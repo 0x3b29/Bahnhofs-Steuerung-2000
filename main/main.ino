@@ -1,9 +1,10 @@
-#include <WiFiNINA.h>
+#include "WiFiS3.h"
+
 #include <WiFiServer.h>
 #include <Adafruit_PWMServoDriver.h>
 #include <ArduinoOTA.h>
 #include <SPI.h>
-#include <Wire.h>
+#include <EEPROM.h>
 
 // If you check out this project, this file does not exist. 
 // You need to create a copy of example_arduino_secrets.h and rename it to 
@@ -15,7 +16,6 @@ const int servoFrequency = 1042;
 // Starting address for writing data
 // Offset by 3 to accomodate flags at 0 & 1 & channels
 const int startAddress = 0x0003;
-const int EEPROM_ADDRESS = 0x50;
 const int MAX_TOTAL_CHANNELS = MAX_PWM_BOARDS * 16;
 
 WiFiServer server(80);
@@ -83,9 +83,9 @@ void saveDataToEeprom() {
   Serial.println("Writing Channels");
   printAllChannelsWithValue();
 
-  writeToEeprom(EEPROM_ADDRESS, 0, &toggleAll, 1);
-  writeToEeprom(EEPROM_ADDRESS, 1, &toggleRandom, 1);
-  writeToEeprom(EEPROM_ADDRESS, 2, &channels, 1);
+  writeToEeprom(0, &toggleAll, 1);
+  writeToEeprom(1, &toggleRandom, 1);
+  writeToEeprom(2, &channels, 1);
 
   for (int i = 0; i < channels; i++) {
     int address = startAddress + i * 2;  // Calculate address for each channel
@@ -93,7 +93,7 @@ void saveDataToEeprom() {
     uint8_t highByte = data >> 8;   // High byte
     uint8_t lowByte = data & 0xFF;  // Low byte
     uint8_t buffer[2] = { highByte, lowByte };
-    writeToEeprom(EEPROM_ADDRESS, address, buffer, 2);  // Write both bytes to EEPROM
+    writeToEeprom(address, buffer, 2);  // Write both bytes to EEPROM
   }
 }
 
@@ -170,14 +170,14 @@ void readAllDataFromEeprom() {
   uint8_t toggleAll = 0;
   uint8_t toggleRandom = 0;
 
-  readFromEeprom(EEPROM_ADDRESS, 0, &toggleAll, 1);
-  readFromEeprom(EEPROM_ADDRESS, 1, &toggleRandom, 1);
-  readFromEeprom(EEPROM_ADDRESS, 2, &channels, 1);
+  readFromEeprom(0, &toggleAll, 1);
+  readFromEeprom(1, &toggleRandom, 1);
+  readFromEeprom(2, &channels, 1);
 
   for (int i = 0; i < channels; i++) {
     int address = startAddress + i * 2;  // Calculate address for each channel
     uint8_t buffer[2];
-    readFromEeprom(EEPROM_ADDRESS, address, buffer, 2);                // Read two bytes from EEPROM
+    readFromEeprom(address, buffer, 2);                // Read two bytes from EEPROM
     uint16_t data = ((uint16_t)buffer[0] << 8) | buffer[1];  // Combine the high and low bytes
     channelValues[i] = data;
   }
@@ -201,31 +201,16 @@ void readAllDataFromEeprom() {
   printAllChannelsWithValue();
 }
 
-void writeToEeprom(int eepromAddress, uint16_t writeAddress, uint8_t* data, uint8_t len) {
-  Wire.beginTransmission(eepromAddress);
-  Wire.write((byte)(writeAddress & 0xFF00) >> 8);
-  Wire.write((byte)(writeAddress & 0x00FF));
-  uint8_t i;
-  for (i = 0; i < len; i++) {
-    Wire.write(data[i]);
+void writeToEeprom(int writeAddress, uint8_t* data, uint8_t len) {
+  for (int i = 0; i < len; i++) {
+    EEPROM.write(writeAddress + i, data[i]);
   }
-  Wire.endTransmission();
-  delay(10);
 }
 
-void readFromEeprom(int eepromAddress, uint16_t readAddress, uint8_t* data, uint8_t len) {
-  Wire.beginTransmission(eepromAddress);
-  Wire.write((byte)(readAddress & 0xFF00) >> 8);
-  Wire.write((byte)(readAddress & 0x00FF));
-  Wire.endTransmission();
-
-  Wire.requestFrom(eepromAddress, len);
-  int i;
-  for (i = 0; i < len; i++) {
-    if (Wire.available()) data[i] = Wire.read();
+void readFromEeprom(int readAddress, uint8_t* data, uint8_t len) {
+  for (int i = 0; i < len; i++) {
+    data[i] = EEPROM.read(readAddress + i);
   }
-
-  delay(10);
 }
 
 void applyValues() {
@@ -304,7 +289,6 @@ void setup() {
 
   Serial.println("Server started");
 
-  Wire.begin();
   readAllDataFromEeprom();
   applyValues();
 
