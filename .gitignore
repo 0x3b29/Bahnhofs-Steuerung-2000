@@ -1,2 +1,6 @@
 .DS_Store
 main/arduino_secrets.h
+.pio
+.vscode
+src/arduino_secrets.h
+build
