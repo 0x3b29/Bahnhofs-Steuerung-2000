@@ -5,6 +5,9 @@
 #include <WiFiServer.h>
 #include <Wire.h>
 
+#include "CRC.h"
+#include "CRC16.h"
+
 // If you check out this project, this file does not exist.
 // You need to create a copy of example_arduino_secrets.h and rename it to
 // arduino_secrets.h and fill in your WiFI name and password
@@ -19,7 +22,9 @@ const int MAX_TOTAL_CHANNELS = MAX_PWM_BOARDS * 16;
 const int PWM_REFRESH_RATE = 1042;
 
 const int EEPROM_ADDRESS = 0x50;
-const int MAX_EEPROM_RANGE = 4096;
+
+// Each page is 64 Bytes long, we use one page per channel + 1, in page 0 we store general settings
+const int MAX_EEPROM_RANGE = 64 * (MAX_TOTAL_CHANNELS + 1);
 const int PAGE_BUFFER_SIZE = 8192;
 const int MAX_CHANNEL_NAME_LENGTH = 20;
 
@@ -38,6 +43,8 @@ const int MEM_SLOT_RANDOM_OFF_FREQ = 35;
 const int MEM_SLOT_IS_LINKED = 36;
 const int MEM_SLOT_LINKED_CHANNEL = 37;
 
+const int MEM_SLOT_CRC = 62;
+
 char m_pageBuffer[PAGE_BUFFER_SIZE];
 
 WiFiServer server(80);
@@ -52,7 +59,7 @@ char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH + 1] = "";
 char m_channelValueBuffer[5] = "0";
 
 char m_channelIdToEditBuffer[4] = "";
-
+uint16_t m_channelIdToEdit = 0;
 bool m_renderNextPageWithOptionsVisible = true;
 bool m_renderNextPageWithChannelEditVisible = false;
 
@@ -148,7 +155,9 @@ void renderWebPage(WiFiClient client) {
     // Max value = Max number of boards (62 are max, but -1 because eeprom
     // address so 61) * number of pins => 61 * 16 = 976
     pt("Kanäle: <input type='number' name='numChannels' min='0' "
-       "max='976' value='");
+       "max='");
+    pt(MAX_TOTAL_CHANNELS);
+    pt("' value='");
     pt(m_numChannels);
     pt("'>");
     pt("<br><br>");
@@ -214,14 +223,13 @@ void renderWebPage(WiFiClient client) {
   }
 
   if (m_renderNextPageWithChannelEditVisible == true) {
-
-    int channelId = atoi(m_channelIdToEditBuffer);
     pt("<h3>Kanal ");
-    pt(m_channelIdToEditBuffer);
+    pt(m_channelIdToEdit);
+
     pn(" Bearbeiten</h3>");
 
     pt("<input type='hidden'  name='channelId' value='");
-    pt(m_channelIdToEditBuffer);
+    pt(m_channelIdToEdit);
     pn("'>");
 
     pt("Name: <br> <input type='text' maxlength='20' size='20' "
@@ -230,27 +238,28 @@ void renderWebPage(WiFiClient client) {
     pn("'>");
     pn("<br><br>");
 
-    pt("Helligkeit: <br><input type='range' min='0' max='4095' "
+    pt("Helligkeit: <input type='range' min='0' max='4095' "
        "name='channelValue' value='");
-    pt(readUint16tForChannelFromEeprom(channelId, MEM_SLOT_BRIGHTNESS));
+    pt(readUint16tForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_BRIGHTNESS));
     pn("'>");
     pn("<br><br>");
 
     pt("Zufällig An: <input type='checkbox' name='randomOn' value='1' ");
 
-    if (readBoolForChannelFromEeprom(channelId, MEM_SLOT_RANDOM_ON)) {
+    if (readBoolForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_RANDOM_ON)) {
       pt("checked");
     }
 
     pn(">");
     pn("<br>");
-    pn("Häufigkeit An (/h): <br>");
+    pn("Häufigkeit An (/h): ");
     pt("<input type='number' name='frequencyOn' min='0' max='255' value='");
-    pt(readUint8tForChannelFromEeprom(channelId, MEM_SLOT_RANDOM_ON_FREQ));
+    pt(readUint8tForChannelFromEeprom(m_channelIdToEdit,
+                                      MEM_SLOT_RANDOM_ON_FREQ));
     pn("'><br><br>");
 
     pt("Zufällig Aus: <input type='checkbox' name='randomOff' value='1' ");
-    if (readBoolForChannelFromEeprom(channelId, MEM_SLOT_RANDOM_OFF)) {
+    if (readBoolForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_RANDOM_OFF)) {
       pt("checked");
     }
 
@@ -258,21 +267,23 @@ void renderWebPage(WiFiClient client) {
     pn("<br>");
     pt("Häufigkeit Aus (/h): <input type='number' "
        "name='frequencyOff' min='0' max='255' value='");
-    pt(readUint8tForChannelFromEeprom(channelId, MEM_SLOT_RANDOM_OFF_FREQ));
+    pt(readUint8tForChannelFromEeprom(m_channelIdToEdit,
+                                      MEM_SLOT_RANDOM_OFF_FREQ));
     pn("'><br><br>");
 
     pt("Verlinkt: <input type='checkbox' name='channelLinked' value='1' ");
-    if (readBoolForChannelFromEeprom(channelId, MEM_SLOT_IS_LINKED)) {
+    if (readBoolForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_IS_LINKED)) {
       pt("checked");
     }
 
     pn(">");
     pn("<br>");
-    pt("Linked Channel ID: <input type='number' "
+    pt("Verlinkter Kanal: <input type='number' "
        "name='linkedChannelId' min='0' max='");
     pt(m_numChannels - 1);
     pt("' value='");
-    pt(readUint16tForChannelFromEeprom(channelId, MEM_SLOT_LINKED_CHANNEL));
+    pt(readUint16tForChannelFromEeprom(m_channelIdToEdit,
+                                       MEM_SLOT_LINKED_CHANNEL));
     pn("'><br>");
 
     pn("<br><br>");
@@ -292,6 +303,18 @@ void renderWebPage(WiFiClient client) {
     readNameForChannelFromEepromToBuffer(i);
     uint16_t brightness =
       readUint16tForChannelFromEeprom(i, MEM_SLOT_BRIGHTNESS);
+
+    bool randomOn = readBoolForChannelFromEeprom(i, MEM_SLOT_RANDOM_ON);
+    uint8_t randomOnFreq =
+      readUint8tForChannelFromEeprom(i, MEM_SLOT_RANDOM_ON_FREQ);
+
+    bool randomOff = readBoolForChannelFromEeprom(i, MEM_SLOT_RANDOM_OFF);
+    uint8_t randomOffFreq =
+      readUint8tForChannelFromEeprom(i, MEM_SLOT_RANDOM_OFF_FREQ);
+
+    bool isLinked = readBoolForChannelFromEeprom(i, MEM_SLOT_IS_LINKED);
+    uint16_t linkedChannel =
+      readUint16tForChannelFromEeprom(i, MEM_SLOT_LINKED_CHANNEL);
 
     pn("<div class='pl-1 pr-1'>");
 
@@ -339,7 +362,9 @@ void renderWebPage(WiFiClient client) {
     pn("<span class='h6'>Helligkeit</span>");
     pn("    </div>");
     pn("    <div class='col'>");
-    pn(brightness);
+    pt((int)(((float)brightness / 4095) * 100));
+    pn("%");
+
     pn("    </div>");
     pn("  </div>");
 
@@ -348,54 +373,74 @@ void renderWebPage(WiFiClient client) {
     pn("      <span class='h6'>Zufällig An</span>");
     pn("    </div>");
     pn("    <div class='col'>");
-    pn("      Nein");
+    if (randomOn) {
+      pn("      Ja");
+    } else {
+      pn("      Nein");
+    }
     pn("    </div>");
     pn("  </div>");
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("      <span class='h6'>Häufigkeit</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
-    pn("      10/h");
-    pn("    </div>");
-    pn("  </div>");
+    if (randomOn) {
+      pn("  <div class='row'>");
+      pn("    <div class='col'>");
+      pn("      <span class='h6'>Häufigkeit</span>");
+      pn("    </div>");
+      pn("    <div class='col'>");
+      pt(randomOnFreq);
+      pn("/h");
+      pn("    </div>");
+      pn("  </div>");
+    }
 
     pn("  <div class='row'>");
     pn("    <div class='col'>");
     pn("      <span class='h6'>Zufällig Aus</span>");
     pn("    </div>");
     pn("    <div class='col'>");
-    pn("      Nein");
+    if (randomOff) {
+      pn("      Ja");
+    } else {
+      pn("      Nein");
+    }
     pn("    </div>");
     pn("  </div>");
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("      <span class='h6'>Häufigkeit</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
-    pn("      5/h");
-    pn("    </div>");
-    pn("  </div>");
+    if (randomOff) {
+      pn("  <div class='row'>");
+      pn("    <div class='col'>");
+      pn("      <span class='h6'>Häufigkeit</span>");
+      pn("    </div>");
+      pn("    <div class='col'>");
+      pt(randomOffFreq);
+      pn("/h");
+      pn("    </div>");
+      pn("  </div>");
+    }
 
     pn("  <div class='row'>");
     pn("    <div class='col'>");
     pn("      <span class='h6'>Verlinkt</span>");
     pn("    </div>");
     pn("    <div class='col'>");
-    pn("      Nein");
+    if (isLinked) {
+      pn("      Ja");
+    } else {
+      pn("      Nein");
+    }
     pn("    </div>");
     pn("  </div>");
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("      <span class='h6'>Kanal</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
-    pn("      1");
-    pn("    </div>");
-    pn("  </div>");
+    if (isLinked) {
+      pn("  <div class='row'>");
+      pn("    <div class='col'>");
+      pn("      <span class='h6'>Kanal</span>");
+      pn("    </div>");
+      pn("    <div class='col'>");
+      pn(linkedChannel);
+      pn("    </div>");
+      pn("  </div>");
+    }
 
     pn("  </div>");
     pn("<hr class='mb-3 mt-3'/>");
@@ -438,12 +483,18 @@ uint16_t readUInt16FromEeprom(uint16_t readAddress) {
 
 void readNameForChannelFromEepromToBuffer(int channel) {
   uint16_t startAddress = (channel + 1) * 64;
-  readFromEeprom(startAddress, (uint8_t *)m_channelNameBuffer, 21);
+  readFromEeprom(startAddress, (uint8_t *)m_channelNameBuffer, 20);
+  m_channelNameBuffer[21] = '\0';
 }
 
 void writeNameForChannelFromBufferToEeprom(int channel) {
   uint16_t startAddress = (channel + 1) * 64;
   writeToEeprom(startAddress, (uint8_t *)m_channelNameBuffer, 21);
+}
+
+void writeUint8tToEeprom(int channel, int memorySlot, uint8_t value) {
+  uint16_t startAddress = (channel + 1) * 64 + memorySlot;
+  writeToEeprom(startAddress, &value, 1);
 }
 
 void writeUint16tForChannelToEeprom(int channel, int memorySlot,
@@ -462,9 +513,6 @@ bool readBoolForChannelFromEeprom(int channel, int memorySlot) {
   uint8_t result = 0;
 
   readFromEeprom(startAddress, &result, 1);
-
-  Serial.print("Read RandomOn: ");
-  Serial.println(result);
 
   if (result == 0) {
     return false;
@@ -564,7 +612,7 @@ void clearEeprom() {
     }
   }
 
-  Serial.print("Erasing eeprom finished");
+  Serial.println("Erasing eeprom finished");
 }
 
 void applyValue(int channel, uint16_t brightness) {
@@ -592,8 +640,8 @@ void applyValue(int channel, uint16_t brightness) {
 void applyValues() {
   for (int i = 0; i < m_numChannels; i++) {
 
-    uint16_t brightness = readUint16tForChannelFromEeprom(i, MEM_SLOT_BRIGHTNESS);
-
+    uint16_t brightness =
+      readUint16tForChannelFromEeprom(i, MEM_SLOT_BRIGHTNESS);
 
     applyValue(i, brightness);
   }
@@ -607,26 +655,24 @@ void clearPageBuffer() {
 
 void checkPageBufferForPostData() {
   if (strstr(m_pageBuffer, "POST") != NULL) {
-    Serial.println("Was post request");
-
     if (isKeyInData(m_pageBuffer, "editChannel")) {
-      Serial.println("UPDATE CHANNEL FORM");
+      Serial.println("PREPARE CHANNEL FORM");
+
+      getValueFromData(m_pageBuffer, "editChannel=", m_channelIdToEditBuffer,
+                       4);
 
       m_renderNextPageWithOptionsVisible = false;
       m_renderNextPageWithChannelEditVisible = true;
 
-      uint16_t channelIdAsNumber = atoi(m_channelIdToEditBuffer);
-      readNameForChannelFromEepromToBuffer(channelIdAsNumber);
+      m_channelIdToEdit = atoi(m_channelIdToEditBuffer);
+      readNameForChannelFromEepromToBuffer(m_channelIdToEdit);
     }
 
     if (isKeyInData(m_pageBuffer, "updateSettings")) {
-      Serial.println("UPDATE SETTINGS");
-
       char clearEepromBuffer[10] = "";
-      getValueFromData(m_pageBuffer,
-                       "clearEeprom=", clearEepromBuffer, 10);
-Serial.print("clearEepromBuffer: ");
-Serial.println(clearEepromBuffer);
+      getValueFromData(m_pageBuffer, "clearEeprom=", clearEepromBuffer, 10);
+      Serial.print("clearEepromBuffer: ");
+      Serial.println(clearEepromBuffer);
       if (strcmp(clearEepromBuffer, "reset2024") == 0) {
         Serial.println("Clearing Eeprom!!!");
         clearEeprom();
@@ -656,15 +702,6 @@ Serial.println(clearEepromBuffer);
       m_toggleRandom = atoi(toggleRandomBuffer);
       m_numChannels = atoi(numChannelsBuffer);
 
-      Serial.print("m_toggleForceAllOff: ");
-      Serial.println(m_toggleForceAllOff);
-
-      Serial.print("m_toggleRandom: ");
-      Serial.println(m_toggleRandom);
-
-      Serial.print("m_numChannels: ");
-      Serial.println(m_numChannels);
-
       writeUInt16ToEeprom(MEM_SLOT_CHANNELS, m_numChannels);
       writeToEeprom(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
       writeToEeprom(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
@@ -677,13 +714,35 @@ Serial.println(clearEepromBuffer);
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;
 
-      strcpy(m_channelIdToEditBuffer, "");
-      getValueFromData(m_pageBuffer, "editChannel=", m_channelIdToEditBuffer,
-                       4);
-
       getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
       getValueFromData(m_pageBuffer, "channelName=", m_channelNameBuffer, 21);
       getValueFromData(m_pageBuffer, "channelValue=", m_channelValueBuffer, 5);
+
+      char randomOnBuffer[2] = "0";
+      char randomOnFreqBuffer[4] = "0";
+
+      char randomOffBuffer[2] = "0";
+      char randomOffFreqBuffer[4] = "0";
+
+      char isLinkedBuffer[2] = "0";
+      char linkedChannelIdBuffer[4] = "0";
+
+      getValueFromData(m_pageBuffer, "randomOn=", randomOnBuffer, 2);
+      getValueFromData(m_pageBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
+      getValueFromData(m_pageBuffer, "randomOff=", randomOffBuffer, 2);
+      getValueFromData(m_pageBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
+      getValueFromData(m_pageBuffer, "channelLinked=", isLinkedBuffer, 2);
+      getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer,
+                       2);
+
+      uint8_t randomOn = atoi(randomOnBuffer);
+      uint8_t randomOnFreq = atoi(randomOnFreqBuffer);
+
+      uint8_t randomOff = atoi(randomOffBuffer);
+      uint8_t randomOffFreq = atoi(randomOffFreqBuffer);
+
+      uint8_t isLinked = atoi(isLinkedBuffer);
+      uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
 
       uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
       Serial.print("Channel ");
@@ -699,22 +758,80 @@ Serial.println(clearEepromBuffer);
       writeUint16tForChannelToEeprom(channelIdAsNumber, MEM_SLOT_BRIGHTNESS,
                                      channelValue);
 
+      writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_ON, randomOn);
+      if (randomOn == 1) {
+        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ, randomOnFreq);
+      }
+
+      writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_OFF, randomOff);
+      if (randomOff == 1) {
+        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ, randomOffFreq);
+      }
+
+      writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_IS_LINKED, isLinked);
+      if (isLinked == 1) {
+        writeUint16tForChannelToEeprom(channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
+      }
+
       applyValue(channelIdAsNumber, channelValue);
     }
 
-    dumpEepromData(0, (m_numChannels + 1) * 64 - 1);
+    // dumpEepromData(0, (m_numChannels + 1) * 64 - 1);
 
+    // After each post request, we apply all the values
     applyValues();
-  } else {
-    Serial.println("Was not a post request");
   }
 }
 
-void loadOptions() {
+void loadOptionsToMemberVariables() {
   m_numChannels = readUInt16FromEeprom(MEM_SLOT_CHANNELS);
   readFromEeprom(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
   readFromEeprom(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
   readFromEeprom(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+}
+
+uint8_t eepromPageBuffer[64];
+CRC16 crc;
+
+void checkPageIntegrity(uint8_t page) {
+  readFromEeprom(page * 64, eepromPageBuffer, 64);
+
+  crc.reset();
+  for (int i = 0; i < 62; i++) {
+    crc.add(eepromPageBuffer[i]);
+  }
+
+  uint16_t savedCrc = ((uint16_t)eepromPageBuffer[62] << 8) | eepromPageBuffer[63];
+  uint16_t caclulatedCrc = crc.getCRC();
+
+  Serial.print("savedCrc: ");
+  Serial.print(savedCrc);
+  Serial.print(" caclulatedCrc: ");
+  Serial.print(caclulatedCrc);
+
+  if (savedCrc == caclulatedCrc) {
+    Serial.println(" OK");
+  } else {
+    Serial.println(" NOT OK");
+  }
+}
+
+void writePageIntegrity(uint8_t page) {
+  readFromEeprom(page * 64, eepromPageBuffer, 64);
+
+  crc.reset();
+  for (int i = 0; i < 62; i++) {
+    crc.add(eepromPageBuffer[i]);
+  }
+
+  uint16_t caclulatedCrc = crc.getCRC();
+  uint16_t address = page * 64 + MEM_SLOT_CRC;
+
+  Serial.print("Writing caclulatedCrc: ");
+  Serial.print(caclulatedCrc);
+  Serial.print(" to address: ");
+  Serial.println(address);
+  writeUInt16ToEeprom(address, caclulatedCrc);
 }
 
 void setup() {
@@ -722,6 +839,9 @@ void setup() {
   delay(2000);
   Serial.println("Starting");
   Wire.begin();
+
+  checkPageIntegrity(0);
+  writePageIntegrity(0);
 
   // clearEeprom();
 
@@ -778,10 +898,12 @@ void setup() {
   InternalStorage); */
 
   Serial.println("Server started");
-  loadOptions();
-  dumpEepromData(0, (m_numChannels + 1) * 64 - 1);
+  loadOptionsToMemberVariables();
+  dumpEepromData(0, MAX_EEPROM_RANGE);
   applyValues();
 }
+
+
 
 void loop() {
   /*   // check for WiFi OTA updates
