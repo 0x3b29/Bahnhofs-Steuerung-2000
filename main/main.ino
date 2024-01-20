@@ -307,7 +307,7 @@ void renderWebPage(WiFiClient client) {
     pt(getBoardSubAddressForChannel(i));
     //  / FIRST COL
 
-    pn("      </div>"
+    pt("      </div>"
        "      <div class='col'>"
 
        // SECOND COL
@@ -327,8 +327,8 @@ void renderWebPage(WiFiClient client) {
        "<span class='h6'>Name</span>"
        "    </div>"
        "    <div class='col'>");
-    pn(m_channelNameBuffer);
-    pn("    </div>"
+    pt(m_channelNameBuffer);
+    pt("    </div>"
        "  </div>"
 
        "  <div class='row'>"
@@ -337,7 +337,7 @@ void renderWebPage(WiFiClient client) {
        "    </div>"
        "    <div class='col'>");
     pt((int)(((float)brightness / 4095) * 100));
-    pn("%"
+    pt("%"
 
        "    </div>"
        "  </div>"
@@ -464,6 +464,31 @@ void clearPageBuffer() {
   }
 }
 
+void urlDecode(const char *urlEncoded, char *decoded, int maxLen) {
+  int len = strlen(urlEncoded);
+  int decodedIndex = 0;
+
+  for (int i = 0; i < len && decodedIndex < maxLen - 1; ++i) {
+    if (urlEncoded[i] == '+') {
+      decoded[decodedIndex++] = ' ';
+    } else if (urlEncoded[i] == '%' && i + 2 < len) {
+      // Get the next two characters after '%'
+      char hex[3];
+      hex[0] = urlEncoded[++i];
+      hex[1] = urlEncoded[++i];
+      hex[2] = '\0';
+
+      // Convert it into a character
+      decoded[decodedIndex++] = (char)strtol(hex, NULL, 16);
+    } else {
+      decoded[decodedIndex++] = urlEncoded[i];
+    }
+  }
+
+  // Null-terminate the decoded string
+  decoded[decodedIndex] = '\0';
+}
+
 void checkPageBufferForPostData() {
   if (strstr(m_pageBuffer, "POST") != NULL) {
 
@@ -548,7 +573,11 @@ void checkPageBufferForPostData() {
       m_renderNextPageWithChannelEditVisible = false;
 
       getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
-      getValueFromData(m_pageBuffer, "channelName=", m_channelNameBuffer, 21);
+
+      char urlEncodedNameBuffer[21];
+      getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer, 21);
+      urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, 20);
+
       getValueFromData(m_pageBuffer, "channelValue=", m_channelValueBuffer, 5);
 
       char randomOnBuffer[2] = "0";
