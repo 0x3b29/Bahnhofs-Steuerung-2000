@@ -467,6 +467,13 @@ void clearPageBuffer() {
 
 void checkPageBufferForPostData() {
   if (strstr(m_pageBuffer, "POST") != NULL) {
+
+    if (isKeyInData(m_pageBuffer, "ignoreChannel")) {
+      // User clicked on "Verwerfen" button
+      m_renderNextPageWithOptionsVisible = true;
+      m_renderNextPageWithChannelEditVisible = false;
+    }
+
     if (isKeyInData(m_pageBuffer, "editChannel")) {
       Serial.println("PREPARE CHANNEL FORM");
 
