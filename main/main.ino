@@ -526,11 +526,6 @@ void checkPageBufferForPostData() {
 
       // If we have new channels, we load them, check them and wipe them if
       // nessesary
-      st("oldNumChannels: ");
-      st(oldNumChannels);
-      st(" m_numChannels: ");
-      sn(m_numChannels);
-
       if (oldNumChannels < m_numChannels) {
         for (int i = oldNumChannels; i < m_numChannels; i++) {
           Serial.print("Checking page for channel: ");
