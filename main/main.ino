@@ -4,8 +4,8 @@
 #include <WiFiNINA.h>
 #include <WiFiServer.h>
 
-#include "main.h"
 #include "eeprom.h"
+#include "main.h"
 
 // If you check out this project, this file does not exist.
 // You need to create a copy of example_arduino_secrets.h and rename it to
@@ -30,6 +30,12 @@ uint16_t m_channelIdToEdit = 0;
 bool m_renderNextPageWithOptionsVisible = true;
 bool m_renderNextPageWithChannelEditVisible = false;
 
+#define RANDOM_INTERVAL 200
+#define RANDOM_EVENT_INTERVAL 1000
+
+long m_lastRandom = 0;
+long m_lastRandomEvent = 0;
+
 Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
 // Function to extract value from form data using char arrays
@@ -46,21 +52,22 @@ void getValueFromData(const char *formData, const char *key, char *value,
     return;
   }
 
-  startPtr += strlen(key);  // Move pointer past the key
+  startPtr += strlen(key); // Move pointer past the key
 
   const char *endPtr = strchr(startPtr, '&');
   if (endPtr == NULL) {
     endPtr =
-      formData + strlen(formData);  // Set endPtr to the end of formData if '&' not found
+        formData +
+        strlen(formData); // Set endPtr to the end of formData if '&' not found
   }
 
   int numCharsToCopy = endPtr - startPtr;
   if (numCharsToCopy >= valueLen) {
-    numCharsToCopy = valueLen - 1;  // Ensure we don't exceed buffer size
+    numCharsToCopy = valueLen - 1; // Ensure we don't exceed buffer size
   }
 
   strncpy(value, startPtr, numCharsToCopy);
-  value[numCharsToCopy] = '\0';  // Null-terminate the string
+  value[numCharsToCopy] = '\0'; // Null-terminate the string
 
   return;
 }
@@ -74,17 +81,13 @@ bool isKeyInData(const char *formData, const char *key) {
   return true;
 }
 
-int getBoardIndexForChannel(int channel) {
-  return channel / 16;
-}
+int getBoardIndexForChannel(int channel) { return channel / 16; }
 
 int getBoardAddressForChannel(int channel) {
   return 0x40 + getBoardIndexForChannel(channel);
 }
 
-int getBoardSubAddressForChannel(int channel) {
-  return channel % 16;
-}
+int getBoardSubAddressForChannel(int channel) { return channel % 16; }
 
 void renderWebPage(WiFiClient client) {
   // Send a standard HTTP response header
@@ -99,13 +102,13 @@ void renderWebPage(WiFiClient client) {
   pn("<head>");
   pn("<meta charset='UTF-8'>");
   pn("<meta name='viewport' content='width=device-width, "
-     "initial-scale=1'>");  // Responsive meta tag
+     "initial-scale=1'>"); // Responsive meta tag
   pn("    <link "
      "href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/"
      "bootstrap.min.css' rel='stylesheet' "
      "integrity='sha384-"
      "rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65' "
-     "crossorigin='anonymous'>");  // Bootstrap CSS
+     "crossorigin='anonymous'>"); // Bootstrap CSS
 
   pn("</head>"
      "<body>"
@@ -273,19 +276,19 @@ void renderWebPage(WiFiClient client) {
   for (int i = 0; i < m_numChannels; i++) {
     readChannelNameFromEepromBufferToChannelNameBuffer(i);
     uint16_t brightness =
-      readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
 
     bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
     uint8_t randomOnFreq =
-      readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON_FREQ);
+        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON_FREQ);
 
     bool randomOff = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF);
     uint8_t randomOffFreq =
-      readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF_FREQ);
+        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF_FREQ);
 
     bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
     uint16_t linkedChannel =
-      readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
+        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
     pn("<div class='pl-1 pr-1'>");
 
@@ -419,13 +422,10 @@ void renderWebPage(WiFiClient client) {
 
   pn("<br>");
   pn("</form>");
-  pn("</div>");  // Close container div
+  pn("</div>"); // Close container div
   pn("</body></html>");
   pn();
 }
-
-
-
 
 void applyValue(int channel, uint16_t brightness) {
   int boardIndex = getBoardIndexForChannel(channel);
@@ -453,7 +453,7 @@ void applyValues() {
   for (int i = 0; i < m_numChannels; i++) {
 
     uint16_t brightness =
-      readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
 
     applyValue(i, brightness);
   }
@@ -464,8 +464,6 @@ void clearPageBuffer() {
     m_pageBuffer[i] = '\0';
   }
 }
-
-
 
 void checkPageBufferForPostData() {
   if (strstr(m_pageBuffer, "POST") != NULL) {
@@ -610,7 +608,7 @@ void checkPageBufferForPostData() {
                                 isLinked);
       if (isLinked == 1) {
         writeUint16tForChannelToEepromBuffer(
-          channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
+            channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
       }
 
       applyValue(channelIdAsNumber, channelValue);
@@ -631,6 +629,65 @@ void loadOptionsToMemberVariables() {
   readFromEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
   readFromEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
   readFromEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+}
+
+bool shouldInvokeEvent(uint8_t freq) {
+  // Generate a random number between 0 and 3599
+  uint16_t randNumber = random(3600);
+
+  // Check if the random number is less than the threshold
+  return randNumber < freq;
+}
+
+void calculateRandomEvents() {
+  for (int i = 0; i < m_numChannels; i++) {
+    bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
+    bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
+    uint16_t linkedChannel =
+        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
+
+    // No need for further checks if channel has no random events
+    if (!randomOn) {
+      continue;
+    }
+
+    uint8_t randomOnFreq =
+        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON_FREQ);
+
+    uint8_t randomOffFreq =
+        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF_FREQ);
+
+    bool turnOn = shouldInvokeEvent(randomOnFreq);
+    bool turnOff = shouldInvokeEvent(randomOffFreq);
+
+    if (turnOn) {
+      st("Got random on event for channel ");
+      sn(i);
+
+      uint16_t brightness =
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+
+      applyValue(i, brightness);
+
+      if (isLinked) {
+        uint16_t linkedBrightness = readUint16tForChannelFromEepromBuffer(
+            linkedChannel, MEM_SLOT_BRIGHTNESS);
+
+        applyValue(linkedChannel, linkedBrightness);
+      }
+    }
+
+    if (turnOff) {
+      st("Got random off event for channel ");
+      sn(i);
+
+      applyValue(i, 0);
+
+      if (isLinked) {
+        applyValue(linkedChannel, 0);
+      }
+    }
+  }
 }
 
 void setup() {
@@ -710,15 +767,30 @@ void setup() {
 
   Serial.println("Server started");
 
-
   applyValues();
+
+  float analogValue = analogRead(0);
+
+  st("Priming randomSeed with ");
+  sn(analogValue);
+  randomSeed(analogValue);
 }
 
 void loop() {
   /*   // check for WiFi OTA updates
   ArduinoOTA.poll(); */
 
-  WiFiClient client = server.available();  // Listen for incoming clients
+  WiFiClient client = server.available(); // Listen for incoming clients
+
+  if ((m_toggleRandom == 1) && (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
+    m_lastRandom = millis();
+    applyValues();
+  }
+
+  if (millis() > (m_lastRandomEvent + RANDOM_EVENT_INTERVAL)) {
+    m_lastRandomEvent = millis();
+    calculateRandomEvents();
+  }
 
   if (client) {
     boolean currentLineIsBlank = true;
