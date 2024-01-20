@@ -16,15 +16,18 @@
 #define pt client.print
 #define pn client.println
 
-const int MAX_PWM_BOARDS = 4;
-const int MAX_TOTAL_CHANNELS = MAX_PWM_BOARDS * 16;
+const int PWM_BOARDS = 1;
+const int CHANNELS_PER_PWM_BOARD = 8;
+const int MAX_TOTAL_CHANNELS = PWM_BOARDS * CHANNELS_PER_PWM_BOARD;
 
 const int PWM_REFRESH_RATE = 1042;
 
 const int EEPROM_ADDRESS = 0x50;
 
-// Each page is 64 Bytes long, we use one page per channel + 1, in page 0 we store general settings
-const int MAX_EEPROM_RANGE = 64 * (MAX_TOTAL_CHANNELS + 1);
+// Each page is 64 Bytes long, we use one page per channel + 1, in page 0 we
+// store general settings
+const int PAGE_SIZE = 64;
+const int MAX_EEPROM_RANGE = PAGE_SIZE * (MAX_TOTAL_CHANNELS + 1);
 const int PAGE_BUFFER_SIZE = 8192;
 const int MAX_CHANNEL_NAME_LENGTH = 20;
 
@@ -46,6 +49,7 @@ const int MEM_SLOT_LINKED_CHANNEL = 37;
 const int MEM_SLOT_CRC = 62;
 
 char m_pageBuffer[PAGE_BUFFER_SIZE];
+uint8_t m_eepromBuffer[MAX_EEPROM_RANGE];
 
 WiFiServer server(80);
 
@@ -63,7 +67,9 @@ uint16_t m_channelIdToEdit = 0;
 bool m_renderNextPageWithOptionsVisible = true;
 bool m_renderNextPageWithChannelEditVisible = false;
 
-Adafruit_PWMServoDriver m_pwmBoards[MAX_PWM_BOARDS];
+Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
+
+CRC16 crc;
 
 // Function to extract value from form data using char arrays
 // formData: The form data as a char array
@@ -547,49 +553,75 @@ void readFromEeprom(uint16_t readAddress, uint8_t *data, uint8_t length) {
 }
 
 void dumpEepromData(int startAddress, int endAddress) {
-
-  char asciiBuffer[9];  // Buffer to store ASCII characters (8 characters + null
-                        // terminator)
+  char lineBufferEEPROM[50];  // Buffer for EEPROM line data
+  char lineBufferMirror[50];  // Buffer for m_eepromBuffer line data
+  char asciiBufferEEPROM[9];  // Buffer for EEPROM ASCII characters
+  char asciiBufferMirror[9];  // Buffer for m_eepromBuffer ASCII characters
   int bufferIndex = 0;
 
   for (int i = startAddress; i <= endAddress; i++) {
-    // Print the address at the start of each line
+    // Handle the start of a new line
     if ((i - startAddress) % 8 == 0) {
       if (i != startAddress) {
-        asciiBuffer[bufferIndex] = '\0';  // Null terminate the ASCII buffer
-        Serial.print("  ");               // End the previous line
-        Serial.println(asciiBuffer);
+        // Print the accumulated line data for EEPROM and m_eepromBuffer
+        asciiBufferEEPROM[bufferIndex] = '\0';
+        asciiBufferMirror[bufferIndex] = '\0';
+        Serial.print(lineBufferEEPROM);
+        Serial.print("  ");
+        Serial.print(asciiBufferEEPROM);
+        Serial.print("    ");
+        Serial.print(lineBufferMirror);
+        Serial.print("  ");
+        Serial.println(asciiBufferMirror);
         bufferIndex = 0;
       }
-      Serial.print(i, HEX);
-      Serial.print(": ");
+      if (i != startAddress && (i - startAddress) % PAGE_SIZE == 0) {
+        Serial.println();  // Newline to separate pages
+      }
+      sprintf(lineBufferEEPROM,
+              "%04X: ", i);               // Start a new line for EEPROM data
+      strcpy(lineBufferMirror, "     ");  // Align m_eepromBuffer data
     }
 
-    uint8_t byteValue = 0;
-    readFromEeprom(i, &byteValue, 1);
+    uint8_t byteValueEEPROM = 0;
+    readFromEeprom(i, &byteValueEEPROM, 1);
 
-    // Print the byte value in HEX
-    if (byteValue < 0x10) {
-      Serial.print('0');  // Print leading zero for single digit hex values
-    }
-    Serial.print(byteValue, HEX);
-    Serial.print(" ");
+    // Add HEX and ASCII for EEPROM data
+    char hexBuffer[5];
+    sprintf(hexBuffer, "%02X ", byteValueEEPROM);
+    strcat(lineBufferEEPROM, hexBuffer);
+    asciiBufferEEPROM[bufferIndex] =
+      (byteValueEEPROM >= 32 && byteValueEEPROM <= 126) ? byteValueEEPROM
+                                                        : '.';
 
-    // Store the corresponding ASCII character or a placeholder
-    asciiBuffer[bufferIndex++] =
-      (byteValue >= 32 && byteValue <= 126) ? byteValue : '.';
+    // Add HEX and ASCII for m_eepromBuffer data
+    sprintf(hexBuffer, "%02X ", m_eepromBuffer[i]);
+    strcat(lineBufferMirror, hexBuffer);
+    asciiBufferMirror[bufferIndex] =
+      (m_eepromBuffer[i] >= 32 && m_eepromBuffer[i] <= 126)
+        ? m_eepromBuffer[i]
+        : '.';
+
+    bufferIndex++;
 
     // Group the bytes in sets of four, separated by two spaces
     if ((i - startAddress) % 4 == 3) {
-      Serial.print("  ");
+      strcat(lineBufferEEPROM, "  ");
+      strcat(lineBufferMirror, "  ");
     }
   }
 
-  // Handle any remaining ASCII characters at the end
-  asciiBuffer[bufferIndex] = '\0';  // Null terminate the buffer
+  // Print any remaining data at the end
   if (bufferIndex > 0) {
-    Serial.print("  ");           // Two spaces before ASCII dump
-    Serial.println(asciiBuffer);  // Print the ASCII characters
+    asciiBufferEEPROM[bufferIndex] = '\0';
+    asciiBufferMirror[bufferIndex] = '\0';
+    Serial.print(lineBufferEEPROM);
+    Serial.print("  ");
+    Serial.print(asciiBufferEEPROM);
+    Serial.print("    ");
+    Serial.print(lineBufferMirror);
+    Serial.print("  ");
+    Serial.println(asciiBufferMirror);
   }
 }
 
@@ -653,6 +685,12 @@ void clearPageBuffer() {
   }
 }
 
+void clearEepromBuffer() {
+  for (int i = 0; i < MAX_EEPROM_RANGE; i++) {
+    m_eepromBuffer[i] = '\0';
+  }
+}
+
 void checkPageBufferForPostData() {
   if (strstr(m_pageBuffer, "POST") != NULL) {
     if (isKeyInData(m_pageBuffer, "editChannel")) {
@@ -671,8 +709,8 @@ void checkPageBufferForPostData() {
     if (isKeyInData(m_pageBuffer, "updateSettings")) {
       char clearEepromBuffer[10] = "";
       getValueFromData(m_pageBuffer, "clearEeprom=", clearEepromBuffer, 10);
-      Serial.print("clearEepromBuffer: ");
-      Serial.println(clearEepromBuffer);
+
+      // TODO: move reset2024 to secrets file
       if (strcmp(clearEepromBuffer, "reset2024") == 0) {
         Serial.println("Clearing Eeprom!!!");
         clearEeprom();
@@ -760,17 +798,20 @@ void checkPageBufferForPostData() {
 
       writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_ON, randomOn);
       if (randomOn == 1) {
-        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ, randomOnFreq);
+        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ,
+                            randomOnFreq);
       }
 
       writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_OFF, randomOff);
       if (randomOff == 1) {
-        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ, randomOffFreq);
+        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ,
+                            randomOffFreq);
       }
 
       writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_IS_LINKED, isLinked);
       if (isLinked == 1) {
-        writeUint16tForChannelToEeprom(channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
+        writeUint16tForChannelToEeprom(
+          channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
       }
 
       applyValue(channelIdAsNumber, channelValue);
@@ -790,18 +831,39 @@ void loadOptionsToMemberVariables() {
   readFromEeprom(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
 }
 
-uint8_t eepromPageBuffer[64];
-CRC16 crc;
+void loadPageFromEepromToBuffer(int page) {
+  uint16_t readAddress = page * PAGE_SIZE;
 
-void checkPageIntegrity(uint8_t page) {
-  readFromEeprom(page * 64, eepromPageBuffer, 64);
+  if (readAddress < MAX_EEPROM_RANGE) {
+    readFromEeprom(readAddress, &m_eepromBuffer[readAddress], PAGE_SIZE);
+  } else {
+    Serial.println("Error: loadPageFromEepromToBuffer tried to load memory "
+                   "outside MAX_EEPROM_RANGE");
+  }
+}
+
+void writePageFromBufferToEeprom(int page) {
+  uint16_t writeAddress = page * PAGE_SIZE;
+
+  if (writeAddress < MAX_EEPROM_RANGE) {
+    writeToEeprom(writeAddress, &m_eepromBuffer[writeAddress], PAGE_SIZE);
+  } else {
+    Serial.println("Error: writePageFromBufferToEeprom tried to write memory "
+                   "outside MAX_EEPROM_RANGE");
+  }
+}
+
+bool isPageIntegrityGood(uint8_t page) {
+  uint16_t pageStart = page * 64;
+  uint16_t pageCrcHighByteAddress = page * 64 + 62;
+  uint8_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
 
   crc.reset();
-  for (int i = 0; i < 62; i++) {
-    crc.add(eepromPageBuffer[i]);
+  for (int i = pageStart; i < pageCrcHighByteAddress; i++) {
+    crc.add(m_eepromBuffer[i]);
   }
 
-  uint16_t savedCrc = ((uint16_t)eepromPageBuffer[62] << 8) | eepromPageBuffer[63];
+  uint16_t savedCrc = ((uint16_t)m_eepromBuffer[pageCrcHighByteAddress] << 8) | m_eepromBuffer[pageCrcLowByteAddress];
   uint16_t caclulatedCrc = crc.getCRC();
 
   Serial.print("savedCrc: ");
@@ -810,28 +872,34 @@ void checkPageIntegrity(uint8_t page) {
   Serial.print(caclulatedCrc);
 
   if (savedCrc == caclulatedCrc) {
-    Serial.println(" OK");
+    return true;
   } else {
-    Serial.println(" NOT OK");
+    return false;
   }
 }
 
 void writePageIntegrity(uint8_t page) {
-  readFromEeprom(page * 64, eepromPageBuffer, 64);
+  uint16_t pageStart = page * 64;
+  uint16_t pageCrcHighByteAddress = page * 64 + 62;
+  uint8_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
 
   crc.reset();
-  for (int i = 0; i < 62; i++) {
-    crc.add(eepromPageBuffer[i]);
+  for (int i = pageStart; i < pageCrcHighByteAddress; i++) {
+    crc.add(m_pageBuffer[i]);
   }
 
-  uint16_t caclulatedCrc = crc.getCRC();
-  uint16_t address = page * 64 + MEM_SLOT_CRC;
+  uint16_t calculatedCrc = crc.getCRC();
 
-  Serial.print("Writing caclulatedCrc: ");
-  Serial.print(caclulatedCrc);
-  Serial.print(" to address: ");
-  Serial.println(address);
-  writeUInt16ToEeprom(address, caclulatedCrc);
+  // Split the CRC into two bytes and store them in the last two positions of
+  // pageBuffer
+  m_pageBuffer[pageCrcHighByteAddress] = (uint8_t)(calculatedCrc >> 8);   // High byte of CRC
+  m_pageBuffer[pageCrcLowByteAddress] = (uint8_t)(calculatedCrc & 0xFF);  // Low byte of CRC
+}
+
+void wipePage(uint8_t pageBuffer[64]) {
+  for (int i = 0; i < PAGE_SIZE; i++) {
+    pageBuffer[i] = 0;
+  }
 }
 
 void setup() {
@@ -840,14 +908,25 @@ void setup() {
   Serial.println("Starting");
   Wire.begin();
 
-  checkPageIntegrity(0);
-  writePageIntegrity(0);
-
+  // HARD RESET
   // clearEeprom();
 
+  clearEepromBuffer();
   clearPageBuffer();
+
+  loadPageFromEepromToBuffer(0);
+
+  bool isFirstPageIntegrityGood = isPageIntegrityGood(0);
+
+  if (isFirstPageIntegrityGood == false) {
+    Serial.println("Error: first page integrety was wrong. Wiping page...");
+    wipePage(0);
+    writePageIntegrity(0);
+    writePageFromBufferToEeprom(0);
+  }
+
   // Initializte pwm boards
-  for (int i = 0; i < MAX_PWM_BOARDS; i++) {
+  for (int i = 0; i < PWM_BOARDS; i++) {
     int pwmAddress = 0x40 + i;
 
     m_pwmBoards[i] = Adafruit_PWMServoDriver(pwmAddress);
@@ -899,11 +978,9 @@ void setup() {
 
   Serial.println("Server started");
   loadOptionsToMemberVariables();
-  dumpEepromData(0, MAX_EEPROM_RANGE);
+  dumpEepromData(0, MAX_EEPROM_RANGE - 1);
   applyValues();
 }
-
-
 
 void loop() {
   /*   // check for WiFi OTA updates
