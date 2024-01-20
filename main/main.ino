@@ -15,9 +15,11 @@
 
 #define pt client.print
 #define pn client.println
+#define st Serial.print
+#define sn Serial.println
 
-const int PWM_BOARDS = 1;
-const int CHANNELS_PER_PWM_BOARD = 8;
+const int PWM_BOARDS = 8;
+const int CHANNELS_PER_PWM_BOARD = 16;
 const int MAX_TOTAL_CHANNELS = PWM_BOARDS * CHANNELS_PER_PWM_BOARD;
 
 const int PWM_REFRESH_RATE = 1042;
@@ -246,13 +248,15 @@ void renderWebPage(WiFiClient client) {
 
     pt("Helligkeit: <input type='range' min='0' max='4095' "
        "name='channelValue' value='");
-    pt(readUint16tForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_BRIGHTNESS));
+    pt(readUint16tForChannelFromEepromBuffer(m_channelIdToEdit,
+                                             MEM_SLOT_BRIGHTNESS));
     pn("'>");
     pn("<br><br>");
 
     pt("Zufällig An: <input type='checkbox' name='randomOn' value='1' ");
 
-    if (readBoolForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_RANDOM_ON)) {
+    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
+                                           MEM_SLOT_RANDOM_ON)) {
       pt("checked");
     }
 
@@ -260,12 +264,13 @@ void renderWebPage(WiFiClient client) {
     pn("<br>");
     pn("Häufigkeit An (/h): ");
     pt("<input type='number' name='frequencyOn' min='0' max='255' value='");
-    pt(readUint8tForChannelFromEeprom(m_channelIdToEdit,
-                                      MEM_SLOT_RANDOM_ON_FREQ));
+    pt(readUint8tForChannelFromEepromBuffer(m_channelIdToEdit,
+                                            MEM_SLOT_RANDOM_ON_FREQ));
     pn("'><br><br>");
 
     pt("Zufällig Aus: <input type='checkbox' name='randomOff' value='1' ");
-    if (readBoolForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_RANDOM_OFF)) {
+    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
+                                           MEM_SLOT_RANDOM_OFF)) {
       pt("checked");
     }
 
@@ -273,12 +278,13 @@ void renderWebPage(WiFiClient client) {
     pn("<br>");
     pt("Häufigkeit Aus (/h): <input type='number' "
        "name='frequencyOff' min='0' max='255' value='");
-    pt(readUint8tForChannelFromEeprom(m_channelIdToEdit,
-                                      MEM_SLOT_RANDOM_OFF_FREQ));
+    pt(readUint8tForChannelFromEepromBuffer(m_channelIdToEdit,
+                                            MEM_SLOT_RANDOM_OFF_FREQ));
     pn("'><br><br>");
 
     pt("Verlinkt: <input type='checkbox' name='channelLinked' value='1' ");
-    if (readBoolForChannelFromEeprom(m_channelIdToEdit, MEM_SLOT_IS_LINKED)) {
+    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
+                                           MEM_SLOT_IS_LINKED)) {
       pt("checked");
     }
 
@@ -288,8 +294,8 @@ void renderWebPage(WiFiClient client) {
        "name='linkedChannelId' min='0' max='");
     pt(m_numChannels - 1);
     pt("' value='");
-    pt(readUint16tForChannelFromEeprom(m_channelIdToEdit,
-                                       MEM_SLOT_LINKED_CHANNEL));
+    pt(readUint16tForChannelFromEepromBuffer(m_channelIdToEdit,
+                                             MEM_SLOT_LINKED_CHANNEL));
     pn("'><br>");
 
     pn("<br><br>");
@@ -306,21 +312,21 @@ void renderWebPage(WiFiClient client) {
   pn("<div>");
 
   for (int i = 0; i < m_numChannels; i++) {
-    readNameForChannelFromEepromToBuffer(i);
+    readChannelNameFromEepromBufferToChannelNameBuffer(i);
     uint16_t brightness =
-      readUint16tForChannelFromEeprom(i, MEM_SLOT_BRIGHTNESS);
+      readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
 
-    bool randomOn = readBoolForChannelFromEeprom(i, MEM_SLOT_RANDOM_ON);
+    bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
     uint8_t randomOnFreq =
-      readUint8tForChannelFromEeprom(i, MEM_SLOT_RANDOM_ON_FREQ);
+      readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON_FREQ);
 
-    bool randomOff = readBoolForChannelFromEeprom(i, MEM_SLOT_RANDOM_OFF);
+    bool randomOff = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF);
     uint8_t randomOffFreq =
-      readUint8tForChannelFromEeprom(i, MEM_SLOT_RANDOM_OFF_FREQ);
+      readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF_FREQ);
 
-    bool isLinked = readBoolForChannelFromEeprom(i, MEM_SLOT_IS_LINKED);
+    bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
     uint16_t linkedChannel =
-      readUint16tForChannelFromEeprom(i, MEM_SLOT_LINKED_CHANNEL);
+      readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
     pn("<div class='pl-1 pr-1'>");
 
@@ -459,82 +465,6 @@ void renderWebPage(WiFiClient client) {
   pn();
 }
 
-void writeUInt16ToEeprom(uint16_t writeAddress, uint16_t value) {
-  uint8_t data[2];                // Create a byte array to hold the uint16_t value
-  data[0] = (value >> 8) & 0xFF;  // Extract the high byte
-  data[1] = value & 0xFF;         // Extract the low byte
-
-  writeToEeprom(writeAddress, data, 2);
-}
-
-void writeToEeprom(uint16_t writeAddress, uint8_t *data, uint8_t length) {
-  Wire.beginTransmission(EEPROM_ADDRESS);
-  Wire.write((byte)((writeAddress & 0xFF00) >> 8));
-  Wire.write((byte)(writeAddress & 0x00FF));
-  uint8_t i;
-  for (i = 0; i < length; i++) {
-    Wire.write(data[i]);
-  }
-  Wire.endTransmission();
-  delay(20);
-}
-
-uint16_t readUInt16FromEeprom(uint16_t readAddress) {
-  uint8_t data[2];
-  readFromEeprom(readAddress, data, 2);
-
-  uint16_t value = ((uint16_t)data[0] << 8) | data[1];
-  return value;
-}
-
-void readNameForChannelFromEepromToBuffer(int channel) {
-  uint16_t startAddress = (channel + 1) * 64;
-  readFromEeprom(startAddress, (uint8_t *)m_channelNameBuffer, 20);
-  m_channelNameBuffer[21] = '\0';
-}
-
-void writeNameForChannelFromBufferToEeprom(int channel) {
-  uint16_t startAddress = (channel + 1) * 64;
-  writeToEeprom(startAddress, (uint8_t *)m_channelNameBuffer, 21);
-}
-
-void writeUint8tToEeprom(int channel, int memorySlot, uint8_t value) {
-  uint16_t startAddress = (channel + 1) * 64 + memorySlot;
-  writeToEeprom(startAddress, &value, 1);
-}
-
-void writeUint16tForChannelToEeprom(int channel, int memorySlot,
-                                    uint16_t channelValue) {
-  int startAddress = (channel + 1) * 64 + memorySlot;
-  writeUInt16ToEeprom(startAddress, channelValue);
-}
-
-uint16_t readUint16tForChannelFromEeprom(int channel, int memorySlot) {
-  int startAddress = (channel + 1) * 64 + memorySlot;
-  return readUInt16FromEeprom(startAddress);
-}
-
-bool readBoolForChannelFromEeprom(int channel, int memorySlot) {
-  int startAddress = (channel + 1) * 64 + memorySlot;
-  uint8_t result = 0;
-
-  readFromEeprom(startAddress, &result, 1);
-
-  if (result == 0) {
-    return false;
-  } else {
-    return true;
-  }
-}
-
-uint8_t readUint8tForChannelFromEeprom(int channel, int memorySlot) {
-  int startAddress = (channel + 1) * 64 + memorySlot;
-  uint8_t result = 0;
-
-  readFromEeprom(startAddress, &result, 1);
-  return result;
-}
-
 void readFromEeprom(uint16_t readAddress, uint8_t *data, uint8_t length) {
   Wire.beginTransmission(EEPROM_ADDRESS);
   Wire.write((byte)((readAddress & 0xFF00) >> 8));
@@ -549,6 +479,94 @@ void readFromEeprom(uint16_t readAddress, uint8_t *data, uint8_t length) {
     } else {
       data[i] = 0;
     }
+  }
+}
+
+void writeToEeprom(uint16_t writeAddress, uint8_t *data, uint8_t length) {
+  Wire.beginTransmission(EEPROM_ADDRESS);
+  Wire.write((byte)((writeAddress & 0xFF00) >> 8));
+  Wire.write((byte)(writeAddress & 0x00FF));
+  uint8_t i;
+  for (i = 0; i < length; i++) {
+    Wire.write(data[i]);
+  }
+  Wire.endTransmission();
+  delay(20);
+}
+
+void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value) {
+  uint8_t data[2];                // Create a byte array to hold the uint16_t value
+  data[0] = (value >> 8) & 0xFF;  // Extract the high byte
+  data[1] = value & 0xFF;         // Extract the low byte
+
+  writeToEepromBuffer(writeAddress, data, 2);
+}
+
+void writeToEepromBuffer(uint16_t writeAddress, uint8_t *data, uint8_t length) {
+  for (int i = 0; i < length; i++) {
+    m_eepromBuffer[writeAddress + i] = data[i];
+  }
+}
+
+uint16_t readUInt16FromEepromBuffer(uint16_t readAddress) {
+  uint8_t data[2];
+  readFromEepromBuffer(readAddress, data, 2);
+
+  uint16_t value = ((uint16_t)data[0] << 8) | data[1];
+  return value;
+}
+
+void readChannelNameFromEepromBufferToChannelNameBuffer(int channel) {
+  uint16_t startAddress = (channel + 1) * 64;
+  readFromEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer, 20);
+  m_channelNameBuffer[21] = '\0';
+}
+
+void writeChannelNameFromChannelNameBufferToEepromBuffer(int channel) {
+  uint16_t startAddress = (channel + 1) * 64;
+  writeToEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer, 21);
+}
+
+void writeUint8tToEepromBuffer(int channel, int memorySlot, uint8_t value) {
+  uint16_t startAddress = (channel + 1) * 64 + memorySlot;
+  writeToEepromBuffer(startAddress, &value, 1);
+}
+
+void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
+                                          uint16_t channelValue) {
+  int startAddress = (channel + 1) * 64 + memorySlot;
+  writeUInt16ToEepromBuffer(startAddress, channelValue);
+}
+
+uint16_t readUint16tForChannelFromEepromBuffer(int channel, int memorySlot) {
+  int startAddress = (channel + 1) * 64 + memorySlot;
+  return readUInt16FromEepromBuffer(startAddress);
+}
+
+bool readBoolForChannelFromEepromBuffer(int channel, int memorySlot) {
+  int startAddress = (channel + 1) * 64 + memorySlot;
+  uint8_t result = 0;
+
+  readFromEepromBuffer(startAddress, &result, 1);
+
+  if (result == 0) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+uint8_t readUint8tForChannelFromEepromBuffer(int channel, int memorySlot) {
+  int startAddress = (channel + 1) * 64 + memorySlot;
+  uint8_t result = 0;
+
+  readFromEepromBuffer(startAddress, &result, 1);
+  return result;
+}
+
+void readFromEepromBuffer(uint16_t readAddress, uint8_t *data, uint8_t length) {
+  for (int i = 0; i < length; i++) {
+    data[i] = m_eepromBuffer[readAddress + i];
   }
 }
 
@@ -673,7 +691,7 @@ void applyValues() {
   for (int i = 0; i < m_numChannels; i++) {
 
     uint16_t brightness =
-      readUint16tForChannelFromEeprom(i, MEM_SLOT_BRIGHTNESS);
+      readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
 
     applyValue(i, brightness);
   }
@@ -703,7 +721,7 @@ void checkPageBufferForPostData() {
       m_renderNextPageWithChannelEditVisible = true;
 
       m_channelIdToEdit = atoi(m_channelIdToEditBuffer);
-      readNameForChannelFromEepromToBuffer(m_channelIdToEdit);
+      readChannelNameFromEepromBufferToChannelNameBuffer(m_channelIdToEdit);
     }
 
     if (isKeyInData(m_pageBuffer, "updateSettings")) {
@@ -716,6 +734,8 @@ void checkPageBufferForPostData() {
         clearEeprom();
         return;
       }
+
+      uint16_t oldNumChannels = m_numChannels;
 
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;
@@ -740,10 +760,28 @@ void checkPageBufferForPostData() {
       m_toggleRandom = atoi(toggleRandomBuffer);
       m_numChannels = atoi(numChannelsBuffer);
 
-      writeUInt16ToEeprom(MEM_SLOT_CHANNELS, m_numChannels);
-      writeToEeprom(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
-      writeToEeprom(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
-      writeToEeprom(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+      writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, m_numChannels);
+      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
+      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
+      writeToEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+
+      // If we have new channels, we load them, check them and wipe them if
+      // nessesary
+      st("oldNumChannels: ");
+      st(oldNumChannels);
+      st(" m_numChannels: ");
+      sn(m_numChannels);
+
+      if (oldNumChannels < m_numChannels) {
+        for (int i = oldNumChannels; i < m_numChannels; i++) {
+          Serial.print("Checking page for channel: ");
+          Serial.println(i);
+          loadPageAndCheckIntegrity(i + 1);
+        }
+      }
     }
 
     if (isKeyInData(m_pageBuffer, "updateChannel")) {
@@ -792,32 +830,38 @@ void checkPageBufferForPostData() {
 
       uint16_t channelValue = atoi(m_channelValueBuffer);
 
-      writeNameForChannelFromBufferToEeprom(channelIdAsNumber);
-      writeUint16tForChannelToEeprom(channelIdAsNumber, MEM_SLOT_BRIGHTNESS,
-                                     channelValue);
+      writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
+      writeUint16tForChannelToEepromBuffer(channelIdAsNumber,
+                                           MEM_SLOT_BRIGHTNESS, channelValue);
 
-      writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_ON, randomOn);
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON,
+                                randomOn);
       if (randomOn == 1) {
-        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ,
-                            randomOnFreq);
+        writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ,
+                                  randomOnFreq);
       }
 
-      writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_OFF, randomOff);
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF,
+                                randomOff);
       if (randomOff == 1) {
-        writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ,
-                            randomOffFreq);
+        writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ,
+                                  randomOffFreq);
       }
 
-      writeUint8tToEeprom(channelIdAsNumber, MEM_SLOT_IS_LINKED, isLinked);
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_IS_LINKED,
+                                isLinked);
       if (isLinked == 1) {
-        writeUint16tForChannelToEeprom(
+        writeUint16tForChannelToEepromBuffer(
           channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
       }
 
       applyValue(channelIdAsNumber, channelValue);
+
+      writePageIntegrity(channelIdAsNumber + 1);
+      writePageFromBufferToEeprom(channelIdAsNumber + 1);
     }
 
-    // dumpEepromData(0, (m_numChannels + 1) * 64 - 1);
+    // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
 
     // After each post request, we apply all the values
     applyValues();
@@ -825,10 +869,10 @@ void checkPageBufferForPostData() {
 }
 
 void loadOptionsToMemberVariables() {
-  m_numChannels = readUInt16FromEeprom(MEM_SLOT_CHANNELS);
-  readFromEeprom(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
-  readFromEeprom(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
-  readFromEeprom(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+  m_numChannels = readUInt16FromEepromBuffer(MEM_SLOT_CHANNELS);
+  readFromEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
+  readFromEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
+  readFromEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
 }
 
 void loadPageFromEepromToBuffer(int page) {
@@ -855,8 +899,8 @@ void writePageFromBufferToEeprom(int page) {
 
 bool isPageIntegrityGood(uint8_t page) {
   uint16_t pageStart = page * 64;
-  uint16_t pageCrcHighByteAddress = page * 64 + 62;
-  uint8_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
+  uint16_t pageCrcHighByteAddress = page * PAGE_SIZE + 62;
+  uint16_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
 
   crc.reset();
   for (int i = pageStart; i < pageCrcHighByteAddress; i++) {
@@ -864,41 +908,58 @@ bool isPageIntegrityGood(uint8_t page) {
   }
 
   uint16_t savedCrc = ((uint16_t)m_eepromBuffer[pageCrcHighByteAddress] << 8) | m_eepromBuffer[pageCrcLowByteAddress];
-  uint16_t caclulatedCrc = crc.getCRC();
+  uint16_t calculatedCrc = crc.getCRC();
 
-  Serial.print("savedCrc: ");
-  Serial.print(savedCrc);
-  Serial.print(" caclulatedCrc: ");
-  Serial.print(caclulatedCrc);
-
-  if (savedCrc == caclulatedCrc) {
+  if (savedCrc == calculatedCrc) {
     return true;
   } else {
     return false;
   }
 }
 
-void writePageIntegrity(uint8_t page) {
-  uint16_t pageStart = page * 64;
-  uint16_t pageCrcHighByteAddress = page * 64 + 62;
-  uint8_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
+void writePageIntegrity(int page) {
+  uint16_t pageStart = page * PAGE_SIZE;
+  uint16_t pageCrcHighByteAddress = page * PAGE_SIZE + 62;
+  uint16_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
 
   crc.reset();
   for (int i = pageStart; i < pageCrcHighByteAddress; i++) {
-    crc.add(m_pageBuffer[i]);
+    crc.add(m_eepromBuffer[i]);
   }
 
   uint16_t calculatedCrc = crc.getCRC();
+  uint8_t calculatedCrcHighByte = (uint8_t)(calculatedCrc >> 8);
+  uint8_t calculatedCrcLowByte = (uint8_t)(calculatedCrc & 0xFF);
 
-  // Split the CRC into two bytes and store them in the last two positions of
-  // pageBuffer
-  m_pageBuffer[pageCrcHighByteAddress] = (uint8_t)(calculatedCrc >> 8);   // High byte of CRC
-  m_pageBuffer[pageCrcLowByteAddress] = (uint8_t)(calculatedCrc & 0xFF);  // Low byte of CRC
+  m_eepromBuffer[pageCrcHighByteAddress] = calculatedCrcHighByte;
+  m_eepromBuffer[pageCrcLowByteAddress] = calculatedCrcLowByte;
 }
 
-void wipePage(uint8_t pageBuffer[64]) {
-  for (int i = 0; i < PAGE_SIZE; i++) {
-    pageBuffer[i] = 0;
+void wipePage(int page) {
+  uint16_t pageStart = page * PAGE_SIZE;
+  uint16_t pageEnd = pageStart + PAGE_SIZE;
+
+  for (int i = pageStart; i < pageEnd; i++) {
+    m_eepromBuffer[i] = 0;
+  }
+}
+
+void loadPageAndCheckIntegrity(int page) {
+  loadPageFromEepromToBuffer(page);
+
+  if (isPageIntegrityGood(page) == false) {
+    st("Error: page ");
+    st(page);
+    sn(" integrety was bad. Wiping page...");
+
+    wipePage(page);
+    writePageIntegrity(page);
+
+    if (isPageIntegrityGood(page) == false) {
+      Serial.println("Error: page integrety still bad. This is probably a bug.");
+    } else {
+      writePageFromBufferToEeprom(page);
+    }
   }
 }
 
@@ -908,22 +969,23 @@ void setup() {
   Serial.println("Starting");
   Wire.begin();
 
-  // HARD RESET
+  // Comment in for HARD RESET
   // clearEeprom();
 
   clearEepromBuffer();
   clearPageBuffer();
 
-  loadPageFromEepromToBuffer(0);
+  // Load first page which contains information such as channel count etc...
+  loadPageAndCheckIntegrity(0);
 
-  bool isFirstPageIntegrityGood = isPageIntegrityGood(0);
+  loadOptionsToMemberVariables();
 
-  if (isFirstPageIntegrityGood == false) {
-    Serial.println("Error: first page integrety was wrong. Wiping page...");
-    wipePage(0);
-    writePageIntegrity(0);
-    writePageFromBufferToEeprom(0);
+  for (int i = 0; i < m_numChannels; i++) {
+    // Page for channel is always channelId + 1 since page 0 = general config;
+    loadPageAndCheckIntegrity(i + 1);
   }
+
+  // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
 
   // Initializte pwm boards
   for (int i = 0; i < PWM_BOARDS; i++) {
@@ -977,8 +1039,8 @@ void setup() {
   InternalStorage); */
 
   Serial.println("Server started");
-  loadOptionsToMemberVariables();
-  dumpEepromData(0, MAX_EEPROM_RANGE - 1);
+
+
   applyValues();
 }
 
