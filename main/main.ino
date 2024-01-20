@@ -290,141 +290,140 @@ void renderWebPage(WiFiClient client) {
     uint16_t linkedChannel =
         readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
-    pn("<div class='pl-1 pr-1'>");
+    pn("<div class='pl-1 pr-1'>"
 
-    // ROW START
-    pn("  <div class='row'>");
-    pn("      <div class='col-9'>");
+       // ROW START
+       "  <div class='row'>"
+       "      <div class='col-9'>"
 
-    //  FIRST COL
-    pt("<span class='h4'>");
-    pt("Kanal ");
+       //  FIRST COL
+       "<span class='h4'>"
+       "Kanal ");
     pt(i);
-    pt(" </span > ");
-    pt("Board ");
+    pt(" </span > "
+       "Board ");
     pt(getBoardIndexForChannel(i));
     pt(", Pin ");
     pt(getBoardSubAddressForChannel(i));
     //  / FIRST COL
 
-    pn("      </div>");
-    pn("      <div class='col'>");
+    pn("      </div>"
+       "      <div class='col'>"
 
-    // SECOND COL
-    pn("      <div class='d-flex justify-content-end'>");
-    pt("<button class='btn p-0' type='submit' name='editChannel' value='");
+       // SECOND COL
+       "      <div class='d-flex justify-content-end'>"
+       "<button class='btn p-0' type='submit' name='editChannel' value='");
     pt(i);
-    pt("'>🖊</button >");
-    pn("      </div>");
-    // / SECOND COL
+    pt("'>🖊</button >"
+       "      </div>"
+       // / SECOND COL
 
-    pn("      </div>");
-    pn("  </div>");
-    // ROW END
+       "      </div>"
+       "  </div>"
+       // ROW END
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("<span class='h6'>Name</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
+       "  <div class='row'>"
+       "    <div class='col'>"
+       "<span class='h6'>Name</span>"
+       "    </div>"
+       "    <div class='col'>");
     pn(m_channelNameBuffer);
-    pn("    </div>");
-    pn("  </div>");
+    pn("    </div>"
+       "  </div>"
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("<span class='h6'>Helligkeit</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
+       "  <div class='row'>"
+       "    <div class='col'>"
+       "<span class='h6'>Helligkeit</span>"
+       "    </div>"
+       "    <div class='col'>");
     pt((int)(((float)brightness / 4095) * 100));
-    pn("%");
+    pn("%"
 
-    pn("    </div>");
-    pn("  </div>");
+       "    </div>"
+       "  </div>"
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("      <span class='h6'>Zufällig An</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
+       "  <div class='row'>"
+       "    <div class='col'>"
+       "      <span class='h6'>Zufällig An</span>"
+       "    </div>"
+       "    <div class='col'>");
     if (randomOn) {
       pn("      Ja");
     } else {
       pn("      Nein");
     }
-    pn("    </div>");
-    pn("  </div>");
+    pn("    </div>"
+       "  </div>");
 
     if (randomOn) {
-      pn("  <div class='row'>");
-      pn("    <div class='col'>");
-      pn("      <span class='h6'>Häufigkeit</span>");
-      pn("    </div>");
-      pn("    <div class='col'>");
+      pn("  <div class='row'>"
+         "    <div class='col'>"
+         "      <span class='h6'>Häufigkeit</span>"
+         "    </div>"
+         "    <div class='col'>");
       pt(randomOnFreq);
-      pn("/h");
-      pn("    </div>");
-      pn("  </div>");
+      pn("/h"
+         "    </div>"
+         "  </div>");
     }
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("      <span class='h6'>Zufällig Aus</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
+    pn("  <div class='row'>"
+       "    <div class='col'>"
+       "      <span class='h6'>Zufällig Aus</span>"
+       "    </div>"
+       "    <div class='col'>");
     if (randomOff) {
       pn("      Ja");
     } else {
       pn("      Nein");
     }
-    pn("    </div>");
-    pn("  </div>");
+    pn("    </div>"
+       "  </div>");
 
     if (randomOff) {
-      pn("  <div class='row'>");
-      pn("    <div class='col'>");
-      pn("      <span class='h6'>Häufigkeit</span>");
-      pn("    </div>");
-      pn("    <div class='col'>");
+      pn("  <div class='row'>"
+         "    <div class='col'>"
+         "      <span class='h6'>Häufigkeit</span>"
+         "    </div>"
+         "    <div class='col'>");
       pt(randomOffFreq);
-      pn("/h");
-      pn("    </div>");
-      pn("  </div>");
+      pn("/h"
+         "    </div>"
+         "  </div>");
     }
 
-    pn("  <div class='row'>");
-    pn("    <div class='col'>");
-    pn("      <span class='h6'>Verlinkt</span>");
-    pn("    </div>");
-    pn("    <div class='col'>");
+    pn("  <div class='row'>"
+       "    <div class='col'>"
+       "      <span class='h6'>Verlinkt</span>"
+       "    </div>"
+       "    <div class='col'>");
     if (isLinked) {
       pn("      Ja");
     } else {
       pn("      Nein");
     }
-    pn("    </div>");
-    pn("  </div>");
+    pn("    </div>"
+       "  </div>");
 
     if (isLinked) {
-      pn("  <div class='row'>");
-      pn("    <div class='col'>");
-      pn("      <span class='h6'>Kanal</span>");
-      pn("    </div>");
-      pn("    <div class='col'>");
+      pn("  <div class='row'>"
+         "    <div class='col'>"
+         "      <span class='h6'>Kanal</span>"
+         "    </div>"
+         "    <div class='col'>");
       pn(linkedChannel);
-      pn("    </div>");
-      pn("  </div>");
+      pn("    </div>"
+         "  </div>");
     }
 
-    pn("  </div>");
-    pn("<hr class='mb-3 mt-3'/>");
+    pn("  </div>"
+       "<hr class='mb-3 mt-3'/>");
   }
 
-  pn("<br>");
-  pn("</form>");
-  pn("</div>"); // Close container div
-  pn("</body></html>");
-  pn();
+  pn("<br>"
+     "</form>"
+     "</div>"
+     "</body></html>");
 }
 
 void applyValue(int channel, uint16_t brightness) {
