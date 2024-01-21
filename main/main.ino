@@ -287,6 +287,9 @@ void renderWebPage(WiFiClient client) {
     uint16_t brightness =
         readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
 
+    bool initialState =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_INITIAL_STATE);
+
     bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
     uint8_t randomOnFreq =
         readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON_FREQ);
@@ -345,6 +348,21 @@ void renderWebPage(WiFiClient client) {
        "    <div class='col font-weight-bold'> <b>");
     pt(m_channelNameBuffer);
     pt("    </b></div>"
+       "  </div>"
+
+       "  <div class='row'>"
+       "    <div class='col'>"
+       "<span class='h6'>Startzustand</span>"
+       "    </div>"
+       "    <div class='col'>");
+
+    if (initialState) {
+      pt("An");
+    } else {
+      pt("Aus");
+    }
+
+    pt("    </div>"
        "  </div>"
 
        "  <div class='row'>"
