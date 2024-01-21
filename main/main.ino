@@ -98,45 +98,47 @@ void renderWebPage(WiFiClient client) {
   // Output the HTML Web Page
   pn("<!DOCTYPE html>");
 
-  pn("<html>");
-  pn("<head>");
-  pn("<meta charset='UTF-8'>");
-  pn("<meta name='viewport' content='width=device-width, "
-     "initial-scale=1'>"); // Responsive meta tag
-  pn("    <link "
+  pn("<html>"
+     "<head>"
+     "<meta charset='UTF-8'>"
+     "<meta name='viewport' content='width=device-width, "
+     "initial-scale=1'>"
+     "    <link "
      "href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/"
      "bootstrap.min.css' rel='stylesheet' "
      "integrity='sha384-"
      "rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65' "
-     "crossorigin='anonymous'>"); // Bootstrap CSS
-
-  pn("</head>"
+     "crossorigin='anonymous'/>"
+     "</head>"
      "<body>"
      "<div class='container'>"
-     "<br>"
-     "<br>"
-     "<h1>Bahnhofs Steuerung 2000</h1>"
-     "<form action='/' method='POST' accept-charset='UTF-8'>"
-     "<br>");
+     "<div class='h1 mt-4 mb-3'>Bahnhofs Steuerung 2000</div>"
+     "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
 
   if (m_renderNextPageWithOptionsVisible == true) {
     pn("<h3>Optionen</h3>");
 
     // Max value = Max number of boards (62 are max, but -1 because eeprom
     // address so 61) * number of pins => 61 * 16 = 976
-    pt("Kanäle: <input type='number' name='numChannels' min='0' "
+    pt("<div class='row'>"
+       "<div class='col-3 d-flex align-items-center'> Kanäle: </div> <div "
+       "class='col-5'> <input type='number' class='form-control w-100' "
+       "name='numChannels' min='0' "
        "max='");
     pt(MAX_TOTAL_CHANNELS);
     pt("' value='");
     pt(m_numChannels);
-    pt("'>");
-    pt("<br><br>");
+    pt("'> </div>");
+    pn("<div class='col-4 d-flex justify-content-end'><button class='btn "
+       "btn-primary' type='submit' "
+       "name='updateSettings' value='Absenden'>Senden</button> </div></div>"
+       "<br>");
 
     // Alles Aus Switch
     pt("<div class='form-check form-switch'>");
     pt("<input class='form-check-input' type='checkbox' "
        "name='toggleForceAllOff' "
-       "value='1'  id='toggleForceAllOff'");
+       "value='1'  id='toggleForceAllOff' onchange='sendCheckbox(this)'");
 
     if (m_toggleForceAllOff == true) {
       pn(" checked>");
@@ -145,6 +147,7 @@ void renderWebPage(WiFiClient client) {
     }
 
     pt("<label class='form-check-label' for='toggleForceAllOff'>Alles "
+       "dauerhaft "
        "0%</label>");
     pt("</div>");
     // /Alles Aus Switch
@@ -153,7 +156,7 @@ void renderWebPage(WiFiClient client) {
     pt("<div class='form-check form-switch'>");
     pt("<input class='form-check-input' type='checkbox' "
        "name='toggleForceAllOn' "
-       "value='1'  id='toggleForceAllOn'");
+       "value='1' id='toggleForceAllOn' onchange='sendCheckbox(this)'");
 
     if (m_toggleForceAllOn == true) {
       pn(" checked>");
@@ -161,16 +164,16 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleForceAllOn'>Alles "
-       "100%</label>");
-    pt("</div>");
+    pt("<label class='form-check-label' for='toggleForceAllOn'>Alles dauerhaft "
+       "100%</label>"
+       "</div>");
     // /Alles An Switch
 
     // Zufalls Switch
     pt("<div class='form-check form-switch'>");
     pt("<input class='form-check-input' type='checkbox' name='toggleRandom'  "
        "value='1' role='switch' "
-       "id='toggleRandom'");
+       "id='toggleRandom' onchange='sendCheckbox(this)'");
 
     if (m_toggleRandom == true) {
       pn(" checked>");
@@ -182,14 +185,7 @@ void renderWebPage(WiFiClient client) {
     pt("</div>");
     // /Zufalls Switch
 
-    pn("<br>");
-
     pt("<input type='hidden'  name='clearEeprom' value='0'>");
-
-    pn("<button class='btn btn-primary' type='submit' "
-       "name='updateSettings' value='Absenden'> Senden</button>");
-    pn("<br>");
-    pn("<br>");
   }
 
   if (m_renderNextPageWithChannelEditVisible == true) {
@@ -291,7 +287,6 @@ void renderWebPage(WiFiClient client) {
         readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
     pn("<div class='pl-1 pr-1'>"
-
        // ROW START
        "  <div class='row'>"
        "      <div class='col-9'>"
@@ -308,11 +303,19 @@ void renderWebPage(WiFiClient client) {
     //  / FIRST COL
 
     pt("      </div>"
-       "      <div class='col'>"
+       "      <div class='col-3'>"
 
        // SECOND COL
        "      <div class='d-flex justify-content-end'>"
-       "<button class='btn p-0' type='submit' name='editChannel' value='");
+       "<button class='btn text-warning'  onclick=\"sendValue('turnChannelOn', "
+       "'");
+    pt(i);
+    pt("')\" >⛭</button >"
+       "<button class='btn'  onclick=\"sendValue('turnChannelOff', '");
+    pt(i);
+    pt("')\" >⛭</button >"
+
+       "<button class='btn' type='submit' name='editChannel' value='");
     pt(i);
     pt("'>🖊</button >"
        "      </div>"
@@ -326,9 +329,9 @@ void renderWebPage(WiFiClient client) {
        "    <div class='col'>"
        "<span class='h6'>Name</span>"
        "    </div>"
-       "    <div class='col'>");
+       "    <div class='col font-weight-bold'> <b>");
     pt(m_channelNameBuffer);
-    pt("    </div>"
+    pt("    </b></div>"
        "  </div>"
 
        "  <div class='row'>"
@@ -423,7 +426,38 @@ void renderWebPage(WiFiClient client) {
   pn("<br>"
      "</form>"
      "</div>"
+     "<script>"
+     "function sendValue(buttonName, buttonValue) {"
+     "    event.preventDefault();"
+     "    var dataString = encodeURIComponent(buttonName) + '=' + "
+     "encodeURIComponent(buttonValue);"
+     "    fetch('/', {"
+     "       method: 'POST',"
+     "       headers: {"
+     "          'Content-Type': 'application/x-www-form-urlencoded'"
+     "       },"
+     "       body: dataString"
+     "   });"
+     "}"
+     "function sendCheckbox(checkbox) {"
+     "var dataString = encodeURIComponent(checkbox.name) + '=' + "
+     "encodeURIComponent(checkbox.checked ? 1 : 0);"
+     "fetch('/', {"
+     "    method: 'POST',"
+     "    headers: {"
+     "        'Content-Type': 'application/x-www-form-urlencoded'"
+     "    },"
+     "    body: dataString"
+     "})}"
+     "</script>"
      "</body></html>");
+}
+
+void replyToClient(WiFiClient client) {
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-type:text/plain");
+  client.println();
+  client.println("Settings updated successfully.");
 }
 
 void applyValue(int channel, uint16_t brightness) {
@@ -444,6 +478,13 @@ void applyValue(int channel, uint16_t brightness) {
     m_pwmBoards[boardIndex].setPWM(subAddress, 0, random(0, 4095));
     return;
   }
+
+  st("applyValue ");
+  st(brightness);
+  st(" to boardIndex ");
+  st(boardIndex);
+  st(" and subAddress ");
+  sn(subAddress);
 
   m_pwmBoards[boardIndex].setPWM(subAddress, 0, brightness);
 }
@@ -489,13 +530,47 @@ void urlDecode(const char *urlEncoded, char *decoded, int maxLen) {
   decoded[decodedIndex] = '\0';
 }
 
-void checkPageBufferForPostData() {
+bool processRequestAndReturnRerenderNeed() {
+  bool shouldRerender = false;
+
   if (strstr(m_pageBuffer, "POST") != NULL) {
 
     if (isKeyInData(m_pageBuffer, "ignoreChannel")) {
       // User clicked on "Verwerfen" button
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;
+
+      shouldRerender = true;
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnChannelOff")) {
+      char turnChannelOffIdBuffer[4];
+      uint16_t turnChannelOffId;
+      getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
+                       4);
+      turnChannelOffId = atoi(turnChannelOffIdBuffer);
+
+      st("Turning channel ");
+      st(turnChannelOffId);
+      sn(" off");
+      applyValue(turnChannelOffId, 0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnChannelOn")) {
+      char turnChannelOnIdBuffer[4];
+      uint16_t turnChannelOnId;
+      getValueFromData(m_pageBuffer, "turnChannelOn=", turnChannelOnIdBuffer,
+                       4);
+      turnChannelOnId = atoi(turnChannelOnIdBuffer);
+
+      uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
+          turnChannelOnId, MEM_SLOT_BRIGHTNESS);
+
+      st("Turning channel ");
+      st(turnChannelOnId);
+      st(" on to ");
+      sn(turnOnBrightness);
+      applyValue(turnChannelOnId, turnOnBrightness);
     }
 
     if (isKeyInData(m_pageBuffer, "editChannel")) {
@@ -509,6 +584,43 @@ void checkPageBufferForPostData() {
 
       m_channelIdToEdit = atoi(m_channelIdToEditBuffer);
       readChannelNameFromEepromBufferToChannelNameBuffer(m_channelIdToEdit);
+
+      shouldRerender = true;
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleForceAllOff")) {
+      char toggleForceAllOffBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleForceAllOff=", toggleForceAllOffBuffer, 2);
+      m_toggleForceAllOff = atoi(toggleForceAllOffBuffer);
+      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+      applyValues();
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleForceAllOn")) {
+      char toggleForceAllOnBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleForceAllOn=", toggleForceAllOnBuffer, 2);
+      m_toggleForceAllOn = atoi(toggleForceAllOnBuffer);
+      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+      applyValues();
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleRandom")) {
+      char toggleRandomBuffer[2] = "0";
+      getValueFromData(m_pageBuffer, "toggleRandom=", toggleRandomBuffer, 2);
+      m_toggleRandom = atoi(toggleRandomBuffer);
+      writeToEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+      applyValues();
     }
 
     if (isKeyInData(m_pageBuffer, "updateSettings")) {
@@ -519,7 +631,7 @@ void checkPageBufferForPostData() {
       if (strcmp(clearEepromBuffer, "reset2024") == 0) {
         Serial.println("Clearing Eeprom!!!");
         clearEeprom();
-        return;
+        return true;
       }
 
       uint16_t oldNumChannels = m_numChannels;
@@ -527,30 +639,11 @@ void checkPageBufferForPostData() {
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;
 
-      // Initialize the toggles with 0 since they might not be present in the
-      // post data if unchecked
-      char toggleForceAllOffBuffer[2] = "0";
-      char toggleForceAllOnBuffer[2] = "0";
-      char toggleRandomBuffer[2] = "0";
       char numChannelsBuffer[4] = "0";
-
-      // Find each value
-      getValueFromData(m_pageBuffer,
-                       "toggleForceAllOn=", toggleForceAllOnBuffer, 2);
-      getValueFromData(m_pageBuffer,
-                       "toggleForceAllOff=", toggleForceAllOffBuffer, 2);
-      getValueFromData(m_pageBuffer, "toggleRandom=", toggleRandomBuffer, 2);
       getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
-
-      m_toggleForceAllOn = atoi(toggleForceAllOnBuffer);
-      m_toggleForceAllOff = atoi(toggleForceAllOffBuffer);
-      m_toggleRandom = atoi(toggleRandomBuffer);
       m_numChannels = atoi(numChannelsBuffer);
 
       writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, m_numChannels);
-      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
-      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
-      writeToEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -564,6 +657,10 @@ void checkPageBufferForPostData() {
           loadPageAndCheckIntegrity(i + 1);
         }
       }
+
+      applyValues();
+
+      shouldRerender = true;
     }
 
     if (isKeyInData(m_pageBuffer, "updateChannel")) {
@@ -645,13 +742,21 @@ void checkPageBufferForPostData() {
 
       writePageIntegrity(channelIdAsNumber + 1);
       writePageFromBufferToEeprom(channelIdAsNumber + 1);
+
+      shouldRerender = true;
     }
 
     // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
+  } else {
+    // For get requests, we always want to render the page to the client if its
+    // not for the favicon
 
-    // After each post request, we apply all the values
-    applyValues();
+    if (!isKeyInData(m_pageBuffer, "updateChannel")) {
+      shouldRerender = true;
+    }
   }
+
+  return shouldRerender;
 }
 
 void loadOptionsToMemberVariables() {
@@ -841,8 +946,15 @@ void loop() {
         }
       }
 
-      checkPageBufferForPostData();
-      renderWebPage(client);
+      bool shouldRerender = processRequestAndReturnRerenderNeed();
+
+      if (shouldRerender) {
+        sn("Rerender");
+        renderWebPage(client);
+      } else {
+        replyToClient(client);
+      }
+
       client.stop();
     }
   }
