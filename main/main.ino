@@ -107,10 +107,11 @@ void renderWebPage(WiFiClient client) {
      "integrity='sha384-"
      "rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65' "
      "crossorigin='anonymous'/>"
+     "<link href='https://fonts.googleapis.com/css2?family=Grape+Nuts&display=swap' rel='stylesheet'>"
      "</head>"
      "<body>"
      "<div class='container'>"
-     "<div class='h1 mt-4 mb-3'>Bahnhofs Steuerung 2000</div>"
+     "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
      "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
 
   if (m_renderNextPageWithOptionsVisible == true) {
