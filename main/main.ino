@@ -23,8 +23,6 @@ uint8_t m_toggleForceAllOn = false;
 
 char m_channelIdBuffer[4] = "0";
 
-char m_channelValueBuffer[5] = "0";
-
 char m_channelIdToEditBuffer[4] = "";
 uint16_t m_channelIdToEdit = 0;
 bool m_renderNextPageWithOptionsVisible = true;
@@ -103,7 +101,7 @@ void renderWebPage(WiFiClient client) {
      "<meta charset='UTF-8'>"
      "<meta name='viewport' content='width=device-width, "
      "initial-scale=1'>"
-     "    <link "
+     "<link "
      "href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/"
      "bootstrap.min.css' rel='stylesheet' "
      "integrity='sha384-"
@@ -170,8 +168,8 @@ void renderWebPage(WiFiClient client) {
     // /Alles An Switch
 
     // Zufalls Switch
-    pt("<div class='form-check form-switch'>");
-    pt("<input class='form-check-input' type='checkbox' name='toggleRandom'  "
+    pt("<div class='form-check form-switch'>"
+       "<input class='form-check-input' type='checkbox' name='toggleRandom'  "
        "value='1' role='switch' "
        "id='toggleRandom' onchange='sendCheckbox(this)'");
 
@@ -181,11 +179,11 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleRandom'>Zufall</label>");
-    pt("</div>");
-    // /Zufalls Switch
+    pt("<label class='form-check-label' for='toggleRandom'>Zufall</label>"
+       "</div>"
+       // /Zufalls Switch
 
-    pt("<input type='hidden'  name='clearEeprom' value='0'>");
+       "<input type='hidden'  name='clearEeprom' value='0'>");
   }
 
   if (m_renderNextPageWithChannelEditVisible == true) {
@@ -210,6 +208,21 @@ void renderWebPage(WiFiClient client) {
                                              MEM_SLOT_BRIGHTNESS));
     pn("'>");
     pn("<br><br>");
+
+    pt("<div class='form-check form-switch'>"
+       "<input class='form-check-input' type='checkbox' "
+       "name='initialState' value='1' role='switch' id='initialState' "
+       "value='1'");
+
+    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
+                                           MEM_SLOT_INITIAL_STATE)) {
+      pn(" checked>");
+    } else {
+      pt(">");
+    }
+
+    pt("<label class='form-check-label' for='toggleRandom'>Startzustand</label>"
+       "</div>");
 
     pt("Zufällig An: <input type='checkbox' name='randomOn' value='1' ");
 
@@ -492,8 +505,15 @@ void applyValue(int channel, uint16_t brightness) {
 void applyValues() {
   for (int i = 0; i < m_numChannels; i++) {
 
-    uint16_t brightness =
-        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+    bool initialState =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_INITIAL_STATE);
+
+    uint16_t brightness = 0;
+
+    if (initialState == true) {
+      brightness =
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+    }
 
     applyValue(i, brightness);
   }
@@ -670,12 +690,20 @@ bool processRequestAndReturnRerenderNeed() {
       m_renderNextPageWithChannelEditVisible = false;
 
       getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
       char urlEncodedNameBuffer[21];
       getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer, 21);
       urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, 20);
 
-      getValueFromData(m_pageBuffer, "channelValue=", m_channelValueBuffer, 5);
+      char channelValueBuffer[5] = "0";
+      getValueFromData(m_pageBuffer, "channelValue=", channelValueBuffer, 5);
+
+      char initialStateBuffer[2] = "0";
+      getValueFromData(m_pageBuffer, "initialState=", initialStateBuffer, 2);
+      uint8_t initialState = atoi(initialStateBuffer);
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_INITIAL_STATE,
+                                initialState);
 
       char randomOnBuffer[2] = "0";
       char randomOnFreqBuffer[4] = "0";
@@ -703,7 +731,6 @@ bool processRequestAndReturnRerenderNeed() {
       uint8_t isLinked = atoi(isLinkedBuffer);
       uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
 
-      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
       Serial.print("Channel ");
       Serial.print(channelIdAsNumber);
 
@@ -711,7 +738,7 @@ bool processRequestAndReturnRerenderNeed() {
       Serial.print(" got startAddress ");
       Serial.println(startAddress);
 
-      uint16_t channelValue = atoi(m_channelValueBuffer);
+      uint16_t channelValue = atoi(channelValueBuffer);
 
       writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
       writeUint16tForChannelToEepromBuffer(channelIdAsNumber,
