@@ -38,6 +38,8 @@ uint16_t m_anchorChannelId;
 long m_lastRandom = 0;
 long m_lastRandomEvent = 0;
 
+bool m_foundRecursion = false;
+
 Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
 // Function to extract value from form data using char arrays
@@ -124,8 +126,18 @@ void renderWebPage(WiFiClient client) {
      "font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
      "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
 
+  if (m_foundRecursion) {
+    pt("<div class='pb-3'><span class='text-danger'>Achtung: Schleife oder zu "
+       "tiefe Verschachtelung (> ");
+    pt(MAX_RECURSION);
+    pn(") in "
+       "verknüpften Kanälen "
+       "entdeckt. Bitte überprüfe alle Verknüpfungen auf Schleifen oder erhöhe "
+       "die maximale Verschachtelungstiefe!</span></div>");
+  }
+
   if (m_renderNextPageWithOptionsVisible == true) {
-    pn("<h3>Optionen</h3>");
+    pn("<div class='h3'>Optionen</div>");
 
     // Max value = Max number of boards (62 are max, but -1 because eeprom
     // address so 61) * number of pins => 61 * 16 = 976
@@ -213,7 +225,7 @@ void renderWebPage(WiFiClient client) {
     }
 
     pt("<label class='form-check-label' for='toggleRandom'>Verrücktes "
-       "blinken</label>"
+       "Blinken</label>"
        "</div>"
        // /Zufalls Switch
 
@@ -284,7 +296,7 @@ void renderWebPage(WiFiClient client) {
     }
 
     pt("<label class='form-check-label' for='randomOn'>Zufälliges "
-       "Anschalten</label>"
+       "Einschalten</label>"
        "</div>");
 
     pt("<div class='row'>");
@@ -492,7 +504,7 @@ void renderWebPage(WiFiClient client) {
 
        "  <div class='row'>"
        "    <div class='col'>"
-       "      <span class='h6'>Zufälliges Anschalten</span>"
+       "      <span class='h6'>Zufälliges Einschalten</span>"
        "    </div>"
        "    <div class='col'>");
     if (randomOn) {
@@ -629,6 +641,11 @@ void replyToClientWithSuccess(WiFiClient client) {
 }
 
 void applyValue(int channel, uint16_t brightness) {
+  setChannelValue(channel, brightness);
+  commandLinkedChannel(channel, brightness, 0, 5);
+}
+
+void setChannelValue(int channel, uint16_t brightness) {
   int boardIndex = getBoardIndexForChannel(channel);
   int subAddress = getBoardSubAddressForChannel(channel);
 
@@ -646,13 +663,6 @@ void applyValue(int channel, uint16_t brightness) {
     m_pwmBoards[boardIndex].setPWM(subAddress, 0, random(0, 4095));
     return;
   }
-
-  st("applyValue ");
-  st(brightness);
-  st(" to boardIndex ");
-  st(boardIndex);
-  st(" and subAddress ");
-  sn(subAddress);
 
   m_pwmBoards[boardIndex].setPWM(subAddress, 0, brightness);
 }
@@ -736,10 +746,6 @@ void processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
                        4);
       turnChannelOffId = atoi(turnChannelOffIdBuffer);
-
-      st("Turning channel ");
-      st(turnChannelOffId);
-      sn(" off");
       applyValue(turnChannelOffId, 0);
     }
 
@@ -753,10 +759,6 @@ void processRequest(WiFiClient client) {
       uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
           turnChannelOnId, MEM_SLOT_BRIGHTNESS);
 
-      st("Turning channel ");
-      st(turnChannelOnId);
-      st(" on to ");
-      sn(turnOnBrightness);
       applyValue(turnChannelOnId, turnOnBrightness);
     }
 
@@ -943,6 +945,7 @@ void processRequest(WiFiClient client) {
       shouldRerender = true;
       m_renderAnchor = true;
       m_anchorChannelId = channelIdAsNumber;
+      m_foundRecursion = false;
     }
 
     if (shouldRerender) {
@@ -980,6 +983,41 @@ bool shouldInvokeEvent(uint8_t freq) {
 
   // Check if the random number is less than the threshold
   return randNumber < freq;
+}
+
+void commandLinkedChannel(uint16_t commandingChannelId, uint16_t brightness,
+                          int depth, int maxDepth) {
+
+  if (depth > maxDepth) {
+    st("Detected and broke recusrion for commandingChannelId ");
+    sn(commandingChannelId);
+
+    m_foundRecursion = true;
+    return;
+  }
+
+  for (uint16_t i = 0; i < m_numChannels; i++) {
+    if (i == commandingChannelId) {
+
+      continue;
+    }
+
+    bool isChannelLinked =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
+
+    if (isChannelLinked == true) {
+
+      uint16_t linkedChannelId =
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
+
+      if (linkedChannelId == commandingChannelId) {
+
+        setChannelValue(i, brightness);
+
+        commandLinkedChannel(i, brightness, depth + 1, maxDepth);
+      }
+    }
+  }
 }
 
 void calculateRandomEvents() {
@@ -1110,13 +1148,13 @@ void setup() {
 
   Serial.println("Server started");
 
-  applyValues();
-
   float analogValue = analogRead(0);
 
   st("Priming randomSeed with ");
   sn(analogValue);
   randomSeed(analogValue);
+
+  applyValues();
 }
 
 void loop() {

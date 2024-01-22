@@ -14,6 +14,8 @@
 
 #define PWM_REFRESH_RATE  1042
 
+#define MAX_RECURSION 5
+
 #define MAX_CHANNEL_NAME_LENGTH 20
 
 // Memory Slots for general settings
