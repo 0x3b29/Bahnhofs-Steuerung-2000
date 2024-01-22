@@ -739,7 +739,7 @@ bool processRequestAndReturnRerenderNeed() {
       getValueFromData(m_pageBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
       getValueFromData(m_pageBuffer, "channelLinked=", isLinkedBuffer, 2);
       getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer,
-                       2);
+                       4);
 
       uint8_t randomOn = atoi(randomOnBuffer);
       uint8_t randomOnFreq = atoi(randomOnFreqBuffer);
