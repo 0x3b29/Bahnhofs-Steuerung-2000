@@ -118,8 +118,8 @@ void renderWebPage(WiFiClient client) {
      "</head>"
      "<body>"
      "<div class='container'>"
-     "<div class='row justify-content-md-center'>"
-     "<div class='col col-md-8 col-lg-5'>"
+     "<div class='row justify-content-center'>"
+     "<div class='col col-12 col-sm-10 col-md-8 col-lg-6'>"
      "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; "
      "font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
      "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
@@ -156,8 +156,9 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleOneBasedAddresses'>Adressen "
-       "starten bei 1</label>");
+    pt("<label class='form-check-label' "
+       "for='toggleOneBasedAddresses'>Adressierung "
+       "startet bei 1</label>");
     pt("</div>");
     // /Alles Aus Switch
 
@@ -174,7 +175,7 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleForceAllOff'>Alles "
+    pt("<label class='form-check-label' for='toggleForceAllOff'>Alle Kanäle "
        "dauerhaft auf "
        "0%</label>");
     pt("</div>");
@@ -192,7 +193,8 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleForceAllOn'>Alles dauerhaft "
+    pt("<label class='form-check-label' for='toggleForceAllOn'>Alle Kanäle "
+       "dauerhaft "
        "auf "
        "100%</label>"
        "</div>");
@@ -210,7 +212,7 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleRandom'>Zufällig "
+    pt("<label class='form-check-label' for='toggleRandom'>Verrücktes "
        "blinken</label>"
        "</div>"
        // /Zufalls Switch
@@ -221,25 +223,25 @@ void renderWebPage(WiFiClient client) {
   if (m_renderNextPageWithChannelEditVisible == true) {
     pt("<h3>Kanal ");
     pt(m_toggleOneBasedAddresses ? m_channelIdToEdit + 1 : m_channelIdToEdit);
-
     pn(" Bearbeiten</h3>");
 
     pt("<input type='hidden'  name='channelId' value='");
     pt(m_channelIdToEdit);
     pn("'>");
 
-    pt("Name: <br> <input type='text' maxlength='20' size='20' "
+    pt("<div class='row'>");
+    pt("  <div class='col'>");
+    pt("Beschreibung");
+    pt("  </div>");
+    pt("  <div class='col d-flex justify-content-end'>");
+    pt("<input type='text' maxlength='20' size='20' "
        "name='channelName' value='");
     pt(m_channelNameBuffer);
     pn("'>");
-    pn("<br><br>");
+    pt("  </div>");
+    pt("</div>");
 
-    pt("Helligkeit: <input type='range' min='0' max='4095' "
-       "name='channelValue' value='");
-    pt(readUint16tForChannelFromEepromBuffer(m_channelIdToEdit,
-                                             MEM_SLOT_BRIGHTNESS));
-    pn("'>");
-    pn("<br><br>");
+    pt("<br>");
 
     pt("<div class='form-check form-switch'>"
        "<input class='form-check-input' type='checkbox' "
@@ -256,44 +258,97 @@ void renderWebPage(WiFiClient client) {
     pt("<label class='form-check-label' for='toggleRandom'>Startzustand</label>"
        "</div>");
 
-    pt("Zufällig An: <input type='checkbox' name='randomOn' value='1' ");
+    pt("<div class='row'>");
+    pt("  <div class='col'>");
+    pt("Helligkeit");
+    pt("  </div>");
+    pt("  <div class='col d-flex justify-content-end'>");
+    pt("<input type='range' min='0' max='4095' "
+       "name='channelValue' value='");
+    pt(readUint16tForChannelFromEepromBuffer(m_channelIdToEdit,
+                                             MEM_SLOT_BRIGHTNESS));
+    pn("'>");
+    pt("  </div>");
+    pt("</div>");
+
+    pt("<div class='form-check form-switch pt-3'>"
+       "<input class='form-check-input' type='checkbox' "
+       "name='randomOn' value='1' role='switch' id='randomOn' "
+       "value='1'");
 
     if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
                                            MEM_SLOT_RANDOM_ON)) {
-      pt("checked");
+      pn(" checked>");
+    } else {
+      pt(">");
     }
 
-    pn(">");
-    pn("<br>");
-    pn("Häufigkeit An (/h): ");
+    pt("<label class='form-check-label' for='randomOn'>Zufälliges "
+       "Anschalten</label>"
+       "</div>");
+
+    pt("<div class='row'>");
+    pt("  <div class='col'>");
+    pt("~ Zufälle/h");
+    pt("  </div>");
+    pt("  <div class='col d-flex justify-content-end'>");
     pt("<input type='number' name='frequencyOn' min='0' max='255' value='");
     pt(readUint8tForChannelFromEepromBuffer(m_channelIdToEdit,
                                             MEM_SLOT_RANDOM_ON_FREQ));
-    pn("'><br><br>");
+    pn("'>");
+    pt("  </div>");
+    pt("</div>");
 
-    pt("Zufällig Aus: <input type='checkbox' name='randomOff' value='1' ");
+    pt("<div class='form-check form-switch pt-3'>"
+       "<input class='form-check-input' type='checkbox' "
+       "name='randomOff' value='1' role='switch' id='randomOff' "
+       "value='1'");
+
     if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
                                            MEM_SLOT_RANDOM_OFF)) {
-      pt("checked");
+      pn(" checked>");
+    } else {
+      pt(">");
     }
 
-    pn(">");
-    pn("<br>");
-    pt("Häufigkeit Aus (/h): <input type='number' "
-       "name='frequencyOff' min='0' max='255' value='");
+    pt("<label class='form-check-label' for='randomOff'>Zufälliges "
+       "Ausschalten</label>"
+       "</div>");
+
+    pt("<div class='row'>");
+    pt("  <div class='col'>");
+    pt("~ Zufälle/h");
+    pt("  </div>");
+    pt("  <div class='col d-flex justify-content-end'>");
+    pt("<input type='number' name='frequencyOff' min='0' max='255' value='");
     pt(readUint8tForChannelFromEepromBuffer(m_channelIdToEdit,
                                             MEM_SLOT_RANDOM_OFF_FREQ));
-    pn("'><br><br>");
+    pn("'>");
+    pt("  </div>");
+    pt("</div>");
 
-    pt("Verlinkt: <input type='checkbox' name='channelLinked' value='1' ");
+    pt("<div class='form-check form-switch pt-3'>"
+       "<input class='form-check-input' type='checkbox' "
+       "name='channelLinked' value='1' role='switch' id='channelLinked' "
+       "value='1'");
+
     if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
                                            MEM_SLOT_IS_LINKED)) {
-      pt("checked");
+      pn(" checked>");
+    } else {
+      pt(">");
     }
 
-    pn(">");
-    pn("<br>");
-    pt("Steuert Kanal: <input type='number' "
+    pt("<label class='form-check-label' for='channelLinked'>Verknüpft</label>"
+       "</div>");
+
+    pt("<div class='row'>");
+    pt("  <div class='col'>");
+    pt("Gesteuert durch Kanal");
+    pt("  </div>");
+    pt("  <div class='col d-flex justify-content-end'>");
+
+    pt("<input type='number' "
        "name='linkedChannelId' min='");
     pt(m_toggleOneBasedAddresses ? 1 : 0);
     pt("' max='");
@@ -306,13 +361,23 @@ void renderWebPage(WiFiClient client) {
 
     pt(m_toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId);
 
-    pn("'><br>");
+    pn("'>");
 
-    pn("<br><br>");
-    pn("<input class='btn btn-success' type='submit' name='updateChannel' "
-       "value='Speichern'/> &nbsp; <input class='btn btn-warning' "
-       "type='submit' name='ignoreChannel' value='Verwerfen'/>");
-    pn("<br>");
+    pt("  </div>");
+    pt("</div>");
+
+    pt("<br>");
+
+    pt("<div class='row'>");
+    pt("  <div class='col'>");
+    pt("    <input class='btn btn-warning' type='submit' name='ignoreChannel' "
+       "value='Verwerfen'/>");
+    pt("  </div>");
+    pt("  <div class='col d-flex justify-content-end'>");
+    pn("    <input class='btn btn-primary ' type='submit' name='updateChannel' "
+       "value='Speichern'/> &nbsp; ");
+    pt("  </div>");
+    pt("</div>");
   }
 
   pn("<br>");
@@ -392,7 +457,7 @@ void renderWebPage(WiFiClient client) {
 
        "  <div class='row'>"
        "    <div class='col'>"
-       "<span class='h6'>Name</span>"
+       "<span class='h6'>Beschreibung</span>"
        "    </div>"
        "    <div class='col font-weight-bold'> <b>");
     pt(m_channelNameBuffer);
@@ -427,7 +492,7 @@ void renderWebPage(WiFiClient client) {
 
        "  <div class='row'>"
        "    <div class='col'>"
-       "      <span class='h6'>Zufällig An</span>"
+       "      <span class='h6'>Zufälliges Anschalten</span>"
        "    </div>"
        "    <div class='col'>");
     if (randomOn) {
@@ -441,7 +506,7 @@ void renderWebPage(WiFiClient client) {
     if (randomOn) {
       pn("  <div class='row'>"
          "    <div class='col'>"
-         "      <span class='h6'>Häufigkeit</span>"
+         "      <span class='h6'>~Zufälle/h</span>"
          "    </div>"
          "    <div class='col'>");
       pt(randomOnFreq);
@@ -452,7 +517,7 @@ void renderWebPage(WiFiClient client) {
 
     pn("  <div class='row'>"
        "    <div class='col'>"
-       "      <span class='h6'>Zufällig Aus</span>"
+       "      <span class='h6'>Zufälliges Ausschalten</span>"
        "    </div>"
        "    <div class='col'>");
     if (randomOff) {
@@ -466,7 +531,7 @@ void renderWebPage(WiFiClient client) {
     if (randomOff) {
       pn("  <div class='row'>"
          "    <div class='col'>"
-         "      <span class='h6'>Häufigkeit</span>"
+         "      <span class='h6'>~Zufälle/h</span>"
          "    </div>"
          "    <div class='col'>");
       pt(randomOffFreq);
@@ -477,7 +542,7 @@ void renderWebPage(WiFiClient client) {
 
     pn("  <div class='row'>"
        "    <div class='col'>"
-       "      <span class='h6'>Verlinkt</span>"
+       "      <span class='h6'>Verknüpft</span>"
        "    </div>"
        "    <div class='col'>");
     if (isLinked) {
@@ -491,7 +556,7 @@ void renderWebPage(WiFiClient client) {
     if (isLinked) {
       pn("  <div class='row'>"
          "    <div class='col'>"
-         "      <span class='h6'>Steuert Kanal</span>"
+         "      <span class='h6'>Gesteuert durch Kanal</span>"
          "    </div>"
          "    <div class='col'>");
       pn(linkedChannel);
