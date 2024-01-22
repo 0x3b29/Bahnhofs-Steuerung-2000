@@ -180,7 +180,7 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleRandom'>Zufall</label>"
+    pt("<label class='form-check-label' for='toggleRandom'>Zufällig blinken</label>"
        "</div>"
        // /Zufalls Switch
 
@@ -262,7 +262,7 @@ void renderWebPage(WiFiClient client) {
 
     pn(">");
     pn("<br>");
-    pt("Verlinkter Kanal: <input type='number' "
+    pt("Steuert Kanal: <input type='number' "
        "name='linkedChannelId' min='0' max='");
     pt(m_numChannels - 1);
     pt("' value='");
@@ -443,7 +443,7 @@ void renderWebPage(WiFiClient client) {
     if (isLinked) {
       pn("  <div class='row'>"
          "    <div class='col'>"
-         "      <span class='h6'>Kanal</span>"
+         "      <span class='h6'>Steuert Kanal</span>"
          "    </div>"
          "    <div class='col'>");
       pn(linkedChannel);
