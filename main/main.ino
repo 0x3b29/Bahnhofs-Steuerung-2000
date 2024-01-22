@@ -28,6 +28,9 @@ uint16_t m_channelIdToEdit = 0;
 bool m_renderNextPageWithOptionsVisible = true;
 bool m_renderNextPageWithChannelEditVisible = false;
 
+bool m_renderAnchor = false;
+uint16_t m_anchorChannelId;
+
 #define RANDOM_INTERVAL 200
 #define RANDOM_EVENT_INTERVAL 1000
 
@@ -116,7 +119,8 @@ void renderWebPage(WiFiClient client) {
      "<div class='container'>"
      "<div class='row justify-content-md-center'>"
      "<div class='col col-md-8 col-lg-5'>"
-     "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
+     "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; "
+     "font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
      "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
 
   if (m_renderNextPageWithOptionsVisible == true) {
@@ -185,7 +189,8 @@ void renderWebPage(WiFiClient client) {
       pt(">");
     }
 
-    pt("<label class='form-check-label' for='toggleRandom'>Zufällig blinken</label>"
+    pt("<label class='form-check-label' for='toggleRandom'>Zufällig "
+       "blinken</label>"
        "</div>"
        // /Zufalls Switch
 
@@ -308,7 +313,9 @@ void renderWebPage(WiFiClient client) {
     uint16_t linkedChannel =
         readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
-    pn("<div class='pl-1 pr-1'>"
+    pt("<div id='channel-");
+    pt(i);
+    pn("' class='pl-1 pr-1'>"
        // ROW START
        "  <div class='row'>"
        "      <div class='col-9'>"
@@ -460,10 +467,26 @@ void renderWebPage(WiFiClient client) {
        "<hr class='mb-3 mt-3'/>");
   }
 
-  pn("<br>"
-     "</form>"
+  if (m_renderAnchor) {
+    pt("<br>"
+       "<div id='navigateTo' data-anchor='#channel-");
+    pt(m_anchorChannelId);
+    pn("' "
+       "style='display:none;'></div>");
+  }
+
+  pn("</form>"
      "</div></div></div>"
      "<script>"
+     "document.addEventListener('DOMContentLoaded', function() {"
+     "  var navigationTag = document.getElementById('navigateTo');"
+     "  if (navigationTag) {"
+     "    var anchor = navigationTag.getAttribute('data-anchor');"
+     "    if (anchor) {"
+     "      window.location.hash = anchor;"
+     "    }"
+     "  }"
+     "});"
      "function sendValue(buttonName, buttonValue) {"
      "    event.preventDefault();"
      "    var dataString = encodeURIComponent(buttonName) + '=' + "
@@ -576,6 +599,7 @@ void urlDecode(const char *urlEncoded, char *decoded, int maxLen) {
 
 bool processRequestAndReturnRerenderNeed() {
   bool shouldRerender = false;
+  m_renderAnchor = false;
 
   if (strstr(m_pageBuffer, "POST") != NULL) {
 
@@ -795,6 +819,8 @@ bool processRequestAndReturnRerenderNeed() {
       writePageFromBufferToEeprom(channelIdAsNumber + 1);
 
       shouldRerender = true;
+      m_renderAnchor = true;
+      m_anchorChannelId = channelIdAsNumber;
     }
 
     // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
