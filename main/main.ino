@@ -20,6 +20,7 @@ uint16_t m_numChannels = 0;
 uint8_t m_toggleRandom = false;
 uint8_t m_toggleForceAllOff = false;
 uint8_t m_toggleForceAllOn = false;
+uint8_t m_toggleOneBasedAddresses = false;
 
 char m_channelIdBuffer[4] = "0";
 
@@ -142,11 +143,30 @@ void renderWebPage(WiFiClient client) {
        "name='updateSettings' value='Absenden'>Senden</button> </div></div>"
        "<br>");
 
+    // 1 Indexierte Adressen
+    pt("<div class='form-check form-switch'>");
+    pt("<input class='form-check-input' type='checkbox' "
+       "name='toggleOneBasedAddresses' "
+       "value='1'  id='toggleOneBasedAddresses' onchange='sendCheckbox(this, "
+       "true)'");
+
+    if (m_toggleOneBasedAddresses == true) {
+      pn(" checked>");
+    } else {
+      pt(">");
+    }
+
+    pt("<label class='form-check-label' for='toggleOneBasedAddresses'>Adressen "
+       "starten bei 1</label>");
+    pt("</div>");
+    // /Alles Aus Switch
+
     // Alles Aus Switch
     pt("<div class='form-check form-switch'>");
     pt("<input class='form-check-input' type='checkbox' "
        "name='toggleForceAllOff' "
-       "value='1'  id='toggleForceAllOff' onchange='sendCheckbox(this)'");
+       "value='1'  id='toggleForceAllOff' onchange='sendCheckbox(this, "
+       "false)'");
 
     if (m_toggleForceAllOff == true) {
       pn(" checked>");
@@ -155,7 +175,7 @@ void renderWebPage(WiFiClient client) {
     }
 
     pt("<label class='form-check-label' for='toggleForceAllOff'>Alles "
-       "dauerhaft "
+       "dauerhaft auf "
        "0%</label>");
     pt("</div>");
     // /Alles Aus Switch
@@ -164,7 +184,7 @@ void renderWebPage(WiFiClient client) {
     pt("<div class='form-check form-switch'>");
     pt("<input class='form-check-input' type='checkbox' "
        "name='toggleForceAllOn' "
-       "value='1' id='toggleForceAllOn' onchange='sendCheckbox(this)'");
+       "value='1' id='toggleForceAllOn' onchange='sendCheckbox(this, false)'");
 
     if (m_toggleForceAllOn == true) {
       pn(" checked>");
@@ -173,6 +193,7 @@ void renderWebPage(WiFiClient client) {
     }
 
     pt("<label class='form-check-label' for='toggleForceAllOn'>Alles dauerhaft "
+       "auf "
        "100%</label>"
        "</div>");
     // /Alles An Switch
@@ -181,7 +202,7 @@ void renderWebPage(WiFiClient client) {
     pt("<div class='form-check form-switch'>"
        "<input class='form-check-input' type='checkbox' name='toggleRandom'  "
        "value='1' role='switch' "
-       "id='toggleRandom' onchange='sendCheckbox(this)'");
+       "id='toggleRandom' onchange='sendCheckbox(this, false)'");
 
     if (m_toggleRandom == true) {
       pn(" checked>");
@@ -199,7 +220,7 @@ void renderWebPage(WiFiClient client) {
 
   if (m_renderNextPageWithChannelEditVisible == true) {
     pt("<h3>Kanal ");
-    pt(m_channelIdToEdit);
+    pt(m_toggleOneBasedAddresses ? m_channelIdToEdit + 1 : m_channelIdToEdit);
 
     pn(" Bearbeiten</h3>");
 
@@ -273,11 +294,18 @@ void renderWebPage(WiFiClient client) {
     pn(">");
     pn("<br>");
     pt("Steuert Kanal: <input type='number' "
-       "name='linkedChannelId' min='0' max='");
-    pt(m_numChannels - 1);
+       "name='linkedChannelId' min='");
+    pt(m_toggleOneBasedAddresses ? 1 : 0);
+    pt("' max='");
+
+    pt(m_toggleOneBasedAddresses ? m_numChannels : m_numChannels - 1);
     pt("' value='");
-    pt(readUint16tForChannelFromEepromBuffer(m_channelIdToEdit,
-                                             MEM_SLOT_LINKED_CHANNEL));
+
+    uint16_t linkedChannelId = readUint16tForChannelFromEepromBuffer(
+        m_channelIdToEdit, MEM_SLOT_LINKED_CHANNEL);
+
+    pt(m_toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId);
+
     pn("'><br>");
 
     pn("<br><br>");
@@ -313,6 +341,13 @@ void renderWebPage(WiFiClient client) {
     uint16_t linkedChannel =
         readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
+    if (m_toggleOneBasedAddresses) {
+      linkedChannel++;
+    }
+
+    int boardIndex = getBoardIndexForChannel(i);
+    int subAddress = getBoardSubAddressForChannel(i);
+
     pt("<div id='channel-");
     pt(i);
     pn("' class='pl-1 pr-1'>"
@@ -323,12 +358,13 @@ void renderWebPage(WiFiClient client) {
        //  FIRST COL
        "<span class='h4'>"
        "Kanal ");
-    pt(i);
+
+    pt(m_toggleOneBasedAddresses ? i + 1 : i);
     pt(" </span > "
        "Board ");
-    pt(getBoardIndexForChannel(i));
+    pt(m_toggleOneBasedAddresses ? boardIndex + 1 : boardIndex);
     pt(", Pin ");
-    pt(getBoardSubAddressForChannel(i));
+    pt(m_toggleOneBasedAddresses ? subAddress + 1 : subAddress);
     //  / FIRST COL
 
     pt("      </div>"
@@ -499,21 +535,28 @@ void renderWebPage(WiFiClient client) {
      "       body: dataString"
      "   });"
      "}"
-     "function sendCheckbox(checkbox) {"
+     "function sendCheckbox(checkbox, reloadAfterRequest) {"
      "var dataString = encodeURIComponent(checkbox.name) + '=' + "
      "encodeURIComponent(checkbox.checked ? 1 : 0);"
+     "console.log(dataString);"
      "fetch('/', {"
      "    method: 'POST',"
      "    headers: {"
      "        'Content-Type': 'application/x-www-form-urlencoded'"
      "    },"
      "    body: dataString"
-     "})}"
+     "})"
+     ".then(response => {"
+     " if (reloadAfterRequest) {"
+     " window.location.href = '/'; "
+     " }"
+     "})"
+     "}"
      "</script>"
      "</body></html>");
 }
 
-void replyToClient(WiFiClient client) {
+void replyToClientWithSuccess(WiFiClient client) {
   client.println("HTTP/1.1 200 OK");
   client.println("Content-type:text/plain");
   client.println();
@@ -597,18 +640,29 @@ void urlDecode(const char *urlEncoded, char *decoded, int maxLen) {
   decoded[decodedIndex] = '\0';
 }
 
-bool processRequestAndReturnRerenderNeed() {
+void processRequest(WiFiClient client) {
   bool shouldRerender = false;
   m_renderAnchor = false;
 
   if (strstr(m_pageBuffer, "POST") != NULL) {
-
     if (isKeyInData(m_pageBuffer, "ignoreChannel")) {
       // User clicked on "Verwerfen" button
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;
 
       shouldRerender = true;
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleOneBasedAddresses")) {
+      char toggleOneBasedAddressesBuffer[2] = "0";
+      getValueFromData(m_pageBuffer, "toggleOneBasedAddresses=",
+                       toggleOneBasedAddressesBuffer, 2);
+      m_toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
+      writeToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
+                          &m_toggleOneBasedAddresses, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
     }
 
     if (isKeyInData(m_pageBuffer, "turnChannelOff")) {
@@ -699,7 +753,6 @@ bool processRequestAndReturnRerenderNeed() {
       if (strcmp(clearEepromBuffer, "reset2024") == 0) {
         Serial.println("Clearing Eeprom!!!");
         clearEeprom();
-        return true;
       }
 
       uint16_t oldNumChannels = m_numChannels;
@@ -779,6 +832,10 @@ bool processRequestAndReturnRerenderNeed() {
       uint8_t isLinked = atoi(isLinkedBuffer);
       uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
 
+      if (m_toggleOneBasedAddresses) {
+        linkedChannelId--;
+      }
+
       Serial.print("Channel ");
       Serial.print(channelIdAsNumber);
 
@@ -823,17 +880,24 @@ bool processRequestAndReturnRerenderNeed() {
       m_anchorChannelId = channelIdAsNumber;
     }
 
+    if (shouldRerender) {
+      renderWebPage(client);
+    } else {
+      replyToClientWithSuccess(client);
+    }
+
     // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
   } else {
+    sn("processRequest NOT POST");
     // For get requests, we always want to render the page to the client if its
     // not for the favicon
 
-    if (!isKeyInData(m_pageBuffer, "updateChannel")) {
-      shouldRerender = true;
-    }
-  }
+    /*     if (!isKeyInData(m_pageBuffer, "updateChannel")) {
+          shouldRerender = true;
+        } */
 
-  return shouldRerender;
+    renderWebPage(client);
+  }
 }
 
 void loadOptionsToMemberVariables() {
@@ -841,6 +905,8 @@ void loadOptionsToMemberVariables() {
   readFromEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
   readFromEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
   readFromEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+  readFromEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES, &m_toggleOneBasedAddresses,
+                       1);
 }
 
 bool shouldInvokeEvent(uint8_t freq) {
@@ -1023,14 +1089,7 @@ void loop() {
         }
       }
 
-      bool shouldRerender = processRequestAndReturnRerenderNeed();
-
-      if (shouldRerender) {
-        sn("Rerender");
-        renderWebPage(client);
-      } else {
-        replyToClient(client);
-      }
+      processRequest(client);
 
       client.stop();
     }
