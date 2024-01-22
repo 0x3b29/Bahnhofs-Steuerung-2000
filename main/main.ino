@@ -111,6 +111,8 @@ void renderWebPage(WiFiClient client) {
      "</head>"
      "<body>"
      "<div class='container'>"
+     "<div class='row justify-content-md-center'>"
+     "<div class='col col-md-8 col-lg-5'>"
      "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
      "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
 
@@ -457,7 +459,7 @@ void renderWebPage(WiFiClient client) {
 
   pn("<br>"
      "</form>"
-     "</div>"
+     "</div></div></div>"
      "<script>"
      "function sendValue(buttonName, buttonValue) {"
      "    event.preventDefault();"
