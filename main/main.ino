@@ -23,11 +23,12 @@ Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 char m_pageBuffer[PAGE_BUFFER_SIZE];
 
 uint16_t m_numChannels = 0;
-uint8_t m_toggleRandom = false;
+uint8_t m_toggleRandomChaos = false;
 uint8_t m_toggleForceAllOff = false;
 uint8_t m_toggleForceAllOn = false;
 uint8_t m_toggleOneBasedAddresses = false;
 uint8_t m_toggleCompactDisplay = false;
+uint8_t m_toggleRandomEvents = false;
 
 char m_channelIdBuffer[4] = "0";
 
@@ -113,7 +114,7 @@ void setChannelValue(int channel, uint16_t brightness) {
     return;
   }
 
-  if (m_toggleRandom == true) {
+  if (m_toggleRandomChaos == true) {
     m_pwmBoards[boardIndex].setPWM(subAddress, 0, random(0, 4095));
     return;
   }
@@ -266,11 +267,24 @@ void processRequest(WiFiClient client) {
       applyValues();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleRandom")) {
-      char toggleRandomBuffer[2] = "0";
-      getValueFromData(m_pageBuffer, "toggleRandom=", toggleRandomBuffer, 2);
-      m_toggleRandom = atoi(toggleRandomBuffer);
-      writeToEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+    if (isKeyInData(m_pageBuffer, "toggleRandomChaos")) {
+      char toggleRandomChaosBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleRandomChaos=", toggleRandomChaosBuffer, 2);
+      m_toggleRandomChaos = atoi(toggleRandomChaosBuffer);
+      writeToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, &m_toggleRandomChaos, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+      applyValues();
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleRandomEvents")) {
+      char toggleRandomEventsBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleRandomEvents=", toggleRandomEventsBuffer, 2);
+      m_toggleRandomEvents = atoi(toggleRandomEventsBuffer);
+      writeToEepromBuffer(MEM_SLOT_RANDOM_EVENTS, &m_toggleRandomEvents, 1);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -414,12 +428,12 @@ void processRequest(WiFiClient client) {
     }
 
     if (shouldRerender) {
-      renderWebPage(client, m_foundRecursion,
-                    m_renderNextPageWithOptionsVisible,
-                    m_renderNextPageWithChannelEditVisible, m_renderAnchor,
-                    m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
-                    m_toggleCompactDisplay, m_toggleForceAllOff,
-                    m_toggleForceAllOn, m_toggleRandom, m_channelIdToEdit);
+      renderWebPage(
+          client, m_foundRecursion, m_renderNextPageWithOptionsVisible,
+          m_renderNextPageWithChannelEditVisible, m_renderAnchor,
+          m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
+          m_toggleCompactDisplay, m_toggleForceAllOff, m_toggleForceAllOn,
+          m_toggleRandomChaos, m_toggleRandomEvents, m_channelIdToEdit);
     } else {
       replyToClientWithSuccess(client);
     }
@@ -434,7 +448,8 @@ void processRequest(WiFiClient client) {
                   m_renderNextPageWithChannelEditVisible, m_renderAnchor,
                   m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
                   m_toggleCompactDisplay, m_toggleForceAllOff,
-                  m_toggleForceAllOn, m_toggleRandom, m_channelIdToEdit);
+                  m_toggleForceAllOn, m_toggleRandomChaos, m_toggleRandomEvents,
+                  m_channelIdToEdit);
   }
 }
 
@@ -442,10 +457,11 @@ void loadOptionsToMemberVariables() {
   m_numChannels = readUInt16FromEepromBuffer(MEM_SLOT_CHANNELS);
   readFromEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
   readFromEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
-  readFromEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
+  readFromEepromBuffer(MEM_SLOT_RANDOM_CHAOS, &m_toggleRandomChaos, 1);
   readFromEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES, &m_toggleOneBasedAddresses,
                        1);
   readFromEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, &m_toggleCompactDisplay, 1);
+  readFromEepromBuffer(MEM_SLOT_RANDOM_EVENTS, &m_toggleRandomEvents, 1);
 }
 
 bool shouldInvokeEvent(uint8_t freq) {
@@ -634,12 +650,14 @@ void loop() {
 
   WiFiClient client = server.available(); // Listen for incoming clients
 
-  if ((m_toggleRandom == 1) && (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
+  if ((m_toggleRandomChaos == 1) &&
+      (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
     m_lastRandom = millis();
     applyValues();
   }
 
-  if (millis() > (m_lastRandomEvent + RANDOM_EVENT_INTERVAL)) {
+  if ((m_toggleRandomEvents == 1) &&
+      millis() > (m_lastRandomEvent + RANDOM_EVENT_INTERVAL)) {
     m_lastRandomEvent = millis();
     calculateRandomEvents();
   }

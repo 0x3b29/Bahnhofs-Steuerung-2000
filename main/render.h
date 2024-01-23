@@ -14,6 +14,6 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
                    uint16_t anchorChannelId, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
-                   bool toggleRandom, uint16_t channelIdToEdit);
+                   bool toggleRandomChaos, bool toggleRandomEvents, uint16_t channelIdToEdit);
 
 #endif // render_h
