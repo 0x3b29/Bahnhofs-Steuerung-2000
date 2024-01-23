@@ -6,7 +6,7 @@
 void renderOptions(WiFiClient client, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
-                   bool toggleRandomChaos, bool toggleRandomEvents,
+                   bool toggleRandomChaos, bool toggleRandomEvents, bool togglePropagateEvents,
                    uint16_t channelIdToEdit) {
   pn("<div class='h3'>Optionen</div>");
 
@@ -119,7 +119,27 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
      "</div>");
   // /Ranodm Events
 
-  // Zufalls Switch
+  // Propagate Events
+  pt("<div class='form-check form-switch'>"
+     "<input class='form-check-input' type='checkbox' "
+     "name='togglePropagateEvents' "
+     " "
+     "value='1' role='switch' "
+     "id='togglePropagateEvents' onchange='sendCheckbox(this, false)'");
+
+  if (togglePropagateEvents == true) {
+    pn(" checked>");
+  } else {
+    pt(">");
+  }
+
+  pt("<label class='form-check-label' for='togglePropagateEvents'>Verlinkungen "
+     "aktiv"
+     "</label>"
+     "</div>");
+  // /Propagate Events
+
+  // Random Chaos Switch
   pt("<div class='form-check form-switch'>"
      "<input class='form-check-input' type='checkbox' name='toggleRandomChaos' "
      " "
@@ -135,7 +155,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
   pt("<label class='form-check-label' for='toggleRandomChaos'>Verrücktes "
      "Blinken</label>"
      "</div>"
-     // /Zufalls Switch
+     // /Random Chaos Switch
 
      "<input type='hidden'  name='clearEeprom' value='0'>");
 }
@@ -601,7 +621,7 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
                    uint16_t anchorChannelId, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
-                   bool toggleRandomChaos, bool toggleRandomEvents,
+                   bool toggleRandomChaos, bool toggleRandomEvents, bool togglePropagateEvents,
                    uint16_t channelIdToEdit) {
 
   // Send a standard HTTP response header
@@ -657,7 +677,7 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
   } else {
     renderOptions(client, numChannels, toggleOneBasedAddresses,
                   toggleCompactDisplay, toggleForceAllOff, toggleForceAllOn,
-                  toggleRandomChaos, toggleRandomEvents, channelIdToEdit);
+                  toggleRandomChaos, toggleRandomEvents, togglePropagateEvents, channelIdToEdit);
 
     pn("<br>");
 
