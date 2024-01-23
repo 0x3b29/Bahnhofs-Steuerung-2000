@@ -43,6 +43,7 @@ long m_lastRandom = 0;
 long m_lastRandomEvent = 0;
 
 bool m_foundRecursion = false;
+uint8_t m_binaryCount = 0;
 
 // Function to extract value from form data using char arrays
 // formData: The form data as a char array
@@ -94,10 +95,11 @@ void replyToClientWithSuccess(WiFiClient client) {
   client.println("Settings updated successfully.");
 }
 
-void applyValue(int channel, uint16_t brightness) {
+void applyAndPropagateValue(int channel, uint16_t brightness) {
   setChannelBrightness(channel, brightness);
 
-  if (m_togglePropagateEvents) {
+  if (m_togglePropagateEvents && !m_toggleForceAllOff && !m_toggleForceAllOn &&
+      !m_toggleRandomChaos) {
     commandLinkedChannel(channel, brightness, 0, 5);
   }
 }
@@ -124,7 +126,9 @@ void setChannelBrightness(int channel, uint16_t brightness) {
   m_pwmBoards[boardIndex].setPWM(subAddress, 0, brightness);
 }
 
-void applyValues() {
+void applyInitialState() {
+  m_binaryCount = 0;
+  
   for (int i = 0; i < m_numChannels; i++) {
 
     bool initialState =
@@ -137,8 +141,71 @@ void applyValues() {
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
     }
 
-    applyValue(i, brightness);
+    applyAndPropagateValue(i, brightness);
   }
+}
+
+void turnAllChannelsOff() {
+  for (int i = 0; i < m_numChannels; i++) {
+    setChannelBrightness(i, 0);
+  }
+}
+
+void turnAllChannels50() {
+  for (int i = 0; i < m_numChannels; i++) {
+    setChannelBrightness(i, 2048);
+  }
+}
+
+void turnAllChannels100() {
+  for (int i = 0; i < m_numChannels; i++) {
+    setChannelBrightness(i, 4095);
+  }
+}
+
+void turnEvenChannelsOn() {
+  for (int i = 0; i < m_numChannels; i++) {
+
+    int userFacingAddress = i;
+
+    if (m_toggleOneBasedAddresses) {
+      userFacingAddress++;
+    }
+
+    if (userFacingAddress % 2 == 0) {
+      setChannelBrightness(i, 4095);
+    } else {
+      setChannelBrightness(i, 0);
+    }
+  }
+}
+
+void turnOddChannelsOn() {
+  for (int i = 0; i < m_numChannels; i++) {
+
+    int userFacingAddress = i;
+
+    if (m_toggleOneBasedAddresses) {
+      userFacingAddress++;
+    }
+
+    if (userFacingAddress % 2 == 1) {
+      setChannelBrightness(i, 4095);
+    } else {
+      setChannelBrightness(i, 0);
+    }
+  }
+}
+
+void countBinary() {
+  for (int i = 0; i < m_numChannels; i++) {
+    if ((m_binaryCount & (1 << i)) == 0) {
+      setChannelBrightness(i, 0);
+    } else {
+      setChannelBrightness(i, 4095);
+    }
+  }
+  m_binaryCount++;
 }
 
 void clearPageBuffer() {
@@ -236,7 +303,7 @@ void processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
                        4);
       turnChannelOffId = atoi(turnChannelOffIdBuffer);
-      applyValue(turnChannelOffId, 0);
+      applyAndPropagateValue(turnChannelOffId, 0);
     }
 
     if (isKeyInData(m_pageBuffer, "turnChannelOn")) {
@@ -249,7 +316,7 @@ void processRequest(WiFiClient client) {
       uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
           turnChannelOnId, MEM_SLOT_BRIGHTNESS);
 
-      applyValue(turnChannelOnId, turnOnBrightness);
+      applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
     }
 
     if (isKeyInData(m_pageBuffer, "editChannel")) {
@@ -276,7 +343,7 @@ void processRequest(WiFiClient client) {
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
-      applyValues();
+      applyInitialState();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleForceAllOn")) {
@@ -288,7 +355,7 @@ void processRequest(WiFiClient client) {
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
-      applyValues();
+      applyInitialState();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleRandomChaos")) {
@@ -300,7 +367,6 @@ void processRequest(WiFiClient client) {
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
-      applyValues();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleRandomEvents")) {
@@ -312,7 +378,6 @@ void processRequest(WiFiClient client) {
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
-      applyValues();
     }
 
     if (isKeyInData(m_pageBuffer, "togglePropagateEvents")) {
@@ -326,7 +391,6 @@ void processRequest(WiFiClient client) {
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
-      applyValues();
     }
 
     if (isKeyInData(m_pageBuffer, "updateSettings")) {
@@ -362,8 +426,6 @@ void processRequest(WiFiClient client) {
           loadPageAndCheckIntegrity(i + 1);
         }
       }
-
-      applyValues();
 
       shouldRerender = true;
     }
@@ -455,7 +517,7 @@ void processRequest(WiFiClient client) {
             channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
       }
 
-      applyValue(channelIdAsNumber, channelBrightness);
+      applyAndPropagateValue(channelIdAsNumber, channelBrightness);
 
       writePageIntegrity(channelIdAsNumber + 1);
       writePageFromBufferToEeprom(channelIdAsNumber + 1);
@@ -464,6 +526,34 @@ void processRequest(WiFiClient client) {
       m_renderAnchor = true;
       m_anchorChannelId = channelIdAsNumber;
       m_foundRecursion = false;
+    }
+
+    if (isKeyInData(m_pageBuffer, "resetAllChannels")) {
+      applyInitialState();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnAllChannelsOff")) {
+      turnAllChannelsOff();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnAllChannels50")) {
+      turnAllChannels50();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnAllChannels100")) {
+      turnAllChannels100();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnEvenChannelsOn")) {
+      turnEvenChannelsOn();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnOddChannelsOn")) {
+      turnOddChannelsOn();
+    }
+
+    if (isKeyInData(m_pageBuffer, "countBinary")) {
+      countBinary();
     }
 
     if (shouldRerender) {
@@ -526,7 +616,6 @@ void commandLinkedChannel(uint16_t commandingChannelId, uint16_t brightness,
 
   for (uint16_t i = 0; i < m_numChannels; i++) {
     if (i == commandingChannelId) {
-
       continue;
     }
 
@@ -576,13 +665,13 @@ void calculateRandomEvents() {
       uint16_t brightness =
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
 
-      applyValue(i, brightness);
+      applyAndPropagateValue(i, brightness);
 
       if (isLinked) {
         uint16_t linkedBrightness = readUint16tForChannelFromEepromBuffer(
             linkedChannel, MEM_SLOT_BRIGHTNESS);
 
-        applyValue(linkedChannel, linkedBrightness);
+        applyAndPropagateValue(linkedChannel, linkedBrightness);
       }
     }
 
@@ -590,10 +679,10 @@ void calculateRandomEvents() {
       st("Got random off event for channel ");
       sn(i);
 
-      applyValue(i, 0);
+      applyAndPropagateValue(i, 0);
 
       if (isLinked) {
-        applyValue(linkedChannel, 0);
+        applyAndPropagateValue(linkedChannel, 0);
       }
     }
   }
@@ -680,7 +769,7 @@ void setup() {
   sn(analogValue);
   randomSeed(analogValue);
 
-  applyValues();
+  applyInitialState();
 }
 
 void loop() {
@@ -692,7 +781,7 @@ void loop() {
   if ((m_toggleRandomChaos == 1) &&
       (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
     m_lastRandom = millis();
-    applyValues();
+    applyInitialState();
   }
 
   if ((m_toggleRandomEvents == 1) &&

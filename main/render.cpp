@@ -6,8 +6,8 @@
 void renderOptions(WiFiClient client, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
-                   bool toggleRandomChaos, bool toggleRandomEvents, bool togglePropagateEvents,
-                   uint16_t channelIdToEdit) {
+                   bool toggleRandomChaos, bool toggleRandomEvents,
+                   bool togglePropagateEvents, uint16_t channelIdToEdit) {
   pn("<div class='h3'>Optionen</div>");
 
   // Max value = Max number of boards (62 are max, but -1 because eeprom
@@ -158,6 +158,33 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
      // /Random Chaos Switch
 
      "<input type='hidden'  name='clearEeprom' value='0'>");
+}
+
+void renderButtons(WiFiClient client) {
+  pt("<div>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('resetAllChannels','1')\" >&nbsp;⌂&nbsp;</button>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('turnAllChannelsOff','1')\" >0%</button>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('turnAllChannels50','1')\" >50%</button>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('turnAllChannels100','1')\" >100%</button>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('turnEvenChannelsOn','1')\" >Gerade</button>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('turnOddChannelsOn','1')\" >Ungerade</button>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('countBinary','1')\" >01010011</button>"
+
+     "</div>");
 }
 
 void renderEditChannel(WiFiClient client, bool renderAnchor,
@@ -621,8 +648,8 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
                    uint16_t anchorChannelId, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
-                   bool toggleRandomChaos, bool toggleRandomEvents, bool togglePropagateEvents,
-                   uint16_t channelIdToEdit) {
+                   bool toggleRandomChaos, bool toggleRandomEvents,
+                   bool togglePropagateEvents, uint16_t channelIdToEdit) {
 
   // Send a standard HTTP response header
   pn("HTTP/1.1 200 OK");
@@ -677,11 +704,16 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
   } else {
     renderOptions(client, numChannels, toggleOneBasedAddresses,
                   toggleCompactDisplay, toggleForceAllOff, toggleForceAllOn,
-                  toggleRandomChaos, toggleRandomEvents, togglePropagateEvents, channelIdToEdit);
+                  toggleRandomChaos, toggleRandomEvents, togglePropagateEvents,
+                  channelIdToEdit);
 
     pn("<br>");
 
-    pn("<h3>Übersicht der Kanäle</h3>");
+    pn("<h3>Aktionen</h3>");
+    renderButtons(client);
+    pn("<br>");
+
+    pn("<h3>Kanäle</h3>");
 
     if (renderAnchor) {
       pt("<div id='navigateTo' data-anchor='#channel-");
