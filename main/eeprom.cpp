@@ -1,6 +1,6 @@
 #include "eeprom.h"
 uint8_t m_eepromBuffer[MAX_EEPROM_RANGE];
-char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH + 1];
+char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH];
 
 CRC16 crc;
 
@@ -63,13 +63,15 @@ uint16_t readUInt16FromEepromBuffer(uint16_t readAddress) {
 
 void readChannelNameFromEepromBufferToChannelNameBuffer(int channel) {
   uint16_t startAddress = (channel + 1) * 64;
-  readFromEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer, 20);
-  m_channelNameBuffer[21] = '\0';
+  readFromEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer,
+                       MAX_CHANNEL_NAME_LENGTH);
+  m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH - 1] = '\0';
 }
 
 void writeChannelNameFromChannelNameBufferToEepromBuffer(int channel) {
   uint16_t startAddress = (channel + 1) * 64;
-  writeToEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer, 21);
+  writeToEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer,
+                      MAX_CHANNEL_NAME_LENGTH);
 }
 
 void writeUint8tToEepromBuffer(int channel, int memorySlot, uint8_t value) {

@@ -441,9 +441,12 @@ void processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
       uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
-      char urlEncodedNameBuffer[21];
-      getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer, 21);
-      urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, 20);
+      // Worst case, each UTF8 character is 4 bytes long as url encoded
+      char urlEncodedNameBuffer[MAX_CHANNEL_NAME_LENGTH * 4];
+      getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer,
+                       MAX_CHANNEL_NAME_LENGTH * 4);
+      urlDecode(urlEncodedNameBuffer, m_channelNameBuffer,
+                MAX_CHANNEL_NAME_LENGTH);
 
       char channelBrightnessBuffer[5] = "0";
       getValueFromData(m_pageBuffer,
@@ -495,6 +498,7 @@ void processRequest(WiFiClient client) {
       uint16_t channelBrightness = atoi(channelBrightnessBuffer);
 
       writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
+
       writeUint16tForChannelToEepromBuffer(
           channelIdAsNumber, MEM_SLOT_BRIGHTNESS, channelBrightness);
 
@@ -570,7 +574,7 @@ void processRequest(WiFiClient client) {
       replyToClientWithSuccess(client);
     }
 
-    // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
+    dumpEepromData(0, MAX_EEPROM_RANGE - 1);
   } else {
     sn("processRequest NOT POST");
     // For get requests, we always want to render the page to the client if its

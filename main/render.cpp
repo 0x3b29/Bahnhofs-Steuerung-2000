@@ -203,7 +203,11 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   pt("Beschreibung");
   pt("  </div>");
   pt("  <div class='col d-flex justify-content-end'>");
-  pt("<input type='text' maxlength='20' size='20' "
+  pt("<input type='text' maxlength='");
+  pt(MAX_CHANNEL_NAME_LENGTH - 1);
+  pt("' size='");
+  pt(MAX_CHANNEL_NAME_LENGTH - 1);
+  pt("' "
      "name='channelName' value='");
   pt(m_channelNameBuffer);
   pn("'>");

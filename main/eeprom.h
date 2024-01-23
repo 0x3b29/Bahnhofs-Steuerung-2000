@@ -31,6 +31,8 @@
 
 #define MEM_SLOT_CRC 62
 
+#define MAX_CHANNEL_NAME_LENGTH 30
+
 // Each page is 64 Bytes long, we use one page per channel + 1, in page 0 we
 // store general settings
 #define EEPROM_PAGE_SIZE 64
@@ -38,7 +40,7 @@
 #define PAGE_BUFFER_SIZE 8192
 
 extern uint8_t m_eepromBuffer[MAX_EEPROM_RANGE];
-extern char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH + 1];
+extern char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH];
 extern CRC16 crc;
 
 void clearEepromBuffer();
