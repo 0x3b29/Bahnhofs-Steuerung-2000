@@ -151,6 +151,12 @@ void turnAllChannelsOff() {
   }
 }
 
+void turnAllChannels25() {
+  for (int i = 0; i < m_numChannels; i++) {
+    setChannelBrightness(i, 1024);
+  }
+}
+
 void turnAllChannels50() {
   for (int i = 0; i < m_numChannels; i++) {
     setChannelBrightness(i, 2048);
@@ -542,6 +548,10 @@ void processRequest(WiFiClient client) {
       turnAllChannelsOff();
     }
 
+    if (isKeyInData(m_pageBuffer, "turnAllChannels25")) {
+      turnAllChannels25();
+    }
+
     if (isKeyInData(m_pageBuffer, "turnAllChannels50")) {
       turnAllChannels50();
     }
@@ -574,7 +584,8 @@ void processRequest(WiFiClient client) {
       replyToClientWithSuccess(client);
     }
 
-    dumpEepromData(0, MAX_EEPROM_RANGE - 1);
+    // Include line to see whats going on in memory
+    // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
   } else {
     sn("processRequest NOT POST");
     // For get requests, we always want to render the page to the client if its

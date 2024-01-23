@@ -171,6 +171,9 @@ void renderButtons(WiFiClient client) {
      "onclick=\"sendValue('turnAllChannelsOff','1')\" >0%</button>"
 
      "<button class='btn btn-primary text-white me-2 mb-2'  "
+     "onclick=\"sendValue('turnAllChannels25','1')\" >25%</button>"
+
+     "<button class='btn btn-primary text-white me-2 mb-2'  "
      "onclick=\"sendValue('turnAllChannels50','1')\" >50%</button>"
 
      "<button class='btn btn-primary text-white me-2 mb-2'  "
