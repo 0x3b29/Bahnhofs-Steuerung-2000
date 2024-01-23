@@ -33,8 +33,8 @@
 
 // Each page is 64 Bytes long, we use one page per channel + 1, in page 0 we
 // store general settings
-#define PAGE_SIZE 64
-#define MAX_EEPROM_RANGE PAGE_SIZE *(MAX_TOTAL_CHANNELS + 1)
+#define EEPROM_PAGE_SIZE 64
+#define MAX_EEPROM_RANGE EEPROM_PAGE_SIZE *(MAX_TOTAL_CHANNELS + 1)
 #define PAGE_BUFFER_SIZE 8192
 
 extern uint8_t m_eepromBuffer[MAX_EEPROM_RANGE];

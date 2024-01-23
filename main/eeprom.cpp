@@ -132,7 +132,7 @@ void dumpEepromData(int startAddress, int endAddress) {
         Serial.println(asciiBufferMirror);
         bufferIndex = 0;
       }
-      if (i != startAddress && (i - startAddress) % PAGE_SIZE == 0) {
+      if (i != startAddress && (i - startAddress) % EEPROM_PAGE_SIZE == 0) {
         Serial.println(); // Newline to separate pages
       }
       sprintf(lineBufferEEPROM,
@@ -205,10 +205,10 @@ void clearEeprom() {
 }
 
 void loadPageFromEepromToBuffer(int page) {
-  uint16_t readAddress = page * PAGE_SIZE;
+  uint16_t readAddress = page * EEPROM_PAGE_SIZE;
 
   if (readAddress < MAX_EEPROM_RANGE) {
-    readFromEeprom(readAddress, &m_eepromBuffer[readAddress], PAGE_SIZE);
+    readFromEeprom(readAddress, &m_eepromBuffer[readAddress], EEPROM_PAGE_SIZE);
   } else {
     Serial.println("Error: loadPageFromEepromToBuffer tried to load memory "
                    "outside MAX_EEPROM_RANGE");
@@ -216,10 +216,11 @@ void loadPageFromEepromToBuffer(int page) {
 }
 
 void writePageFromBufferToEeprom(int page) {
-  uint16_t writeAddress = page * PAGE_SIZE;
+  uint16_t writeAddress = page * EEPROM_PAGE_SIZE;
 
   if (writeAddress < MAX_EEPROM_RANGE) {
-    writeToEeprom(writeAddress, &m_eepromBuffer[writeAddress], PAGE_SIZE);
+    writeToEeprom(writeAddress, &m_eepromBuffer[writeAddress],
+                  EEPROM_PAGE_SIZE);
   } else {
     Serial.println("Error: writePageFromBufferToEeprom tried to write memory "
                    "outside MAX_EEPROM_RANGE");
@@ -228,7 +229,7 @@ void writePageFromBufferToEeprom(int page) {
 
 bool isPageIntegrityGood(uint8_t page) {
   uint16_t pageStart = page * 64;
-  uint16_t pageCrcHighByteAddress = page * PAGE_SIZE + 62;
+  uint16_t pageCrcHighByteAddress = page * EEPROM_PAGE_SIZE + 62;
   uint16_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
 
   crc.reset();
@@ -248,8 +249,8 @@ bool isPageIntegrityGood(uint8_t page) {
 }
 
 void writePageIntegrity(int page) {
-  uint16_t pageStart = page * PAGE_SIZE;
-  uint16_t pageCrcHighByteAddress = page * PAGE_SIZE + 62;
+  uint16_t pageStart = page * EEPROM_PAGE_SIZE;
+  uint16_t pageCrcHighByteAddress = page * EEPROM_PAGE_SIZE + 62;
   uint16_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
 
   crc.reset();
@@ -266,8 +267,8 @@ void writePageIntegrity(int page) {
 }
 
 void wipePage(int page) {
-  uint16_t pageStart = page * PAGE_SIZE;
-  uint16_t pageEnd = pageStart + PAGE_SIZE;
+  uint16_t pageStart = page * EEPROM_PAGE_SIZE;
+  uint16_t pageEnd = pageStart + EEPROM_PAGE_SIZE;
 
   for (int i = pageStart; i < pageEnd; i++) {
     m_eepromBuffer[i] = 0;

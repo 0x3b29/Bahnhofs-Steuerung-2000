@@ -1,11 +1,11 @@
-#include <Adafruit_PWMServoDriver.h>
-#include <ArduinoOTA.h>
-#include <WiFiNINA.h>
-#include <WiFiServer.h>
 #include "eeprom.h"
 #include "helpers.h"
 #include "main.h"
 #include "render.h"
+#include <Adafruit_PWMServoDriver.h>
+#include <ArduinoOTA.h>
+#include <WiFiNINA.h>
+#include <WiFiServer.h>
 
 // If you check out this project, this file does not exist.
 // You need to create a copy of example_arduino_secrets.h and rename it to
@@ -636,10 +636,6 @@ void setup() {
     Serial.println(pwmAddress);
   }
 
-  /*   ArduinoOTA.onStart([]() {
-    Serial.println("Start OTA");
-  }); */
-
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   Serial.println("Attempting to connect to WiFi network...");
   delay(500);
@@ -670,9 +666,11 @@ void setup() {
   // Start the server
   server.begin();
 
-  /*   // start the WiFi OTA library with internal (flash) based storage
+  ArduinoOTA.onStart([]() { Serial.println("Start OTA"); });
+
+  // start the WiFi OTA library with internal (flash) based storage
   ArduinoOTA.begin(WiFi.localIP(), "Arduino_MKR_WiFi_1010", SECRET_OTA,
-  InternalStorage); */
+                   InternalStorage);
 
   Serial.println("Server started");
 
@@ -686,8 +684,8 @@ void setup() {
 }
 
 void loop() {
-  /*   // check for WiFi OTA updates
-  ArduinoOTA.poll(); */
+  // check for WiFi OTA updates
+  ArduinoOTA.poll();
 
   WiFiClient client = server.available(); // Listen for incoming clients
 
