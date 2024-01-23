@@ -6,15 +6,21 @@
 
 #include "eeprom.h"
 #include "main.h"
+#include "render.h"
+#include "helpers.h"
 
 // If you check out this project, this file does not exist.
 // You need to create a copy of example_arduino_secrets.h and rename it to
 // arduino_secrets.h and fill in your WiFI name and password
 #include "arduino_secrets.h"
 
-char m_pageBuffer[PAGE_BUFFER_SIZE];
+#define RANDOM_INTERVAL 200
+#define RANDOM_EVENT_INTERVAL 1000
 
 WiFiServer server(80);
+Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
+
+char m_pageBuffer[PAGE_BUFFER_SIZE];
 
 uint16_t m_numChannels = 0;
 uint8_t m_toggleRandom = false;
@@ -32,15 +38,10 @@ bool m_renderNextPageWithChannelEditVisible = false;
 bool m_renderAnchor = false;
 uint16_t m_anchorChannelId;
 
-#define RANDOM_INTERVAL 200
-#define RANDOM_EVENT_INTERVAL 1000
-
 long m_lastRandom = 0;
 long m_lastRandomEvent = 0;
 
 bool m_foundRecursion = false;
-
-Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
 // Function to extract value from form data using char arrays
 // formData: The form data as a char array
@@ -83,554 +84,6 @@ bool isKeyInData(const char *formData, const char *key) {
   }
 
   return true;
-}
-
-int getBoardIndexForChannel(int channel) { return channel / 16; }
-
-int getBoardAddressForChannel(int channel) {
-  return 0x40 + getBoardIndexForChannel(channel);
-}
-
-int getBoardSubAddressForChannel(int channel) { return channel % 16; }
-
-void renderWebPage(WiFiClient client) {
-  // Send a standard HTTP response header
-  pn("HTTP/1.1 200 OK");
-  pn("Content-type:text/html");
-  pn();
-
-  // Output the HTML Web Page
-  pn("<!DOCTYPE html>");
-
-  pn("<html>"
-     "<head>"
-     "<meta charset='UTF-8'>"
-     "<meta name='viewport' content='width=device-width, "
-     "initial-scale=1'>"
-     "<link "
-     "href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/"
-     "bootstrap.min.css' rel='stylesheet' "
-     "integrity='sha384-"
-     "rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65' "
-     "crossorigin='anonymous'/>"
-     "<link "
-     "href='https://fonts.googleapis.com/css2?family=Grape+Nuts&display=swap' "
-     "rel='stylesheet'>"
-     "<link rel='icon' href='data:;base64,iVBORw0KGgo='>"
-     "</head>"
-     "<body>"
-     "<div class='container'>"
-     "<div class='row justify-content-center'>"
-     "<div class='col col-12 col-sm-10 col-md-8 col-lg-6'>"
-     "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; "
-     "font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
-     "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
-
-  if (m_foundRecursion) {
-    pt("<div class='pb-3'><span class='text-danger'>Achtung: Schleife oder zu "
-       "tiefe Verschachtelung (> ");
-    pt(MAX_RECURSION);
-    pn(") in "
-       "verknüpften Kanälen "
-       "entdeckt. Bitte überprüfe alle Verknüpfungen auf Schleifen oder erhöhe "
-       "die maximale Verschachtelungstiefe!</span></div>");
-  }
-
-  if (m_renderNextPageWithOptionsVisible == true) {
-    pn("<div class='h3'>Optionen</div>");
-
-    // Max value = Max number of boards (62 are max, but -1 because eeprom
-    // address so 61) * number of pins => 61 * 16 = 976
-    pt("<div class='row'>"
-       "<div class='col-3 d-flex align-items-center'> Kanäle: </div> <div "
-       "class='col-5'> <input type='number' class='form-control w-100' "
-       "name='numChannels' min='0' "
-       "max='");
-    pt(MAX_TOTAL_CHANNELS);
-    pt("' value='");
-    pt(m_numChannels);
-    pt("'> </div>");
-    pn("<div class='col-4 d-flex justify-content-end'><button class='btn "
-       "btn-primary' type='submit' "
-       "name='updateSettings' value='Absenden'>Senden</button> </div></div>"
-       "<br>");
-
-    // 1 Indexierte Adressen
-    pt("<div class='form-check form-switch'>");
-    pt("<input class='form-check-input' type='checkbox' "
-       "name='toggleOneBasedAddresses' "
-       "value='1'  id='toggleOneBasedAddresses' onchange='sendCheckbox(this, "
-       "true)'");
-
-    if (m_toggleOneBasedAddresses == true) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' "
-       "for='toggleOneBasedAddresses'>Adressierung "
-       "startet bei 1</label>");
-    pt("</div>");
-    // /Alles Aus Switch
-
-    // Alles Aus Switch
-    pt("<div class='form-check form-switch'>");
-    pt("<input class='form-check-input' type='checkbox' "
-       "name='toggleForceAllOff' "
-       "value='1'  id='toggleForceAllOff' onchange='sendCheckbox(this, "
-       "false)'");
-
-    if (m_toggleForceAllOff == true) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' for='toggleForceAllOff'>Alle Kanäle "
-       "dauerhaft auf "
-       "0%</label>");
-    pt("</div>");
-    // /Alles Aus Switch
-
-    // Alles An Switch
-    pt("<div class='form-check form-switch'>");
-    pt("<input class='form-check-input' type='checkbox' "
-       "name='toggleForceAllOn' "
-       "value='1' id='toggleForceAllOn' onchange='sendCheckbox(this, false)'");
-
-    if (m_toggleForceAllOn == true) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' for='toggleForceAllOn'>Alle Kanäle "
-       "dauerhaft "
-       "auf "
-       "100%</label>"
-       "</div>");
-    // /Alles An Switch
-
-    // Zufalls Switch
-    pt("<div class='form-check form-switch'>"
-       "<input class='form-check-input' type='checkbox' name='toggleRandom'  "
-       "value='1' role='switch' "
-       "id='toggleRandom' onchange='sendCheckbox(this, false)'");
-
-    if (m_toggleRandom == true) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' for='toggleRandom'>Verrücktes "
-       "Blinken</label>"
-       "</div>"
-       // /Zufalls Switch
-
-       "<input type='hidden'  name='clearEeprom' value='0'>");
-  }
-
-  if (m_renderNextPageWithChannelEditVisible == true) {
-    pt("<h3>Kanal ");
-    pt(m_toggleOneBasedAddresses ? m_channelIdToEdit + 1 : m_channelIdToEdit);
-    pn(" Bearbeiten</h3>");
-
-    pt("<input type='hidden'  name='channelId' value='");
-    pt(m_channelIdToEdit);
-    pn("'>");
-
-    pt("<div class='row'>");
-    pt("  <div class='col'>");
-    pt("Beschreibung");
-    pt("  </div>");
-    pt("  <div class='col d-flex justify-content-end'>");
-    pt("<input type='text' maxlength='20' size='20' "
-       "name='channelName' value='");
-    pt(m_channelNameBuffer);
-    pn("'>");
-    pt("  </div>");
-    pt("</div>");
-
-    pt("<br>");
-
-    pt("<div class='form-check form-switch'>"
-       "<input class='form-check-input' type='checkbox' "
-       "name='initialState' value='1' role='switch' id='initialState' "
-       "value='1'");
-
-    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
-                                           MEM_SLOT_INITIAL_STATE)) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' for='toggleRandom'>Startzustand</label>"
-       "</div>");
-
-    pt("<div class='row'>");
-    pt("  <div class='col'>");
-    pt("Helligkeit");
-    pt("  </div>");
-    pt("  <div class='col d-flex justify-content-end'>");
-    pt("<input type='range' min='0' max='4095' "
-       "name='channelValue' value='");
-    pt(readUint16tForChannelFromEepromBuffer(m_channelIdToEdit,
-                                             MEM_SLOT_BRIGHTNESS));
-    pn("'>");
-    pt("  </div>");
-    pt("</div>");
-
-    pt("<div class='form-check form-switch pt-3'>"
-       "<input class='form-check-input' type='checkbox' "
-       "name='randomOn' value='1' role='switch' id='randomOn' "
-       "value='1'");
-
-    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
-                                           MEM_SLOT_RANDOM_ON)) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' for='randomOn'>Zufälliges "
-       "Einschalten</label>"
-       "</div>");
-
-    pt("<div class='row'>");
-    pt("  <div class='col'>");
-    pt("~ Zufälle/h");
-    pt("  </div>");
-    pt("  <div class='col d-flex justify-content-end'>");
-    pt("<input type='number' name='frequencyOn' min='0' max='255' value='");
-    pt(readUint8tForChannelFromEepromBuffer(m_channelIdToEdit,
-                                            MEM_SLOT_RANDOM_ON_FREQ));
-    pn("'>");
-    pt("  </div>");
-    pt("</div>");
-
-    pt("<div class='form-check form-switch pt-3'>"
-       "<input class='form-check-input' type='checkbox' "
-       "name='randomOff' value='1' role='switch' id='randomOff' "
-       "value='1'");
-
-    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
-                                           MEM_SLOT_RANDOM_OFF)) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' for='randomOff'>Zufälliges "
-       "Ausschalten</label>"
-       "</div>");
-
-    pt("<div class='row'>");
-    pt("  <div class='col'>");
-    pt("~ Zufälle/h");
-    pt("  </div>");
-    pt("  <div class='col d-flex justify-content-end'>");
-    pt("<input type='number' name='frequencyOff' min='0' max='255' value='");
-    pt(readUint8tForChannelFromEepromBuffer(m_channelIdToEdit,
-                                            MEM_SLOT_RANDOM_OFF_FREQ));
-    pn("'>");
-    pt("  </div>");
-    pt("</div>");
-
-    pt("<div class='form-check form-switch pt-3'>"
-       "<input class='form-check-input' type='checkbox' "
-       "name='channelLinked' value='1' role='switch' id='channelLinked' "
-       "value='1'");
-
-    if (readBoolForChannelFromEepromBuffer(m_channelIdToEdit,
-                                           MEM_SLOT_IS_LINKED)) {
-      pn(" checked>");
-    } else {
-      pt(">");
-    }
-
-    pt("<label class='form-check-label' for='channelLinked'>Verknüpft</label>"
-       "</div>");
-
-    pt("<div class='row'>");
-    pt("  <div class='col'>");
-    pt("Gesteuert durch Kanal");
-    pt("  </div>");
-    pt("  <div class='col d-flex justify-content-end'>");
-
-    pt("<input type='number' "
-       "name='linkedChannelId' min='");
-    pt(m_toggleOneBasedAddresses ? 1 : 0);
-    pt("' max='");
-
-    pt(m_toggleOneBasedAddresses ? m_numChannels : m_numChannels - 1);
-    pt("' value='");
-
-    uint16_t linkedChannelId = readUint16tForChannelFromEepromBuffer(
-        m_channelIdToEdit, MEM_SLOT_LINKED_CHANNEL);
-
-    pt(m_toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId);
-
-    pn("'>");
-
-    pt("  </div>");
-    pt("</div>");
-
-    pt("<br>");
-
-    pt("<div class='row'>");
-    pt("  <div class='col'>");
-    pt("    <input class='btn btn-warning' type='submit' name='ignoreChannel' "
-       "value='Verwerfen'/>");
-    pt("  </div>");
-    pt("  <div class='col d-flex justify-content-end'>");
-    pn("    <input class='btn btn-primary ' type='submit' name='updateChannel' "
-       "value='Speichern'/> &nbsp; ");
-    pt("  </div>");
-    pt("</div>");
-  }
-
-  pn("<br>");
-
-  pn("<h3>Übersicht der Kanäle</h3>");
-
-  pn("<div>");
-
-  for (int i = 0; i < m_numChannels; i++) {
-    readChannelNameFromEepromBufferToChannelNameBuffer(i);
-    uint16_t brightness =
-        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
-
-    bool initialState =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_INITIAL_STATE);
-
-    bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
-    uint8_t randomOnFreq =
-        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON_FREQ);
-
-    bool randomOff = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF);
-    uint8_t randomOffFreq =
-        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF_FREQ);
-
-    bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
-    uint16_t linkedChannel =
-        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
-
-    if (m_toggleOneBasedAddresses) {
-      linkedChannel++;
-    }
-
-    int boardIndex = getBoardIndexForChannel(i);
-    int subAddress = getBoardSubAddressForChannel(i);
-
-    pt("<div id='channel-");
-    pt(i);
-    pn("' class='pl-1 pr-1'>"
-       // ROW START
-       "  <div class='row'>"
-       "      <div class='col-9'>"
-
-       //  FIRST COL
-       "<span class='h4'>"
-       "Kanal ");
-
-    pt(m_toggleOneBasedAddresses ? i + 1 : i);
-    pt(" </span > "
-       "Board ");
-    pt(m_toggleOneBasedAddresses ? boardIndex + 1 : boardIndex);
-    pt(", Pin ");
-    pt(m_toggleOneBasedAddresses ? subAddress + 1 : subAddress);
-    //  / FIRST COL
-
-    pt("      </div>"
-       "      <div class='col-3'>"
-
-       // SECOND COL
-       "      <div class='d-flex justify-content-end'>"
-       "<button class='btn text-warning'  onclick=\"sendValue('turnChannelOn', "
-       "'");
-    pt(i);
-    pt("')\" >⛭</button >"
-       "<button class='btn'  onclick=\"sendValue('turnChannelOff', '");
-    pt(i);
-    pt("')\" >⛭</button >"
-
-       "<button class='btn' type='submit' name='editChannel' value='");
-    pt(i);
-    pt("'>🖊</button >"
-       "      </div>"
-       // / SECOND COL
-
-       "      </div>"
-       "  </div>"
-       // ROW END
-
-       "  <div class='row'>"
-       "    <div class='col'>"
-       "<span class='h6'>Beschreibung</span>"
-       "    </div>"
-       "    <div class='col font-weight-bold'> <b>");
-    pt(m_channelNameBuffer);
-    pt("    </b></div>"
-       "  </div>"
-
-       "  <div class='row'>"
-       "    <div class='col'>"
-       "<span class='h6'>Startzustand</span>"
-       "    </div>"
-       "    <div class='col'>");
-
-    if (initialState) {
-      pt("An");
-    } else {
-      pt("Aus");
-    }
-
-    pt("    </div>"
-       "  </div>"
-
-       "  <div class='row'>"
-       "    <div class='col'>"
-       "<span class='h6'>Helligkeit</span>"
-       "    </div>"
-       "    <div class='col'>");
-    pt((int)(((float)brightness / 4095) * 100));
-    pt("%"
-
-       "    </div>"
-       "  </div>"
-
-       "  <div class='row'>"
-       "    <div class='col'>"
-       "      <span class='h6'>Zufälliges Einschalten</span>"
-       "    </div>"
-       "    <div class='col'>");
-    if (randomOn) {
-      pn("      Ja");
-    } else {
-      pn("      Nein");
-    }
-    pn("    </div>"
-       "  </div>");
-
-    if (randomOn) {
-      pn("  <div class='row'>"
-         "    <div class='col'>"
-         "      <span class='h6'>~Zufälle/h</span>"
-         "    </div>"
-         "    <div class='col'>");
-      pt(randomOnFreq);
-      pn("/h"
-         "    </div>"
-         "  </div>");
-    }
-
-    pn("  <div class='row'>"
-       "    <div class='col'>"
-       "      <span class='h6'>Zufälliges Ausschalten</span>"
-       "    </div>"
-       "    <div class='col'>");
-    if (randomOff) {
-      pn("      Ja");
-    } else {
-      pn("      Nein");
-    }
-    pn("    </div>"
-       "  </div>");
-
-    if (randomOff) {
-      pn("  <div class='row'>"
-         "    <div class='col'>"
-         "      <span class='h6'>~Zufälle/h</span>"
-         "    </div>"
-         "    <div class='col'>");
-      pt(randomOffFreq);
-      pn("/h"
-         "    </div>"
-         "  </div>");
-    }
-
-    pn("  <div class='row'>"
-       "    <div class='col'>"
-       "      <span class='h6'>Verknüpft</span>"
-       "    </div>"
-       "    <div class='col'>");
-    if (isLinked) {
-      pn("      Ja");
-    } else {
-      pn("      Nein");
-    }
-    pn("    </div>"
-       "  </div>");
-
-    if (isLinked) {
-      pn("  <div class='row'>"
-         "    <div class='col'>"
-         "      <span class='h6'>Gesteuert durch Kanal</span>"
-         "    </div>"
-         "    <div class='col'>");
-      pn(linkedChannel);
-      pn("    </div>"
-         "  </div>");
-    }
-
-    pn("  </div>"
-       "<hr class='mb-3 mt-3'/>");
-  }
-
-  if (m_renderAnchor) {
-    pt("<br>"
-       "<div id='navigateTo' data-anchor='#channel-");
-    pt(m_anchorChannelId);
-    pn("' "
-       "style='display:none;'></div>");
-  }
-
-  pn("</form>"
-     "</div></div></div>"
-     "<script>"
-     "document.addEventListener('DOMContentLoaded', function() {"
-     "  var navigationTag = document.getElementById('navigateTo');"
-     "  if (navigationTag) {"
-     "    var anchor = navigationTag.getAttribute('data-anchor');"
-     "    if (anchor) {"
-     "      window.location.hash = anchor;"
-     "    }"
-     "  }"
-     "});"
-     "function sendValue(buttonName, buttonValue) {"
-     "    event.preventDefault();"
-     "    var dataString = encodeURIComponent(buttonName) + '=' + "
-     "encodeURIComponent(buttonValue);"
-     "    fetch('/', {"
-     "       method: 'POST',"
-     "       headers: {"
-     "          'Content-Type': 'application/x-www-form-urlencoded'"
-     "       },"
-     "       body: dataString"
-     "   });"
-     "}"
-     "function sendCheckbox(checkbox, reloadAfterRequest) {"
-     "var dataString = encodeURIComponent(checkbox.name) + '=' + "
-     "encodeURIComponent(checkbox.checked ? 1 : 0);"
-     "console.log(dataString);"
-     "fetch('/', {"
-     "    method: 'POST',"
-     "    headers: {"
-     "        'Content-Type': 'application/x-www-form-urlencoded'"
-     "    },"
-     "    body: dataString"
-     "})"
-     ".then(response => {"
-     " if (reloadAfterRequest) {"
-     " window.location.href = '/'; "
-     " }"
-     "})"
-     "}"
-     "</script>"
-     "</body></html>");
 }
 
 void replyToClientWithSuccess(WiFiClient client) {
@@ -949,7 +402,12 @@ void processRequest(WiFiClient client) {
     }
 
     if (shouldRerender) {
-      renderWebPage(client);
+      renderWebPage(client, m_foundRecursion,
+                    m_renderNextPageWithOptionsVisible,
+                    m_renderNextPageWithChannelEditVisible, m_renderAnchor,
+                    m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
+                    m_toggleForceAllOff, m_toggleForceAllOn, m_toggleRandom,
+                    m_channelIdToEdit, m_channelNameBuffer);
     } else {
       replyToClientWithSuccess(client);
     }
@@ -960,11 +418,12 @@ void processRequest(WiFiClient client) {
     // For get requests, we always want to render the page to the client if its
     // not for the favicon
 
-    /*     if (!isKeyInData(m_pageBuffer, "updateChannel")) {
-          shouldRerender = true;
-        } */
-
-    renderWebPage(client);
+      renderWebPage(client, m_foundRecursion,
+                    m_renderNextPageWithOptionsVisible,
+                    m_renderNextPageWithChannelEditVisible, m_renderAnchor,
+                    m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
+                    m_toggleForceAllOff, m_toggleForceAllOn, m_toggleRandom,
+                    m_channelIdToEdit, m_channelNameBuffer);
   }
 }
 

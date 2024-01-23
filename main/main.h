@@ -3,8 +3,6 @@
 
 #include <Arduino.h>
 
-#define pt client.print
-#define pn client.println
 #define st Serial.print
 #define sn Serial.println
 
