@@ -10,20 +10,20 @@
 #define EEPROM_ADDRESS 0x50
 
 // Memory Slots for general settings
-#define MEM_SLOT_CHANNELS  0
-#define MEM_SLOT_FORCE_ALL_ON  2
-#define MEM_SLOT_FORCE_ALL_OFF  3
-#define MEM_SLOT_RANDOM_CHAOS  4
-#define MEM_SLOT_RANDOM_EVENTS  5
+#define MEM_SLOT_CHANNELS 0
+#define MEM_SLOT_FORCE_ALL_ON 2
+#define MEM_SLOT_FORCE_ALL_OFF 3
+#define MEM_SLOT_RANDOM_CHAOS 4
+#define MEM_SLOT_RANDOM_EVENTS 5
 
 // Memory Slots for each channel
-#define MEM_SLOT_BRIGHTNESS  30
-#define MEM_SLOT_RANDOM_ON  32
-#define MEM_SLOT_RANDOM_ON_FREQ  33
+#define MEM_SLOT_BRIGHTNESS 30
+#define MEM_SLOT_RANDOM_ON 32
+#define MEM_SLOT_RANDOM_ON_FREQ 33
 #define MEM_SLOT_RANDOM_OFF 34
-#define MEM_SLOT_RANDOM_OFF_FREQ  35
-#define MEM_SLOT_IS_LINKED  36
-#define MEM_SLOT_LINKED_CHANNEL  37
+#define MEM_SLOT_RANDOM_OFF_FREQ 35
+#define MEM_SLOT_IS_LINKED 36
+#define MEM_SLOT_LINKED_CHANNEL 37
 #define MEM_SLOT_INITIAL_STATE 39
 #define MEM_SLOT_ONE_BASED_ADDRESSES 40
 #define MEM_SLOT_COMPACT_DISPLAY 41
@@ -55,7 +55,7 @@ void readChannelNameFromEepromBufferToChannelNameBuffer(int channel);
 void writeChannelNameFromChannelNameBufferToEepromBuffer(int channel);
 void writeUint8tToEepromBuffer(int channel, int memorySlot, uint8_t value);
 void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
-                                          uint16_t channelValue);
+                                          uint16_t channelBrightness);
 
 uint16_t readUint16tForChannelFromEepromBuffer(int channel, int memorySlot);
 bool readBoolForChannelFromEepromBuffer(int channel, int memorySlot);
@@ -68,7 +68,7 @@ void loadPageFromEepromToBuffer(int page);
 void writePageFromBufferToEeprom(int page);
 bool isPageIntegrityGood(uint8_t page);
 void writePageIntegrity(int page);
-void wipePage(int page) ;
+void wipePage(int page);
 void loadPageAndCheckIntegrity(int page);
 
 #endif // eeprom_h

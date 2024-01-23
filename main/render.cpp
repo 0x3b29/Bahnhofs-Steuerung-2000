@@ -6,7 +6,8 @@
 void renderOptions(WiFiClient client, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
-                   bool toggleRandomChaos, bool toggleRandomEvents, uint16_t channelIdToEdit) {
+                   bool toggleRandomChaos, bool toggleRandomEvents,
+                   uint16_t channelIdToEdit) {
   pn("<div class='h3'>Optionen</div>");
 
   // Max value = Max number of boards (62 are max, but -1 because eeprom
@@ -102,7 +103,8 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
 
   // Ranodm Events
   pt("<div class='form-check form-switch'>"
-     "<input class='form-check-input' type='checkbox' name='toggleRandomEvents'  "
+     "<input class='form-check-input' type='checkbox' "
+     "name='toggleRandomEvents'  "
      "value='1' role='switch' "
      "id='toggleRandomEvents' onchange='sendCheckbox(this, false)'");
 
@@ -115,12 +117,12 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
   pt("<label class='form-check-label' for='toggleRandomEvents'>Zufällige "
      "Ereignisse</label>"
      "</div>");
-     // /Ranodm Events
+  // /Ranodm Events
 
-
-       // Zufalls Switch
+  // Zufalls Switch
   pt("<div class='form-check form-switch'>"
-     "<input class='form-check-input' type='checkbox' name='toggleRandomChaos'  "
+     "<input class='form-check-input' type='checkbox' name='toggleRandomChaos' "
+     " "
      "value='1' role='switch' "
      "id='toggleRandomChaos' onchange='sendCheckbox(this, false)'");
 
@@ -175,7 +177,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     pt(">");
   }
 
-  pt("<label class='form-check-label' for='toggleRandomChaos'>Startzustand</label>"
+  pt("<label class='form-check-label' for='initialState'>Startzustand</label>"
      "</div>");
 
   pt("<div class='row'>");
@@ -184,10 +186,12 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   pt("  </div>");
   pt("  <div class='col d-flex justify-content-end'>");
   pt("<input type='range' min='0' max='4095' "
-     "name='channelValue' value='");
+     "name='channelBrightness' value='");
   pt(readUint16tForChannelFromEepromBuffer(channelIdToEdit,
                                            MEM_SLOT_BRIGHTNESS));
-  pn("'>");
+  pn("' onchange='onBrightnessValueChanged(this.value, ");
+  pn(channelIdToEdit);
+  pn(")'>");
   pt("  </div>");
   pt("</div>");
 
@@ -554,11 +558,11 @@ void renderHeadJavascript(WiFiClient client) {
      "       },"
      "       body: dataString"
      "   });"
-     "}"
+     "} "
+
      "function sendCheckbox(checkbox, reloadAfterRequest) {"
      "var dataString = encodeURIComponent(checkbox.name) + '=' + "
      "encodeURIComponent(checkbox.checked ? 1 : 0);"
-     "console.log(dataString);"
      "fetch('/', {"
      "    method: 'POST',"
      "    headers: {"
@@ -567,11 +571,27 @@ void renderHeadJavascript(WiFiClient client) {
      "    body: dataString"
      "})"
      ".then(response => {"
-     " if (reloadAfterRequest) {"
-     " window.location.href = '/'; "
-     " }"
+     "  if (reloadAfterRequest) {"
+     "    window.location.href = '/'; "
+     "  }"
      "})"
+
+     "} "
+     "function onBrightnessValueChanged(value, channelId) {"
+     "    var dataString = 'testBrightness=1&' + "
+     "encodeURIComponent('channelBrightness') + '=' + "
+     "encodeURIComponent(value) + '&' + encodeURIComponent('channelId') + '=' "
+     "+ "
+     "encodeURIComponent(channelId);"
+     "    fetch('/', {"
+     "        method: 'POST',"
+     "        headers: {"
+     "            'Content-Type': 'application/x-www-form-urlencoded'"
+     "       },"
+     "        body: dataString"
+     "    });"
      "}"
+
      "</script>");
 }
 
@@ -581,7 +601,8 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
                    uint16_t anchorChannelId, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
-                   bool toggleRandomChaos, bool toggleRandomEvents, uint16_t channelIdToEdit) {
+                   bool toggleRandomChaos, bool toggleRandomEvents,
+                   uint16_t channelIdToEdit) {
 
   // Send a standard HTTP response header
   pn("HTTP/1.1 200 OK");

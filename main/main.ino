@@ -96,11 +96,11 @@ void replyToClientWithSuccess(WiFiClient client) {
 }
 
 void applyValue(int channel, uint16_t brightness) {
-  setChannelValue(channel, brightness);
+  setChannelBrightness(channel, brightness);
   commandLinkedChannel(channel, brightness, 0, 5);
 }
 
-void setChannelValue(int channel, uint16_t brightness) {
+void setChannelBrightness(int channel, uint16_t brightness) {
   int boardIndex = getBoardIndexForChannel(channel);
   int subAddress = getBoardSubAddressForChannel(channel);
 
@@ -180,7 +180,29 @@ void processRequest(WiFiClient client) {
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;
 
+      // Reload old brigthness
+      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+      uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
+          channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
+
+      setChannelBrightness(channelIdAsNumber, originalBrightness);
+
       shouldRerender = true;
+    }
+
+    if (isKeyInData(m_pageBuffer, "testBrightness")) {
+      // User changed brightness on edit channel form
+      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+      char channelBrightnessBuffer[5] = "0";
+      getValueFromData(m_pageBuffer,
+                       "channelBrightness=", channelBrightnessBuffer, 5);
+      uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+
+      setChannelBrightness(channelIdAsNumber, channelBrightness);
     }
 
     if (isKeyInData(m_pageBuffer, "toggleOneBasedAddresses")) {
@@ -343,8 +365,9 @@ void processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer, 21);
       urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, 20);
 
-      char channelValueBuffer[5] = "0";
-      getValueFromData(m_pageBuffer, "channelValue=", channelValueBuffer, 5);
+      char channelBrightnessBuffer[5] = "0";
+      getValueFromData(m_pageBuffer,
+                       "channelBrightness=", channelBrightnessBuffer, 5);
 
       char initialStateBuffer[2] = "0";
       getValueFromData(m_pageBuffer, "initialState=", initialStateBuffer, 2);
@@ -389,11 +412,11 @@ void processRequest(WiFiClient client) {
       Serial.print(" got startAddress ");
       Serial.println(startAddress);
 
-      uint16_t channelValue = atoi(channelValueBuffer);
+      uint16_t channelBrightness = atoi(channelBrightnessBuffer);
 
       writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
-      writeUint16tForChannelToEepromBuffer(channelIdAsNumber,
-                                           MEM_SLOT_BRIGHTNESS, channelValue);
+      writeUint16tForChannelToEepromBuffer(
+          channelIdAsNumber, MEM_SLOT_BRIGHTNESS, channelBrightness);
 
       writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON,
                                 randomOn);
@@ -416,7 +439,7 @@ void processRequest(WiFiClient client) {
             channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
       }
 
-      applyValue(channelIdAsNumber, channelValue);
+      applyValue(channelIdAsNumber, channelBrightness);
 
       writePageIntegrity(channelIdAsNumber + 1);
       writePageFromBufferToEeprom(channelIdAsNumber + 1);
@@ -499,7 +522,7 @@ void commandLinkedChannel(uint16_t commandingChannelId, uint16_t brightness,
 
       if (linkedChannelId == commandingChannelId) {
 
-        setChannelValue(i, brightness);
+        setChannelBrightness(i, brightness);
 
         commandLinkedChannel(i, brightness, depth + 1, maxDepth);
       }
