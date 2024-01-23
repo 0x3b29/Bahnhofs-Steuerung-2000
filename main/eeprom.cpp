@@ -33,11 +33,10 @@ void writeToEeprom(uint16_t writeAddress, uint8_t *data, uint8_t length) {
   delay(20);
 }
 
-
 void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value) {
-  uint8_t data[2];                // Create a byte array to hold the uint16_t value
-  data[0] = (value >> 8) & 0xFF;  // Extract the high byte
-  data[1] = value & 0xFF;         // Extract the low byte
+  uint8_t data[2]; // Create a byte array to hold the uint16_t value
+  data[0] = (value >> 8) & 0xFF; // Extract the high byte
+  data[1] = value & 0xFF;        // Extract the low byte
 
   writeToEepromBuffer(writeAddress, data, 2);
 }
@@ -68,7 +67,6 @@ void readChannelNameFromEepromBufferToChannelNameBuffer(int channel) {
   m_channelNameBuffer[21] = '\0';
 }
 
-
 void writeChannelNameFromChannelNameBufferToEepromBuffer(int channel) {
   uint16_t startAddress = (channel + 1) * 64;
   writeToEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer, 21);
@@ -84,7 +82,6 @@ void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
   int startAddress = (channel + 1) * 64 + memorySlot;
   writeUInt16ToEepromBuffer(startAddress, channelValue);
 }
-
 
 uint16_t readUint16tForChannelFromEepromBuffer(int channel, int memorySlot) {
   int startAddress = (channel + 1) * 64 + memorySlot;
@@ -112,12 +109,11 @@ uint8_t readUint8tForChannelFromEepromBuffer(int channel, int memorySlot) {
   return result;
 }
 
-
 void dumpEepromData(int startAddress, int endAddress) {
-  char lineBufferEEPROM[50];  // Buffer for EEPROM line data
-  char lineBufferMirror[50];  // Buffer for m_eepromBuffer line data
-  char asciiBufferEEPROM[9];  // Buffer for EEPROM ASCII characters
-  char asciiBufferMirror[9];  // Buffer for m_eepromBuffer ASCII characters
+  char lineBufferEEPROM[50]; // Buffer for EEPROM line data
+  char lineBufferMirror[50]; // Buffer for m_eepromBuffer line data
+  char asciiBufferEEPROM[9]; // Buffer for EEPROM ASCII characters
+  char asciiBufferMirror[9]; // Buffer for m_eepromBuffer ASCII characters
   int bufferIndex = 0;
 
   for (int i = startAddress; i <= endAddress; i++) {
@@ -137,11 +133,11 @@ void dumpEepromData(int startAddress, int endAddress) {
         bufferIndex = 0;
       }
       if (i != startAddress && (i - startAddress) % PAGE_SIZE == 0) {
-        Serial.println();  // Newline to separate pages
+        Serial.println(); // Newline to separate pages
       }
       sprintf(lineBufferEEPROM,
-              "%04X: ", i);               // Start a new line for EEPROM data
-      strcpy(lineBufferMirror, "     ");  // Align m_eepromBuffer data
+              "%04X: ", i);              // Start a new line for EEPROM data
+      strcpy(lineBufferMirror, "     "); // Align m_eepromBuffer data
     }
 
     uint8_t byteValueEEPROM = 0;
@@ -152,16 +148,16 @@ void dumpEepromData(int startAddress, int endAddress) {
     sprintf(hexBuffer, "%02X ", byteValueEEPROM);
     strcat(lineBufferEEPROM, hexBuffer);
     asciiBufferEEPROM[bufferIndex] =
-      (byteValueEEPROM >= 32 && byteValueEEPROM <= 126) ? byteValueEEPROM
-                                                        : '.';
+        (byteValueEEPROM >= 32 && byteValueEEPROM <= 126) ? byteValueEEPROM
+                                                          : '.';
 
     // Add HEX and ASCII for m_eepromBuffer data
     sprintf(hexBuffer, "%02X ", m_eepromBuffer[i]);
     strcat(lineBufferMirror, hexBuffer);
     asciiBufferMirror[bufferIndex] =
-      (m_eepromBuffer[i] >= 32 && m_eepromBuffer[i] <= 126)
-        ? m_eepromBuffer[i]
-        : '.';
+        (m_eepromBuffer[i] >= 32 && m_eepromBuffer[i] <= 126)
+            ? m_eepromBuffer[i]
+            : '.';
 
     bufferIndex++;
 
@@ -208,8 +204,6 @@ void clearEeprom() {
   Serial.println("Erasing eeprom finished");
 }
 
-
-
 void loadPageFromEepromToBuffer(int page) {
   uint16_t readAddress = page * PAGE_SIZE;
 
@@ -242,7 +236,8 @@ bool isPageIntegrityGood(uint8_t page) {
     crc.add(m_eepromBuffer[i]);
   }
 
-  uint16_t savedCrc = ((uint16_t)m_eepromBuffer[pageCrcHighByteAddress] << 8) | m_eepromBuffer[pageCrcLowByteAddress];
+  uint16_t savedCrc = ((uint16_t)m_eepromBuffer[pageCrcHighByteAddress] << 8) |
+                      m_eepromBuffer[pageCrcLowByteAddress];
   uint16_t calculatedCrc = crc.getCRC();
 
   if (savedCrc == calculatedCrc) {
@@ -291,7 +286,8 @@ void loadPageAndCheckIntegrity(int page) {
     writePageIntegrity(page);
 
     if (isPageIntegrityGood(page) == false) {
-      Serial.println("Error: page integrety still bad. This is probably a bug.");
+      Serial.println(
+          "Error: page integrety still bad. This is probably a bug.");
     } else {
       writePageFromBufferToEeprom(page);
     }
