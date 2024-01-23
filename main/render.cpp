@@ -133,7 +133,8 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
     pt(">");
   }
 
-  pt("<label class='form-check-label' for='togglePropagateEvents'>Verlinkungen "
+  pt("<label class='form-check-label' "
+     "for='togglePropagateEvents'>Verknüpfungen "
      "aktiv"
      "</label>"
      "</div>");
@@ -763,7 +764,7 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
      "</div></div></div>"
      "<div class='h6 mt-3 mb-3 d-flex justify-content-center' "
      "style=\"font-family: 'Grape Nuts', bold; "
-     "font-size: large;\">with ♥ by olivier.berlin</div>"
+     "font-size: large;\">made with ♥ by olivier.berlin</div>"
      "<script>"
      "document.addEventListener('DOMContentLoaded', function() {"
      "  var navigationTag = document.getElementById('navigateTo');"
