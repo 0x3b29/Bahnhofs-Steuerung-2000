@@ -1,9 +1,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <ArduinoOTA.h>
-#include <SPI.h>
 #include <WiFiNINA.h>
 #include <WiFiServer.h>
-
 #include "eeprom.h"
 #include "helpers.h"
 #include "main.h"
