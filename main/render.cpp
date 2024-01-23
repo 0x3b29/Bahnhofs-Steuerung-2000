@@ -531,8 +531,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
        "  </div>");
   }
 
-  pn("  </div>"
-     "<hr class='mb-3 mt-3'/>");
+  pn("  </div>");
 }
 
 void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
@@ -588,8 +587,7 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
      " </div>");
   // ROW END
 
-  pn("  </div>"
-     "<hr class='mb-1 mt-1'/>");
+  pn("  </div>");
 }
 
 void renderHeadJavascript(WiFiClient client) {
@@ -678,13 +676,13 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
   renderHeadJavascript(client);
 
   pn("</head>"
-     "<body>"
-     "<div class='container'>"
+     "<body style='min-height:100vh'>"
+     "<div class='container' style='min-height:93vh'>"
      "<div class='row justify-content-center'>"
      "<div class='col col-12 col-sm-10 col-md-8 col-lg-6'>"
 
      "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; "
-     "font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
+     "font-size: 200%;\">Bahnhofs Steuerung 2000</div>"
 
      "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
 
@@ -723,19 +721,30 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
     }
 
     pn("<div>");
+
     for (int channelId = 0; channelId < numChannels; channelId++) {
       if (toggleCompactDisplay) {
         renderChannelDetailCompact(client, toggleOneBasedAddresses, channelId);
       } else {
         renderChannelDetail(client, toggleOneBasedAddresses, channelId);
       }
+
+      if (channelId != numChannels - 1) {
+        if (toggleCompactDisplay) {
+          pn("<hr class='mb-1 mt-1'/>");
+        } else {
+          pn("<hr class='mb-3 mt-3'/>");
+        }
+      }
     }
     pn("</div>");
   }
 
-  pn("</form>");
-
-  pn("</div></div></div>"
+  pn("</form>"
+     "</div></div></div>"
+     "<div class='h6 mt-3 mb-3 d-flex justify-content-center' "
+     "style=\"font-family: 'Grape Nuts', bold; "
+     "font-size: large;\">with ♥ by olivier.berlin</div>"
      "<script>"
      "document.addEventListener('DOMContentLoaded', function() {"
      "  var navigationTag = document.getElementById('navigateTo');"
