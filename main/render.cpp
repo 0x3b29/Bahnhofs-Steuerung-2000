@@ -1,7 +1,8 @@
 #include "render.h"
-#include <WiFiNINA.h>
 #include "eeprom.h"
 #include "helpers.h"
+#include "logo.h"
+#include <WiFiNINA.h>
 
 void renderWebPage(WiFiClient client, bool foundRecursion,
                    bool renderWithOptionsVisible,
@@ -20,7 +21,7 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
   // Output the HTML Web Page
   pn("<!DOCTYPE html>");
 
-  pn("<html>"
+  pt("<html>"
      "<head>"
      "<meta charset='UTF-8'>"
      "<meta name='viewport' content='width=device-width, "
@@ -42,7 +43,32 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
      "<div class='col col-12 col-sm-10 col-md-8 col-lg-6'>"
      "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; "
      "font-size: xx-large;\">Bahnhofs Steuerung 2000</div>"
-     "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
+     "<svg height='210' width='400'>"
+     "<path d='");
+
+  int length = strlen(logo);
+  int chunkSize = 2048;
+  char buffer[chunkSize + 1];
+
+  for (int i = 0; i < length; i += chunkSize) {
+    Serial.print("Printing chunk ");
+    Serial.println(i);
+    // Calculate the number of characters to copy in this chunk
+    int copyLength = (i + chunkSize > length) ? (length - i) : chunkSize;
+
+    // Copy the chunk into the buffer
+    strncpy(buffer, logo + i, copyLength);
+
+    // Add a null terminator to the end of the copied chunk
+    buffer[copyLength] = '\0';
+
+    pt(buffer);
+  }
+
+  pt("' />"
+     "</svg>"
+     "<form id='myForm' action='/' method='POST' "
+     "accept-charset='UTF-8'>");
 
   if (foundRecursion) {
     pt("<div class='pb-3'><span class='text-danger'>Achtung: Schleife oder zu "
