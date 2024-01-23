@@ -4,10 +4,9 @@
 #include <WiFiNINA.h>
 
 void renderOptions(WiFiClient client, uint16_t numChannels,
-                   bool toggleOneBasedAddresses, bool toggleForceAllOff,
-                   bool toggleForceAllOn, bool toggleRandom,
-                   uint16_t channelIdToEdit,
-                   char channelNameBuffer[MAX_CHANNEL_NAME_LENGTH]) {
+                   bool toggleOneBasedAddresses, bool toggleCompactDisplay,
+                   bool toggleForceAllOff, bool toggleForceAllOn,
+                   bool toggleRandom, uint16_t channelIdToEdit) {
   pn("<div class='h3'>Optionen</div>");
 
   // Max value = Max number of boards (62 are max, but -1 because eeprom
@@ -43,7 +42,25 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
      "for='toggleOneBasedAddresses'>Adressierung "
      "startet bei 1</label>");
   pt("</div>");
-  // /Alles Aus Switch
+  // /1 Indexierte Adressen
+
+  // Kompakte Übersicht
+  pt("<div class='form-check form-switch'>");
+  pt("<input class='form-check-input' type='checkbox' "
+     "name='toggleCompactDisplay' "
+     "value='1'  id='toggleCompactDisplay' onchange='sendCheckbox(this, "
+     "true)'");
+
+  if (toggleCompactDisplay == true) {
+    pn(" checked>");
+  } else {
+    pt(">");
+  }
+
+  pt("<label class='form-check-label' "
+     "for='toggleCompactDisplay'>Kompakte Übersicht</label>");
+  pt("</div>");
+  // / Kompakte Übersicht
 
   // Alles Aus Switch
   pt("<div class='form-check form-switch'>");
@@ -105,8 +122,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
 
 void renderEditChannel(WiFiClient client, bool renderAnchor,
                        uint16_t anchorChannelId, uint16_t numChannels,
-                       bool toggleOneBasedAddresses, uint16_t channelIdToEdit,
-                       char channelNameBuffer[MAX_CHANNEL_NAME_LENGTH]) {
+                       bool toggleOneBasedAddresses, uint16_t channelIdToEdit) {
   pt("<h3>Kanal ");
   pt(toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit);
   pn(" Bearbeiten</h3>");
@@ -122,7 +138,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   pt("  <div class='col d-flex justify-content-end'>");
   pt("<input type='text' maxlength='20' size='20' "
      "name='channelName' value='");
-  pt(channelNameBuffer);
+  pt(m_channelNameBuffer);
   pn("'>");
   pt("  </div>");
   pt("</div>");
@@ -450,6 +466,65 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
      "<hr class='mb-3 mt-3'/>");
 }
 
+void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
+                                uint16_t channelId) {
+  readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
+
+  int boardIndex = getBoardIndexForChannel(channelId);
+  int subAddress = getBoardSubAddressForChannel(channelId);
+
+  pt("<div id='channel-");
+  pt(channelId);
+  pn("' class='pl-1 pr-1'>"
+     // ROW START
+     "  <div class='row'>"
+     "      <div class='col-9 d-flex align-items-center'>"
+
+     //  FIRST COL
+
+  );
+  if (strcmp(m_channelNameBuffer, "") == false) {
+    pt("Kanal ");
+    pt(toggleOneBasedAddresses ? channelId + 1 : channelId);
+    pt(", "
+       "Board ");
+    pt(toggleOneBasedAddresses ? boardIndex + 1 : boardIndex);
+    pt(", Pin ");
+    pt(toggleOneBasedAddresses ? subAddress + 1 : subAddress);
+  } else {
+    pt("<span>");
+    pt(m_channelNameBuffer);
+    pt("</span >");
+  }
+  //  / FIRST COL
+
+  pt("  </div>"
+     "    <div class='col-3'>"
+
+     // SECOND COL
+     "      <div class='d-flex justify-content-end'>"
+     "        <button class='btn text-warning'  "
+     "onclick=\"sendValue('turnChannelOn', "
+     "'");
+  pt(channelId);
+  pt("')\" >⛭</button >"
+     "        <button class='btn'  onclick=\"sendValue('turnChannelOff', '");
+  pt(channelId);
+  pt("')\" >⛭</button >"
+     "        <button class='btn' type='submit' name='editChannel' value='");
+  pt(channelId);
+  pt("'>🖊</button >"
+     "     </div>"
+     // / SECOND COL
+
+     "   </div>"
+     " </div>");
+  // ROW END
+
+  pn("  </div>"
+     "<hr class='mb-1 mt-1'/>");
+}
+
 void renderHeadJavascript(WiFiClient client) {
   pn("<script>"
      "function sendValue(buttonName, buttonValue) {"
@@ -488,10 +563,9 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
                    bool renderWithOptionsVisible,
                    bool renderWithEditChannelVisible, bool renderAnchor,
                    uint16_t anchorChannelId, uint16_t numChannels,
-                   bool toggleOneBasedAddresses, bool toggleForceAllOff,
-                   bool toggleForceAllOn, bool toggleRandom,
-                   uint16_t channelIdToEdit,
-                   char channelNameBuffer[MAX_CHANNEL_NAME_LENGTH]) {
+                   bool toggleOneBasedAddresses, bool toggleCompactDisplay,
+                   bool toggleForceAllOff, bool toggleForceAllOn,
+                   bool toggleRandom, uint16_t channelIdToEdit) {
 
   // Send a standard HTTP response header
   pn("HTTP/1.1 200 OK");
@@ -516,7 +590,7 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
      "href='https://fonts.googleapis.com/css2?family=Grape+Nuts&display=swap' "
      "rel='stylesheet'>"
      "<link rel='icon' href='data:;base64,iVBORw0KGgo='>");
-  
+
   renderHeadJavascript(client);
 
   pn("</head>"
@@ -540,35 +614,36 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
        "die maximale Verschachtelungstiefe!</span></div>");
   }
 
-  if (renderWithOptionsVisible == true) {
-    renderOptions(client, numChannels, toggleOneBasedAddresses,
-                  toggleForceAllOff, toggleForceAllOn, toggleRandom,
-                  channelIdToEdit, &channelNameBuffer[MAX_CHANNEL_NAME_LENGTH]);
-  }
-
   if (renderWithEditChannelVisible == true) {
     renderEditChannel(client, renderAnchor, anchorChannelId, numChannels,
-                      toggleOneBasedAddresses, channelIdToEdit,
-                      &channelNameBuffer[MAX_CHANNEL_NAME_LENGTH]);
+                      toggleOneBasedAddresses, channelIdToEdit);
+  } else {
+    renderOptions(client, numChannels, toggleOneBasedAddresses,
+                  toggleCompactDisplay, toggleForceAllOff, toggleForceAllOn,
+                  toggleRandom, channelIdToEdit);
+
+    pn("<br>");
+
+    pn("<h3>Übersicht der Kanäle</h3>");
+
+    if (renderAnchor) {
+      pt("<div id='navigateTo' data-anchor='#channel-");
+      pt(anchorChannelId);
+      pn("' "
+         "style='display:none;'></div>");
+    }
+
+    pn("<div>");
+    for (int channelId = 0; channelId < numChannels; channelId++) {
+      if (toggleCompactDisplay) {
+        renderChannelDetailCompact(client, toggleOneBasedAddresses, channelId);
+      } else {
+        renderChannelDetail(client, toggleOneBasedAddresses, channelId);
+      }
+    }
+    pn("</div>");
   }
 
-  pn("<br>");
-
-  pn("<h3>Übersicht der Kanäle</h3>");
-
-  if (renderAnchor) {
-    pt("<br>"
-       "<div id='navigateTo' data-anchor='#channel-");
-    pt(anchorChannelId);
-    pn("' "
-       "style='display:none;'></div>");
-  }
-
-  pn("<div>");
-
-  for (int channelId = 0; channelId < numChannels; channelId++) {
-    renderChannelDetail(client, toggleOneBasedAddresses, channelId);
-  }
   pn("</form>");
 
   pn("</div></div></div>"

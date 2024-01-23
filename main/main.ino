@@ -5,9 +5,9 @@
 #include <WiFiServer.h>
 
 #include "eeprom.h"
+#include "helpers.h"
 #include "main.h"
 #include "render.h"
-#include "helpers.h"
 
 // If you check out this project, this file does not exist.
 // You need to create a copy of example_arduino_secrets.h and rename it to
@@ -27,6 +27,7 @@ uint8_t m_toggleRandom = false;
 uint8_t m_toggleForceAllOff = false;
 uint8_t m_toggleForceAllOn = false;
 uint8_t m_toggleOneBasedAddresses = false;
+uint8_t m_toggleCompactDisplay = false;
 
 char m_channelIdBuffer[4] = "0";
 
@@ -188,6 +189,17 @@ void processRequest(WiFiClient client) {
       m_toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
       writeToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
                           &m_toggleOneBasedAddresses, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleCompactDisplay")) {
+      char toggleCompactDisplayBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleCompactDisplay=", toggleCompactDisplayBuffer, 2);
+      m_toggleCompactDisplay = atoi(toggleCompactDisplayBuffer);
+      writeToEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, &m_toggleCompactDisplay, 1);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -406,8 +418,8 @@ void processRequest(WiFiClient client) {
                     m_renderNextPageWithOptionsVisible,
                     m_renderNextPageWithChannelEditVisible, m_renderAnchor,
                     m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
-                    m_toggleForceAllOff, m_toggleForceAllOn, m_toggleRandom,
-                    m_channelIdToEdit, m_channelNameBuffer);
+                    m_toggleCompactDisplay, m_toggleForceAllOff,
+                    m_toggleForceAllOn, m_toggleRandom, m_channelIdToEdit);
     } else {
       replyToClientWithSuccess(client);
     }
@@ -418,12 +430,11 @@ void processRequest(WiFiClient client) {
     // For get requests, we always want to render the page to the client if its
     // not for the favicon
 
-      renderWebPage(client, m_foundRecursion,
-                    m_renderNextPageWithOptionsVisible,
-                    m_renderNextPageWithChannelEditVisible, m_renderAnchor,
-                    m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
-                    m_toggleForceAllOff, m_toggleForceAllOn, m_toggleRandom,
-                    m_channelIdToEdit, m_channelNameBuffer);
+    renderWebPage(client, m_foundRecursion, m_renderNextPageWithOptionsVisible,
+                  m_renderNextPageWithChannelEditVisible, m_renderAnchor,
+                  m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
+                  m_toggleCompactDisplay, m_toggleForceAllOff,
+                  m_toggleForceAllOn, m_toggleRandom, m_channelIdToEdit);
   }
 }
 
@@ -434,6 +445,7 @@ void loadOptionsToMemberVariables() {
   readFromEepromBuffer(MEM_SLOT_RANDOM, &m_toggleRandom, 1);
   readFromEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES, &m_toggleOneBasedAddresses,
                        1);
+  readFromEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, &m_toggleCompactDisplay, 1);
 }
 
 bool shouldInvokeEvent(uint8_t freq) {
