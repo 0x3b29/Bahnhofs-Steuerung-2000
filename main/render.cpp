@@ -552,18 +552,33 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
 
   );
   if (strcmp(m_channelNameBuffer, "") == false) {
-    pt("<span class='text-muted'>");
+
+    pt("<div class='text-muted'>");
+
     pt(toggleOneBasedAddresses ? channelId + 1 : channelId);
-    pt(". </span> &nbsp;Board&nbsp;");
+    pt(". </div> <button class='btn p-0 ps-1 flex-fill align-items-start' "
+       "type='submit' "
+       "name='editChannel' "
+       "value='");
+    pt(channelId);
+    pt("'><p class='text-start m-0'>Board");
     pt(toggleOneBasedAddresses ? boardIndex + 1 : boardIndex);
     pt(", Pin ");
     pt(toggleOneBasedAddresses ? subAddress + 1 : subAddress);
+
+    pt("</p></button></span>");
+
   } else {
-    pt("<span><span class='text-muted'>");
+    pt("<div class='text-muted'>");
     pt(toggleOneBasedAddresses ? channelId + 1 : channelId);
-    pt(". </span>");
+    pt(". </div> <button class='btn p-0 ps-1 flex-fill align-items-start' "
+       "type='submit' "
+       "name='editChannel' "
+       "value='");
+    pt(channelId);
+    pt("'><p class='text-start m-0'>");
     pt(m_channelNameBuffer);
-    pt("</span >");
+    pt("</p></button></span >");
   }
   //  / FIRST COL
 
