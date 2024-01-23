@@ -128,7 +128,7 @@ void setChannelBrightness(int channel, uint16_t brightness) {
 
 void applyInitialState() {
   m_binaryCount = 0;
-  
+
   for (int i = 0; i < m_numChannels; i++) {
 
     bool initialState =
@@ -258,6 +258,8 @@ void processRequest(WiFiClient client) {
 
       setChannelBrightness(channelIdAsNumber, originalBrightness);
 
+      m_renderAnchor = true;
+      m_anchorChannelId = channelIdAsNumber;
       shouldRerender = true;
     }
 
