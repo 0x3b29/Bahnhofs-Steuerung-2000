@@ -549,68 +549,60 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
   int boardIndex = getBoardIndexForChannel(channelId);
   int subAddress = getBoardSubAddressForChannel(channelId);
 
-  pt("<div id='channel-");
-  pt(channelId);
-  pn("' class='pl-1 pr-1'>"
-     // ROW START
-     "  <div class='row'>"
-     "      <div class='col-9 d-flex align-items-center'>"
+  int boardIndexToDisplay =
+      toggleOneBasedAddresses ? boardIndex + 1 : boardIndex;
 
-     //  FIRST COL
+  int boardSubAddressToDisplay =
+      toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
-  );
-  if (strcmp(m_channelNameBuffer, "") == false) {
+  uint16_t brightness =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+  uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
-    pt("<div class='text-muted'>");
+  char outputBuffer[1024];
+  char channelDetailBuffer[] =
+      "<div id='channel-%d' class='pl-1 pr-1'>"
+      "  <div class='d-flex g-0 align-items-center'>"
+      "    <div class='d-flex flex-fill align-items-center'>"
+      "      <div class='text-muted'>"
+      "        %d."
+      "      </div>"
+      "      <button class='btn p-0 ps-1 flex-fill align-items-start' "
+      "type='submit' name='editChannel' value='%d'>"
+      "        <p class='text-start m-0'>"
+      "          %s"
+      "        </p>"
+      "      </button>"
+      "      <div class='text-muted'>"
+      "        %d%%"
+      "      </div>"
+      "    </div>"
+      "    <div class='d-flex'>"
+      "      <button class='btn text-warning px-1 px-sm-2 px-md-3' "
+      "onclick=\"sendvalue('turnChannelOn','%d')\">⛭</button>"
+      "      <button class='btn px-1 px-sm-2 px-md-3' "
+      "onclick=\"sendvalue('turnChannelOff','%d')\">⛭</button>"
+      "    </div>"
+      "  </div>"
+      "</div>";
 
-    pt(toggleOneBasedAddresses ? channelId + 1 : channelId);
-    pt(". </div> <button class='btn p-0 ps-1 flex-fill align-items-start' "
-       "type='submit' "
-       "name='editChannel' "
-       "value='");
-    pt(channelId);
-    pt("'><p class='text-start m-0'>Board");
-    pt(toggleOneBasedAddresses ? boardIndex + 1 : boardIndex);
-    pt(", Pin ");
-    pt(toggleOneBasedAddresses ? subAddress + 1 : subAddress);
+  uint16_t channelIdToDisplay =
+      toggleOneBasedAddresses ? channelId + 1 : channelId;
 
-    pt("</p></button></span>");
+  char channelNameToDisplay[MAX_CHANNEL_NAME_LENGTH];
 
+  if (strcmp(m_channelNameBuffer, "")) {
+    strcpy(channelNameToDisplay, m_channelNameBuffer);
   } else {
-    pt("<div class='text-muted'>");
-    pt(toggleOneBasedAddresses ? channelId + 1 : channelId);
-    pt(". </div> <button class='btn p-0 ps-1 flex-fill align-items-start' "
-       "type='submit' "
-       "name='editChannel' "
-       "value='");
-    pt(channelId);
-    pt("'><p class='text-start m-0'>");
-    pt(m_channelNameBuffer);
-    pt("</p></button></span >");
+    sprintf(channelNameToDisplay, "Board %d, Pin %d", boardIndexToDisplay,
+            boardSubAddressToDisplay);
   }
-  //  / FIRST COL
 
-  pt("  </div>"
-     "    <div class='col-3'>"
-     // SECOND COL
-     "      <div class='d-flex justify-content-end'>"
-     "        <button class='btn text-warning'  "
-     "onclick=\"sendValue('turnChannelOn', "
-     "'");
-  pt(channelId);
-  pt("')\" >⛭</button >"
-     "        <button class='btn'  onclick=\"sendValue('turnChannelOff', '");
-  pt(channelId);
-  pt("')\" >⛭</button >"
+  sprintf(outputBuffer, channelDetailBuffer, channelId, channelIdToDisplay,
+          channelId, channelNameToDisplay, brightnessAsPercentage, channelId,
+          channelId);
 
-     "     </div>"
-     // / SECOND COL
-
-     "   </div>"
-     " </div>");
-  // ROW END
-
-  pn("  </div>");
+  pt(outputBuffer);
 }
 
 void renderHeadJavascript(WiFiClient client) {
