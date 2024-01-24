@@ -697,7 +697,7 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
      "<div class='col col-12 col-sm-10 col-md-8 col-lg-6'>"
 
      "<div class='h1 mt-4 mb-3' style=\"font-family: 'Grape Nuts', bold; "
-     "font-size: 200%;\">Bahnhofs Steuerung 2000</div>"
+     "font-size: 195%;\">Bahnhofs Steuerung 2000</div>"
 
      "<form id='myForm' action='/' method='POST' accept-charset='UTF-8'>");
 
