@@ -194,6 +194,12 @@ void renderButtons(WiFiClient client) {
 void renderEditChannel(WiFiClient client, bool renderAnchor,
                        uint16_t anchorChannelId, uint16_t numChannels,
                        bool toggleOneBasedAddresses, uint16_t channelIdToEdit) {
+  uint16_t channelBrightness = readUint16tForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_BRIGHTNESS);
+
+  uint8_t brightnessAsPercentage =
+      (int)(((float)channelBrightness / 4095) * 100);
+
   pt("<h3>Kanal ");
   pt(toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit);
   pn(" Bearbeiten</h3>");
@@ -206,8 +212,8 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   pt("  <div class='col'>");
   pt("Beschreibung");
   pt("  </div>");
-  pt("  <div class='col d-flex justify-content-end'>");
-  pt("<input type='text' maxlength='");
+  pt("  <div class='col d-flex flex-fill justify-content-end'>");
+  pt("<input class='form-control' type='text' maxlength='");
   pt(MAX_CHANNEL_NAME_LENGTH - 1);
   pt("' size='");
   pt(MAX_CHANNEL_NAME_LENGTH - 1);
@@ -218,9 +224,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   pt("  </div>");
   pt("</div>");
 
-  pt("<br>");
-
-  pt("<div class='form-check form-switch'>"
+  pt("<div class='form-check form-switch pt-3'>"
      "<input class='form-check-input' type='checkbox' "
      "name='initialState' value='1' role='switch' id='initialState' "
      "value='1'");
@@ -235,15 +239,17 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   pt("<label class='form-check-label' for='initialState'>Startzustand</label>"
      "</div>");
 
-  pt("<div class='row'>");
+  pt("<div class='row pt-1'>");
   pt("  <div class='col'>");
-  pt("Helligkeit");
+  pt("    <div class='col d-flex'><div>Helligkeit </div><div "
+     "id='rangeAsPercentage' class='ps-1 text-muted'>(");
+  pt(brightnessAsPercentage);
+  pt("%) </div> </div>");
   pt("  </div>");
-  pt("  <div class='col d-flex justify-content-end'>");
-  pt("<input type='range' min='0' max='4095' "
+  pt("  <div class='col-12'>");
+  pt("<input class='form-range' type='range' min='0' max='4095' "
      "name='channelBrightness' value='");
-  pt(readUint16tForChannelFromEepromBuffer(channelIdToEdit,
-                                           MEM_SLOT_BRIGHTNESS));
+  pt(channelBrightness);
   pn("' onchange='onBrightnessValueChanged(this.value, ");
   pn(channelIdToEdit);
   pn(")'>");
@@ -266,11 +272,12 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
      "</div>");
 
   pt("<div class='row'>");
-  pt("  <div class='col'>");
+  pt("  <div class='col d-flex align-items-center'>");
   pt("~ Zufälle/h");
   pt("  </div>");
   pt("  <div class='col d-flex justify-content-end'>");
-  pt("<input type='number' name='frequencyOn' min='0' max='255' value='");
+  pt("<input class='form-control' type='number' name='frequencyOn' min='0' "
+     "max='255' value='");
   pt(readUint8tForChannelFromEepromBuffer(channelIdToEdit,
                                           MEM_SLOT_RANDOM_ON_FREQ));
   pn("'>");
@@ -294,11 +301,12 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
      "</div>");
 
   pt("<div class='row'>");
-  pt("  <div class='col'>");
+  pt("  <div class='col d-flex align-items-center'>");
   pt("~ Zufälle/h");
   pt("  </div>");
   pt("  <div class='col d-flex justify-content-end'>");
-  pt("<input type='number' name='frequencyOff' min='0' max='255' value='");
+  pt("<input class='form-control' type='number' name='frequencyOff' min='0' "
+     "max='255' value='");
   pt(readUint8tForChannelFromEepromBuffer(channelIdToEdit,
                                           MEM_SLOT_RANDOM_OFF_FREQ));
   pn("'>");
@@ -323,9 +331,9 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   pt("  <div class='col'>");
   pt("Gesteuert durch Kanal");
   pt("  </div>");
-  pt("  <div class='col d-flex justify-content-end'>");
+  pt("  <div class='col d-flex align-items-center justify-content-end'>");
 
-  pt("<input type='number' "
+  pt("<input class='form-control' type='number' "
      "name='linkedChannelId' min='");
   pt(toggleOneBasedAddresses ? 1 : 0);
   pt("' max='");
@@ -579,9 +587,9 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
       "    </div>"
       "    <div class='d-flex'>"
       "      <button class='btn text-warning px-1 px-sm-2 px-md-3' "
-      "onclick=\"sendvalue('turnChannelOn','%d')\">⛭</button>"
+      "onclick=\"sendValue('turnChannelOn','%d')\">⛭</button>"
       "      <button class='btn px-1 px-sm-2 px-md-3' "
-      "onclick=\"sendvalue('turnChannelOff','%d')\">⛭</button>"
+      "onclick=\"sendValue('turnChannelOff','%d')\">⛭</button>"
       "    </div>"
       "  </div>"
       "</div>";
@@ -638,6 +646,11 @@ void renderHeadJavascript(WiFiClient client) {
 
      "} "
      "function onBrightnessValueChanged(value, channelId) {"
+
+     "var brightnessAsPercentage = Math.floor((value / 4095) * 100);"
+     "document.getElementById('rangeAsPercentage').textContent = "
+     "'(' + brightnessAsPercentage + '%)';"
+
      "    var dataString = 'testBrightness=1&' + "
      "encodeURIComponent('channelBrightness') + '=' + "
      "encodeURIComponent(value) + '&' + encodeURIComponent('channelId') + '=' "
