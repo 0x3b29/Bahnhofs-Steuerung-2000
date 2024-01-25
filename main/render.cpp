@@ -116,7 +116,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
 </div>
 <!-- Force all lights off -->
 
-<!-- Force all lights 100% -->
+<!-- Force all lights 100%% -->
 <div class="form-check form-switch">
   <input
     class="form-check-input"
@@ -131,7 +131,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
     Alle Kanäle dauerhaft auf 100%%
   </label>
 </div>
-<!-- /Force all lights 100% -->
+<!-- /Force all lights 100%% -->
 
 <!-- Enable random events -->
 <div class="form-check form-switch">
