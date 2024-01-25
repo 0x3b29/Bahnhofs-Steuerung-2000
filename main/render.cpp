@@ -397,186 +397,235 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
 void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
                          uint16_t channelId) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
+  
   uint16_t brightness =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+  uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
   bool initialState =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_INITIAL_STATE);
 
+  uint16_t channelIdToDisplay =
+      toggleOneBasedAddresses ? channelId + 1 : channelId;
+
+  uint8_t boardIndex = getBoardIndexForChannel(channelId);
+  uint8_t subAddress = getBoardSubAddressForChannel(channelId);
+
+  uint8_t boardIndexToDisplay =
+      toggleOneBasedAddresses ? boardIndex + 1 : boardIndex;
+
+  uint8_t boardSubAddressToDisplay =
+      toggleOneBasedAddresses ? subAddress + 1 : subAddress;
+
+  char enabledBuffer[] = "An";
+  char disabledBuffer[] = "Aus";
+
+  char *toggleInitialStateCheckedBuffer =
+      initialState ? enabledBuffer : disabledBuffer;
+
+  // --- Prepare random on events ---
   bool randomOn =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON);
+
   uint8_t randomOnFreq =
       readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON_FREQ);
 
+  char *randomOnEventsEnabledBuffer = randomOn ? enabledBuffer : disabledBuffer;
+
+  char randomOnFrequencyHtmlInputBuffer[] =
+      "  <div class='row'>"
+      "    <div class='col'>"
+      "      <span class='h6'>~Zufälle/h</span>"
+      "    </div>"
+      "    <div class='col'>"
+      "      %d/h"
+      "    </div>"
+      "  </div>";
+
+  char randomOnFrequencyHtmlOutputBuffer[512];
+
+  sprintf(randomOnFrequencyHtmlOutputBuffer, randomOnFrequencyHtmlInputBuffer,
+          randomOnFreq);
+
+  char *randomOnEventsFrequencyHtmlToDisplayBuffer =
+      randomOn ? randomOnFrequencyHtmlOutputBuffer : m_emptyBuffer;
+  // --- /Prepare random on events ---
+
+  // --- Prepare random off events ---
   bool randomOff =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
+
   uint8_t randomOffFreq =
       readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
 
+  char *randomOffEventsEnabledBuffer =
+      randomOff ? enabledBuffer : disabledBuffer;
+
+  char randomOffFrequencyHtmlInputBuffer[] =
+      "  <div class='row'>"
+      "    <div class='col'>"
+      "      <span class='h6'>~Zufälle/h</span>"
+      "    </div>"
+      "    <div class='col'>"
+      "      %d/h"
+      "    </div>"
+      "  </div>";
+
+  char randomOffFrequencyHtmlOutputBuffer[512];
+
+  sprintf(randomOffFrequencyHtmlOutputBuffer, randomOffFrequencyHtmlInputBuffer,
+          randomOffFreq);
+
+  char *randomOffEventsFrequencyHtmlToDisplayBuffer =
+      randomOff ? randomOffFrequencyHtmlOutputBuffer : m_emptyBuffer;
+
+  // --- /Prepare random off events ---
+
+  // --- Prepare linked ---
   bool isLinked =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
-  uint16_t linkedChannel =
+
+  uint16_t linkedChannelId =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINKED_CHANNEL);
 
-  if (toggleOneBasedAddresses) {
-    linkedChannel++;
-  }
+  uint16_t linkedChannelIdToDisplay =
+      toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
 
-  int boardIndex = getBoardIndexForChannel(channelId);
-  int subAddress = getBoardSubAddressForChannel(channelId);
+  char *isChannelLinkedBuffer = isLinked ? enabledBuffer : disabledBuffer;
 
-  pt("<div id='channel-");
-  pt(channelId);
-  pn("' class='pl-1 pr-1'>"
-     // ROW START
-     "  <div class='row'>"
-     "      <div class='col-9'>"
+  char linkedChannelHtmlInputBuffer[] = R"html(
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>
+        Gesteuert durch Kanal
+      </span>
+    </div>
+    <div class='col'>
+      %d
+    </div>
+  </div>
+  )html";
 
-     //  FIRST COL
-     "<span class='h4'>"
-     "Kanal ");
+  char linkedChannelHtmlOutputBuffer[512];
+  sprintf(linkedChannelHtmlOutputBuffer, linkedChannelHtmlInputBuffer,
+          linkedChannelIdToDisplay);
 
-  pt(toggleOneBasedAddresses ? channelId + 1 : channelId);
-  pt(" </span > "
-     "Board ");
-  pt(toggleOneBasedAddresses ? boardIndex + 1 : boardIndex);
-  pt(", Pin ");
-  pt(toggleOneBasedAddresses ? subAddress + 1 : subAddress);
-  //  / FIRST COL
+  char *linkedChannelHtmlToDisplayBuffer =
+      isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
+  // --- /Prepare linked ---
 
-  pt("      </div>"
-     "      <div class='col-3'>"
+  char outputBuffer[4096] = {0};
+  char inputBuffer[] = R"html(
+<div id='channel-%d' class='pl-1 pr-1'>
+  <div class='row'>
+    <div class='col-9'>
+      <span class='h4'>
+        Kanal %d
+      </span > 
+      Board %d, Pin %d
+    </div>
 
-     // SECOND COL
-     "      <div class='d-flex justify-content-end'>"
-     "<button class='btn text-warning'  onclick=\"sendValue('turnChannelOn', "
-     "'");
-  pt(channelId);
-  pt("')\" >⛭</button >"
-     "<button class='btn'  onclick=\"sendValue('turnChannelOff', '");
-  pt(channelId);
-  pt("')\" >⛭</button >"
+    <div class='col-3'>
+      <div class='d-flex justify-content-end'>
+        <button class='btn text-warning' onclick="sendValue('turnChannelOn', '%d')">
+          ⛭
+        </button>
+        <button class='btn' onclick="sendValue('turnChannelOff', '%d')">
+          ⛭
+        </button>
+        <button class='btn' type='submit' name='editChannel' value='%d'>
+          🖊
+        </button >
+      </div>
+    </div>
+  </div>
 
-     "<button class='btn' type='submit' name='editChannel' value='");
-  pt(channelId);
-  pt("'>🖊</button >"
-     "      </div>"
-     // / SECOND COL
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>
+        Beschreibung
+      </span>
+    </div>
+    <div class='col font-weight-bold'> 
+      <b>
+        %s
+      </b>
+    </div>
+  </div>
 
-     "      </div>"
-     "  </div>"
-     // ROW END
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>
+        Startzustand
+      </span>
+    </div>
+    <div class='col'>
+      %s
+    </div>
+  </div>
 
-     "  <div class='row'>"
-     "    <div class='col'>"
-     "<span class='h6'>Beschreibung</span>"
-     "    </div>"
-     "    <div class='col font-weight-bold'> <b>");
-  pt(m_channelNameBuffer);
-  pt("    </b></div>"
-     "  </div>"
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>
+        Helligkeit
+      </span>
+    </div>
+    <div class='col'>
+      %d%%
+    </div>
+  </div>
 
-     "  <div class='row'>"
-     "    <div class='col'>"
-     "<span class='h6'>Startzustand</span>"
-     "    </div>"
-     "    <div class='col'>");
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>
+        Zufälliges Einschalten
+      </span>
+    </div>
+    <div class='col'>
+      %s
+    </div>
+  </div>
 
-  if (initialState) {
-    pt("An");
-  } else {
-    pt("Aus");
-  }
+%s
 
-  pt("    </div>"
-     "  </div>"
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>
+        Zufälliges Ausschalten
+      </span>
+    </div>
+    <div class='col'>
+      %s
+    </div>
+  </div>
 
-     "  <div class='row'>"
-     "    <div class='col'>"
-     "<span class='h6'>Helligkeit</span>"
-     "    </div>"
-     "    <div class='col'>");
-  pt((int)(((float)brightness / 4095) * 100));
-  pt("%"
+%s
 
-     "    </div>"
-     "  </div>"
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>
+        Verknüpft
+      </span>
+    </div>
+    <div class='col'>
+      %s
+    </div>
+  </div>
 
-     "  <div class='row'>"
-     "    <div class='col'>"
-     "      <span class='h6'>Zufälliges Einschalten</span>"
-     "    </div>"
-     "    <div class='col'>");
-  if (randomOn) {
-    pn("      Ja");
-  } else {
-    pn("      Nein");
-  }
-  pn("    </div>"
-     "  </div>");
+%s
 
-  if (randomOn) {
-    pn("  <div class='row'>"
-       "    <div class='col'>"
-       "      <span class='h6'>~Zufälle/h</span>"
-       "    </div>"
-       "    <div class='col'>");
-    pt(randomOnFreq);
-    pn("/h"
-       "    </div>"
-       "  </div>");
-  }
+</div>
+)html";
 
-  pn("  <div class='row'>"
-     "    <div class='col'>"
-     "      <span class='h6'>Zufälliges Ausschalten</span>"
-     "    </div>"
-     "    <div class='col'>");
-  if (randomOff) {
-    pn("      Ja");
-  } else {
-    pn("      Nein");
-  }
-  pn("    </div>"
-     "  </div>");
+  sprintf(outputBuffer, inputBuffer, channelId, channelIdToDisplay,
+          boardIndexToDisplay, boardSubAddressToDisplay, channelId, channelId,
+          channelId, m_channelNameBuffer, toggleInitialStateCheckedBuffer,
+          brightnessAsPercentage, randomOnEventsEnabledBuffer,
+          randomOnEventsFrequencyHtmlToDisplayBuffer, randomOffEventsEnabledBuffer,
+          randomOffEventsFrequencyHtmlToDisplayBuffer, isChannelLinkedBuffer,
+          linkedChannelHtmlToDisplayBuffer);
 
-  if (randomOff) {
-    pn("  <div class='row'>"
-       "    <div class='col'>"
-       "      <span class='h6'>~Zufälle/h</span>"
-       "    </div>"
-       "    <div class='col'>");
-    pt(randomOffFreq);
-    pn("/h"
-       "    </div>"
-       "  </div>");
-  }
-
-  pn("  <div class='row'>"
-     "    <div class='col'>"
-     "      <span class='h6'>Verknüpft</span>"
-     "    </div>"
-     "    <div class='col'>");
-  if (isLinked) {
-    pn("      Ja");
-  } else {
-    pn("      Nein");
-  }
-  pn("    </div>"
-     "  </div>");
-
-  if (isLinked) {
-    pn("  <div class='row'>"
-       "    <div class='col'>"
-       "      <span class='h6'>Gesteuert durch Kanal</span>"
-       "    </div>"
-       "    <div class='col'>");
-    pn(linkedChannel);
-    pn("    </div>"
-       "  </div>");
-  }
-
-  pn("  </div>");
+  pt(outputBuffer);
 }
 
 void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
@@ -721,7 +770,8 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
      "rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65' "
      "crossorigin='anonymous'/>\n"
      "  <link "
-     "href='https://fonts.googleapis.com/css2?family=Grape+Nuts&display=swap' "
+     "href='https://fonts.googleapis.com/"
+     "css2?family=Grape+Nuts&display=swap' "
      "rel='stylesheet'>\n"
      "  <link rel='icon' href='data:;base64,iVBORw0KGgo='>\n");
 
@@ -748,7 +798,8 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
     pt(MAX_RECURSION);
     pn(") in "
        "verknüpften Kanälen "
-       "entdeckt. Bitte überprüfe alle Verknüpfungen auf Schleifen oder erhöhe "
+       "entdeckt. Bitte überprüfe alle Verknüpfungen auf Schleifen oder "
+       "erhöhe "
        "die maximale Verschachtelungstiefe!\n"
        "            </span>\n"
        "          </div>\n");
