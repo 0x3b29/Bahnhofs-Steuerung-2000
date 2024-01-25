@@ -891,7 +891,7 @@ css2?family=Grape+Nuts&display=swap"
         <div class='h1 mt-4 mb-3' style="font-family: 'Grape Nuts', bold; font-size: 195%;"> 
         Bahnhofs Steuerung 2000
       </div>
-      <form id="myForm" action="/" method="POST" accept-charset="UTF-8"></form>
+      <form id="myForm" action="/" method="POST" accept-charset="UTF-8">
 )html");
 
   if (foundRecursion) {
