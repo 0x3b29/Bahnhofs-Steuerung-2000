@@ -395,7 +395,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
 }
 
 void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
-                         uint16_t channelId) {
+                         uint16_t channelId, bool renderHorizontalRule) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   uint16_t brightness =
@@ -516,6 +516,10 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
       isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
   // --- /Prepare linked ---
 
+  char horizontalRuleHtmlBuffer[] = "<hr class='mb-1 mt-1'/>";
+  char *horizontalRuleHtmlToDisplayBuffer =
+      renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
+
   char outputBuffer[4096] = {0};
   char inputBuffer[] = R"html(
 <div id='channel-%d' class='pl-1 pr-1'>
@@ -617,6 +621,8 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
 %s
 
 </div>
+
+%s
 )html";
 
   sprintf(outputBuffer, inputBuffer, channelId, channelIdToDisplay,
@@ -626,13 +632,13 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
           randomOnEventsFrequencyHtmlToDisplayBuffer,
           randomOffEventsEnabledBuffer,
           randomOffEventsFrequencyHtmlToDisplayBuffer, isChannelLinkedBuffer,
-          linkedChannelHtmlToDisplayBuffer);
+          linkedChannelHtmlToDisplayBuffer, horizontalRuleHtmlToDisplayBuffer);
 
   pt(outputBuffer);
 }
 
 void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
-                                uint16_t channelId) {
+                                uint16_t channelId, bool renderHorizontalRule) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   int boardIndex = getBoardIndexForChannel(channelId);
@@ -647,6 +653,10 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
   uint16_t brightness =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
+
+  char horizontalRuleHtmlBuffer[] = "<hr class='mb-1 mt-1'/>";
+  char *horizontalRuleHtmlToDisplayBuffer =
+      renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
 
   char outputBuffer[1024];
   char channelDetailBuffer[] =
@@ -673,7 +683,8 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
       "onclick=\"sendValue('turnChannelOff','%d')\">⛭</button>"
       "    </div>"
       "  </div>"
-      "</div>";
+      "</div>"
+      "%s";
 
   uint16_t channelIdToDisplay =
       toggleOneBasedAddresses ? channelId + 1 : channelId;
@@ -689,7 +700,7 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
 
   sprintf(outputBuffer, channelDetailBuffer, channelId, channelIdToDisplay,
           channelId, channelNameToDisplay, brightnessAsPercentage, channelId,
-          channelId);
+          channelId, horizontalRuleHtmlToDisplayBuffer);
 
   pt(outputBuffer);
 }
@@ -838,17 +849,25 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
 
     if (toggleCompactDisplay) {
       for (int channelId = 0; channelId < numChannels; channelId++) {
-        renderChannelDetailCompact(client, toggleOneBasedAddresses, channelId);
-        if (channelId != numChannels - 1) {
-          pn("<hr class='mb-1 mt-1'/>");
+        bool renderHorizontalRule = true;
+
+        if (channelId == numChannels - 1) {
+          renderHorizontalRule = false;
         }
+
+        renderChannelDetailCompact(client, toggleOneBasedAddresses, channelId,
+                                   renderHorizontalRule);
       }
     } else {
       for (int channelId = 0; channelId < numChannels; channelId++) {
-        renderChannelDetail(client, toggleOneBasedAddresses, channelId);
-        if (channelId != numChannels - 1) {
-          pn("<hr class='mb-3 mt-3'/>");
+        bool renderHorizontalRule = true;
+
+        if (channelId == numChannels - 1) {
+          renderHorizontalRule = false;
         }
+
+        renderChannelDetail(client, toggleOneBasedAddresses, channelId,
+                            renderHorizontalRule);
       }
     }
 
