@@ -799,6 +799,10 @@ function sendValue(buttonName, buttonValue) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: dataString,
+  }).then((response) => {
+    if (!response.ok && response.status === 400) {
+      window.location.href = "/";
+    }
   });
 }
 
@@ -835,6 +839,10 @@ function onBrightnessValueChanged(value, channelId) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: dataString,
+  }).then((response) => {
+    if (!response.ok && response.status === 400) {
+      window.location.href = "/";
+    }
   });
 }
 </script>
@@ -862,19 +870,16 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, 
-initial-scale=1"
+      content="width=device-width, initial-scale=1"
     />
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/
-bootstrap.min.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
       integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
       crossorigin="anonymous"
     />
     <link
-      href="https://fonts.googleapis.com/
-css2?family=Grape+Nuts&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Grape+Nuts&display=swap"
       rel="stylesheet"
     />
     <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
@@ -895,12 +900,12 @@ css2?family=Grape+Nuts&display=swap"
 )html");
 
   if (foundRecursion) {
-    char renderRecursionWarningBuffer[100];
+    char renderRecursionWarningBuffer[512];
     sprintf(renderRecursionWarningBuffer,
             R"html(
 <div class='pb-3'>
   <span class='text-danger'>
-    Achtung: Schleife oder zu tiefe Verschachtelung (>%d) in verknüpften Kanälen entdeckt. 
+    Achtung: Eine Schleife oder zu eine zu tiefe Verschachtelung (mehr als 5 Ebenen) wurde in den verknüpften Kanälen entdeckt. 
     Bitte überprüfe alle Verknüpfungen auf Schleifen oder erhöhe die maximale Verschachtelungstiefe!
   </span>
 </div>

@@ -95,6 +95,13 @@ void replyToClientWithSuccess(WiFiClient client) {
   client.println("Settings updated successfully.");
 }
 
+void replyToClientWithFail(WiFiClient client) {
+  client.println("HTTP/1.1 400 Bad Request");
+  client.println("Content-type:text/plain");
+  client.println();
+  client.println("Failed to update settings.");
+}
+
 void applyAndPropagateValue(int channel, uint16_t brightness) {
   setChannelBrightness(channel, brightness);
 
@@ -581,7 +588,11 @@ void processRequest(WiFiClient client) {
           m_toggleRandomChaos, m_toggleRandomEvents, m_togglePropagateEvents,
           m_channelIdToEdit);
     } else {
-      replyToClientWithSuccess(client);
+      if (m_foundRecursion) {
+        replyToClientWithFail(client);
+      } else {
+        replyToClientWithSuccess(client);
+      }
     }
 
     // Include line to see whats going on in memory
