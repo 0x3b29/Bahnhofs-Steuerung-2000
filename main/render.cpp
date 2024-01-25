@@ -35,161 +35,161 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
 
   char optionsOutputBuffer[4096];
   sprintf(optionsOutputBuffer, R"html(
-<div class="h3">Optionen</div>
+<div id="options" class="mb-3">
+  <!-- Number of channels -->
+  <div class="row">
+    <div class="col-3 d-flex align-items-center">Kanäle:</div>
+    <div class="col-5">
+      <input
+        type="number"
+        class="form-control w-100"
+        name="numChannels"
+        min="0"
+        max="%d"
+        value="%d"
+      />
+    </div>
+    <div class="col-4 d-flex justify-content-end">
+      <button
+        class="btn btn-primary"
+        type="submit"
+        name="updateSettings"
+        value="Absenden"
+      >
+        Senden
+      </button>
+    </div>
+  </div>
+  <!-- /Number of channels -->
 
-<!-- Number of channels -->
-<div class="row">
-  <div class="col-3 d-flex align-items-center">Kanäle:</div>
-  <div class="col-5">
+  <br />
+
+  <!-- 1 based addresses -->
+  <div class="form-check form-switch">
     <input
-      type="number"
-      class="form-control w-100"
-      name="numChannels"
-      min="0"
-      max="%d"
-      value="%d"
+      class="form-check-input"
+      type="checkbox"
+      name="toggleOneBasedAddresses"
+      value="1"
+      id="toggleOneBasedAddresses"
+      onchange="sendCheckbox(this, true)"
+      %s
     />
+    <label class="form-check-label" for="toggleOneBasedAddresses">
+      Adressierung startet bei 1
+    </label>
   </div>
-  <div class="col-4 d-flex justify-content-end">
-    <button
-      class="btn btn-primary"
-      type="submit"
-      name="updateSettings"
-      value="Absenden"
-    >
-      Senden
-    </button>
+  <!-- /1 based addresses -->
+
+  <!-- Compact view -->
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleCompactDisplay"
+      value="1"
+      id="toggleCompactDisplay"
+      onchange="sendCheckbox(this, true)"
+      %s
+    />
+    <label class="form-check-label" for="toggleCompactDisplay">
+      Kompakte Übersicht
+    </label>
   </div>
+  <!-- /Compact view -->
+
+  <!-- Force all lights off -->
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleForceAllOff"
+      value="1"
+      id="toggleForceAllOff"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+    <label class="form-check-label" for="toggleForceAllOff">
+      Alle Kanäle dauerhaft auf 0 %%
+    </label>
+  </div>
+  <!-- Force all lights off -->
+
+  <!-- Force all lights 100 %% -->
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleForceAllOn"
+      value="1"
+      id="toggleForceAllOn"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+    <label class="form-check-label" for="toggleForceAllOn">
+      Alle Kanäle dauerhaft auf 100 %%
+    </label>
+  </div>
+  <!-- /Force all lights 100 %% -->
+
+  <!-- Enable random events -->
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleRandomEvents"
+      value="1"
+      role="switch"
+      id="toggleRandomEvents"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+    <label class="form-check-label" for="toggleRandomEvents">
+      Zufällige Ereignisse
+    </label>
+  </div>
+  <!-- /Enable random events -->
+
+  <!-- Enable event propagation -->
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="togglePropagateEvents"
+      value="1"
+      role="switch"
+      id="togglePropagateEvents"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+    <label class="form-check-label" for="togglePropagateEvents">
+      Verknüpfungen aktiv
+    </label>
+  </div>
+  <!-- /Enable event propagation -->
+
+  <!-- Enable random blink -->
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleRandomChaos"
+      value="1"
+      role="switch"
+      id="toggleRandomChaos"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+    <label class="form-check-label" for="toggleRandomChaos">
+      Verrücktes Blinken
+    </label>
+  </div>
+  <!-- /Enable random blink -->
+
+  <!-- This hidden field is meant to provide an 'easy' access to reset the // eeprom
+  from the web interface -->
+  <input type="hidden" name="clearEeprom" value="0" />
 </div>
-<!-- /Number of channels -->
-
-<br />
-
-<!-- 1 based addresses -->
-<div class="form-check form-switch">
-  <input
-    class="form-check-input"
-    type="checkbox"
-    name="toggleOneBasedAddresses"
-    value="1"
-    id="toggleOneBasedAddresses"
-    onchange="sendCheckbox(this, true)"
-    %s
-  />
-  <label class="form-check-label" for="toggleOneBasedAddresses">
-    Adressierung startet bei 1
-  </label>
-</div>
-<!-- /1 based addresses -->
-
-<!-- Compact view -->
-<div class="form-check form-switch">
-  <input
-    class="form-check-input"
-    type="checkbox"
-    name="toggleCompactDisplay"
-    value="1"
-    id="toggleCompactDisplay"
-    onchange="sendCheckbox(this, true)"
-    %s
-  />
-  <label class="form-check-label" for="toggleCompactDisplay">
-    Kompakte Übersicht
-  </label>
-</div>
-<!-- /Compact view -->
-
-<!-- Force all lights off -->
-<div class="form-check form-switch">
-  <input
-    class="form-check-input"
-    type="checkbox"
-    name="toggleForceAllOff"
-    value="1"
-    id="toggleForceAllOff"
-    onchange="sendCheckbox(this, false)"
-    %s
-  />
-  <label class="form-check-label" for="toggleForceAllOff">
-    Alle Kanäle dauerhaft auf 0 %%
-  </label>
-</div>
-<!-- Force all lights off -->
-
-<!-- Force all lights 100 %% -->
-<div class="form-check form-switch">
-  <input
-    class="form-check-input"
-    type="checkbox"
-    name="toggleForceAllOn"
-    value="1"
-    id="toggleForceAllOn"
-    onchange="sendCheckbox(this, false)"
-    %s
-  />
-  <label class="form-check-label" for="toggleForceAllOn">
-    Alle Kanäle dauerhaft auf 100 %%
-  </label>
-</div>
-<!-- /Force all lights 100 %% -->
-
-<!-- Enable random events -->
-<div class="form-check form-switch">
-  <input
-    class="form-check-input"
-    type="checkbox"
-    name="toggleRandomEvents"
-    value="1"
-    role="switch"
-    id="toggleRandomEvents"
-    onchange="sendCheckbox(this, false)"
-    %s
-  />
-  <label class="form-check-label" for="toggleRandomEvents">
-    Zufällige Ereignisse
-  </label>
-</div>
-<!-- /Enable random events -->
-
-<!-- Enable event propagation -->
-<div class="form-check form-switch">
-  <input
-    class="form-check-input"
-    type="checkbox"
-    name="togglePropagateEvents"
-    value="1"
-    role="switch"
-    id="togglePropagateEvents"
-    onchange="sendCheckbox(this, false)"
-    %s
-  />
-  <label class="form-check-label" for="togglePropagateEvents">
-    Verknüpfungen aktiv
-  </label>
-</div>
-<!-- /Enable event propagation -->
-
-<!-- Enable random blink -->
-<div class="form-check form-switch">
-  <input
-    class="form-check-input"
-    type="checkbox"
-    name="toggleRandomChaos"
-    value="1"
-    role="switch"
-    id="toggleRandomChaos"
-    onchange="sendCheckbox(this, false)"
-    %s
-  />
-  <label class="form-check-label" for="toggleRandomChaos">
-    Verrücktes Blinken
-  </label>
-</div>
-<!-- /Enable random blink -->
-
-<!-- This hidden field is meant to provide an 'easy' access to reset the // eeprom
-from the web interface -->
-<input type="hidden" name="clearEeprom" value="0" />
 )html",
           MAX_TOTAL_CHANNELS, numChannels, toggleOneBasedAddressesCheckedBuffer,
           toggleCompactDisplayCheckedBuffer, toggleForceAllOffCheckedBuffer,
@@ -199,9 +199,9 @@ from the web interface -->
   pn(optionsOutputBuffer);
 }
 
-void renderButtons(WiFiClient client) {
+void renderActions(WiFiClient client) {
   pt(R"html(
-<div>
+<div id="actions" class="mb-3">
   <button
     class="btn btn-primary text-white me-2 mb-2"
     onclick="sendValue('resetAllChannels','1')"
@@ -761,7 +761,7 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
       >
         <p class="text-start m-0">%s</p>
       </button>
-      <div class="text-muted">%d %%</div>
+      <div class="text-muted">%d&nbsp;%%</div>
     </div>
     <div class="d-flex">
       <button
@@ -811,6 +811,29 @@ function sendCheckbox(checkbox, reloadAfterRequest) {
     encodeURIComponent(checkbox.name) +
     "=" +
     encodeURIComponent(checkbox.checked ? 1 : 0);
+
+  if (checkbox.id === "toggleShowOptions") {
+    var optionsDiv = document.getElementById("options");
+    var optionsHeading = document.getElementById("options-heading");
+    optionsDiv.style.display = checkbox.checked ? "block" : "none";
+    if (checkbox.checked) {
+      optionsHeading.classList.remove("text-muted");
+    } else {
+      optionsHeading.classList.add("text-muted");
+    }
+  }
+
+  if (checkbox.id === "toggleShowActions") {
+    var actionsDiv = document.getElementById("actions");
+    var actionsHeading = document.getElementById("actions-heading");
+    actionsDiv.style.display = checkbox.checked ? "block" : "none";
+    if (checkbox.checked) {
+      actionsHeading.classList.remove("text-muted");
+    } else {
+      actionsHeading.classList.add("text-muted");
+    }
+  }
+
   fetch("/", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -847,6 +870,64 @@ function onBrightnessValueChanged(value, channelId) {
 }
 </script>
 )html");
+}
+
+void renderOptionsHeading(WiFiClient client, bool toggleOptionsVisible) {
+
+  char *toggleOptionsVisibleCheckedBuffer =
+      toggleOptionsVisible ? m_checkedBuffer : m_emptyBuffer;
+
+  char outputBuffer[512];
+
+  sprintf(outputBuffer,
+          R"html(
+<div class="d-flex align-items-center">
+  <div id="options-heading" class="h3">Optionen</div>
+  <div class="form-check form-switch ms-2 ">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleShowOptions"
+      value="1"
+      id="toggleShowOptions"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+  </div>
+</div>
+    )html",
+          toggleOptionsVisibleCheckedBuffer);
+
+  pn(outputBuffer);
+}
+
+void renderActionsHeading(WiFiClient client, bool toggleActionsVisible) {
+
+  char *toggleActionsVisibleCheckedBuffer =
+      toggleActionsVisible ? m_checkedBuffer : m_emptyBuffer;
+
+  char outputBuffer[512];
+
+  sprintf(outputBuffer,
+          R"html(
+<div class="d-flex align-items-center">
+  <div id="actions-heading" class="h3">Aktionen</div>
+  <div class="form-check form-switch ms-2 ">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleShowActions"
+      value="1"
+      id="toggleShowActions"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+  </div>
+</div>
+    )html",
+          toggleActionsVisibleCheckedBuffer);
+
+  pn(outputBuffer);
 }
 
 void renderWebPage(WiFiClient client, bool foundRecursion,
@@ -919,16 +1000,15 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
     renderEditChannel(client, renderAnchor, anchorChannelId, numChannels,
                       toggleOneBasedAddresses, channelIdToEdit);
   } else {
+    renderOptionsHeading(client, true);
     renderOptions(client, numChannels, toggleOneBasedAddresses,
                   toggleCompactDisplay, toggleForceAllOff, toggleForceAllOn,
                   toggleRandomChaos, toggleRandomEvents, togglePropagateEvents,
                   channelIdToEdit);
 
-    pn("<br>");
+    renderActionsHeading(client, true);
+    renderActions(client);
 
-    pn("<h3>Aktionen</h3>");
-    renderButtons(client);
-    pn("<br>");
     pn("<h3>Kanäle</h3>");
 
     if (renderAnchor) {
