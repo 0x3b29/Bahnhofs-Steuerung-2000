@@ -28,6 +28,8 @@ uint8_t m_toggleOneBasedAddresses = false;
 uint8_t m_toggleCompactDisplay = false;
 uint8_t m_toggleRandomEvents = false;
 uint8_t m_togglePropagateEvents = false;
+uint8_t m_toggleShowOptions = false;
+uint8_t m_toggleShowActions = false;
 
 char m_channelIdBuffer[4] = "0";
 
@@ -585,6 +587,28 @@ void processRequest(WiFiClient client) {
       countBinary();
     }
 
+    if (isKeyInData(m_pageBuffer, "toggleShowOptions")) {
+      char toggleShowOptionsBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleShowOptions=", toggleShowOptionsBuffer, 2);
+      m_toggleShowOptions = atoi(toggleShowOptionsBuffer);
+      writeToEepromBuffer(MEM_SLOT_SHOW_OPTIONS, &m_toggleShowOptions, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleShowActions")) {
+      char toggleShowActionsBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleShowActions=", toggleShowActionsBuffer, 2);
+      m_toggleShowActions = atoi(toggleShowActionsBuffer);
+      writeToEepromBuffer(MEM_SLOT_SHOW_ACTIONS, &m_toggleShowActions, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
     if (shouldRerender) {
       renderWebPage(
           client, m_foundRecursion, m_renderNextPageWithOptionsVisible,
@@ -592,7 +616,7 @@ void processRequest(WiFiClient client) {
           m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
           m_toggleCompactDisplay, m_toggleForceAllOff, m_toggleForceAllOn,
           m_toggleRandomChaos, m_toggleRandomEvents, m_togglePropagateEvents,
-          m_channelIdToEdit);
+          m_channelIdToEdit, m_toggleShowOptions, m_toggleShowActions);
     } else {
       if (m_foundRecursion) {
         replyToClientWithFail(client);
@@ -613,7 +637,7 @@ void processRequest(WiFiClient client) {
                   m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
                   m_toggleCompactDisplay, m_toggleForceAllOff,
                   m_toggleForceAllOn, m_toggleRandomChaos, m_toggleRandomEvents,
-                  m_togglePropagateEvents, m_channelIdToEdit);
+                  m_togglePropagateEvents, m_channelIdToEdit, m_toggleShowOptions, m_toggleShowActions);
   }
 }
 
@@ -627,6 +651,8 @@ void loadOptionsToMemberVariables() {
   readFromEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, &m_toggleCompactDisplay, 1);
   readFromEepromBuffer(MEM_SLOT_RANDOM_EVENTS, &m_toggleRandomEvents, 1);
   readFromEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, &m_togglePropagateEvents, 1);
+  readFromEepromBuffer(MEM_SLOT_SHOW_OPTIONS, &m_toggleShowOptions, 1);
+  readFromEepromBuffer(MEM_SLOT_SHOW_ACTIONS, &m_toggleShowActions, 1);
 }
 
 bool shouldInvokeEvent(uint8_t freq) {

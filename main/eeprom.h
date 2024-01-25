@@ -16,6 +16,8 @@
 #define MEM_SLOT_RANDOM_CHAOS 4
 #define MEM_SLOT_RANDOM_EVENTS 5
 #define MEM_SLOT_PROPAGATE_EVENTS 6
+#define MEM_SLOT_SHOW_OPTIONS 7
+#define MEM_SLOT_SHOW_ACTIONS 8
 
 // Memory Slots for each channel
 #define MEM_SLOT_BRIGHTNESS 30

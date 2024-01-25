@@ -5,12 +5,15 @@
 
 char m_checkedBuffer[] = "checked";
 char m_emptyBuffer[] = "";
+char m_renderHiddenBuffer[] = "style='display: none;'";
+char m_textMutedBuffer[] = "text-muted";
 
 void renderOptions(WiFiClient client, uint16_t numChannels,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
                    bool toggleRandomChaos, bool toggleRandomEvents,
-                   bool togglePropagateEvents, uint16_t channelIdToEdit) {
+                   bool togglePropagateEvents, uint16_t channelIdToEdit,
+                   bool showOptions) {
 
   char *toggleOneBasedAddressesCheckedBuffer =
       toggleOneBasedAddresses ? m_checkedBuffer : m_emptyBuffer;
@@ -33,9 +36,11 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
   char *toggleRandomChaosCheckedBuffer =
       toggleRandomChaos ? m_checkedBuffer : m_emptyBuffer;
 
+  char *renderHiddenBuffer = showOptions ? m_emptyBuffer : m_renderHiddenBuffer;
+
   char optionsOutputBuffer[4096];
   sprintf(optionsOutputBuffer, R"html(
-<div id="options" class="mb-3">
+<div id="options" class="mb-3" %s>
   <!-- Number of channels -->
   <div class="row">
     <div class="col-3 d-flex align-items-center">Kanäle:</div>
@@ -191,7 +196,8 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
   <input type="hidden" name="clearEeprom" value="0" />
 </div>
 )html",
-          MAX_TOTAL_CHANNELS, numChannels, toggleOneBasedAddressesCheckedBuffer,
+          renderHiddenBuffer, MAX_TOTAL_CHANNELS, numChannels,
+          toggleOneBasedAddressesCheckedBuffer,
           toggleCompactDisplayCheckedBuffer, toggleForceAllOffCheckedBuffer,
           toggleForceAllOnCheckedBuffer, toggleRandomEventsCheckedBuffer,
           togglePropagateEventsCheckedBuffer, toggleRandomChaosCheckedBuffer);
@@ -199,9 +205,16 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
   pn(optionsOutputBuffer);
 }
 
-void renderActions(WiFiClient client) {
-  pt(R"html(
-<div id="actions" class="mb-3">
+void renderActions(WiFiClient client, bool showActions) {
+
+  char *renderHiddenBuffer = showActions ? m_emptyBuffer : m_renderHiddenBuffer;
+
+  char outputBuffer[2048];
+
+  sprintf(outputBuffer,
+
+          R"html(
+<div id="actions" class="mb-3" %s>
   <button
     class="btn btn-primary text-white me-2 mb-2"
     onclick="sendValue('resetAllChannels','1')"
@@ -258,7 +271,10 @@ void renderActions(WiFiClient client) {
     01010011
   </button>
 </div>
-)html");
+)html",
+          renderHiddenBuffer);
+
+  pn(outputBuffer);
 }
 
 void renderEditChannel(WiFiClient client, bool renderAnchor,
@@ -877,11 +893,13 @@ void renderOptionsHeading(WiFiClient client, bool toggleOptionsVisible) {
   char *toggleOptionsVisibleCheckedBuffer =
       toggleOptionsVisible ? m_checkedBuffer : m_emptyBuffer;
 
+  char *mutedBuffer = toggleOptionsVisible ? m_emptyBuffer : m_textMutedBuffer;
+
   char outputBuffer[512];
 
   sprintf(outputBuffer,
           R"html(
-<div class="d-flex align-items-center">
+<div class="d-flex align-items-center %s">
   <div id="options-heading" class="h3">Optionen</div>
   <div class="form-check form-switch ms-2 ">
     <input
@@ -896,7 +914,7 @@ void renderOptionsHeading(WiFiClient client, bool toggleOptionsVisible) {
   </div>
 </div>
     )html",
-          toggleOptionsVisibleCheckedBuffer);
+          mutedBuffer, toggleOptionsVisibleCheckedBuffer);
 
   pn(outputBuffer);
 }
@@ -906,11 +924,13 @@ void renderActionsHeading(WiFiClient client, bool toggleActionsVisible) {
   char *toggleActionsVisibleCheckedBuffer =
       toggleActionsVisible ? m_checkedBuffer : m_emptyBuffer;
 
+  char *mutedBuffer = toggleActionsVisible ? m_emptyBuffer : m_textMutedBuffer;
+
   char outputBuffer[512];
 
   sprintf(outputBuffer,
           R"html(
-<div class="d-flex align-items-center">
+<div class="d-flex align-items-center %s">
   <div id="actions-heading" class="h3">Aktionen</div>
   <div class="form-check form-switch ms-2 ">
     <input
@@ -925,7 +945,7 @@ void renderActionsHeading(WiFiClient client, bool toggleActionsVisible) {
   </div>
 </div>
     )html",
-          toggleActionsVisibleCheckedBuffer);
+          mutedBuffer, toggleActionsVisibleCheckedBuffer);
 
   pn(outputBuffer);
 }
@@ -937,7 +957,8 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
                    bool toggleOneBasedAddresses, bool toggleCompactDisplay,
                    bool toggleForceAllOff, bool toggleForceAllOn,
                    bool toggleRandomChaos, bool toggleRandomEvents,
-                   bool togglePropagateEvents, uint16_t channelIdToEdit) {
+                   bool togglePropagateEvents, uint16_t channelIdToEdit,
+                   bool toggleShowOptions, bool toggleShowActions) {
 
   // Send a standard HTTP response header
   pn("HTTP/1.1 200 OK");
@@ -1000,14 +1021,14 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
     renderEditChannel(client, renderAnchor, anchorChannelId, numChannels,
                       toggleOneBasedAddresses, channelIdToEdit);
   } else {
-    renderOptionsHeading(client, true);
+    renderOptionsHeading(client, toggleShowOptions);
     renderOptions(client, numChannels, toggleOneBasedAddresses,
                   toggleCompactDisplay, toggleForceAllOff, toggleForceAllOn,
                   toggleRandomChaos, toggleRandomEvents, togglePropagateEvents,
-                  channelIdToEdit);
+                  channelIdToEdit, toggleShowOptions);
 
-    renderActionsHeading(client, true);
-    renderActions(client);
+    renderActionsHeading(client, toggleShowActions);
+    renderActions(client, toggleShowActions);
 
     pn("<h3>Kanäle</h3>");
 
