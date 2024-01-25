@@ -855,25 +855,29 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
     pn("</div>");
   }
 
-  pn("          </form>"
-     "        </div>"
-     "      </div>"
-     "    </div>"
-     "  <div class='h6 mt-3 mb-3 d-flex justify-content-center' "
-     "style=\"font-family: 'Grape Nuts', bold; "
-     "font-size: large;\">made with ♥ by olivier.berlin"
-     "  </div>"
-     "<script>"
-     "document.addEventListener('DOMContentLoaded', function() {"
-     "  var navigationTag = document.getElementById('navigateTo');"
-     "  if (navigationTag) {"
-     "    var anchor = navigationTag.getAttribute('data-anchor');"
-     "    if (anchor) {"
-     "      window.location.hash = anchor;"
-     "    }"
-     "  }"
-     "});"
-     "</script>"
-     "</body>"
-     "</html>");
+  const char pageEndBuffer[] = R"html(
+            </form>
+        </div>
+      </div>
+    </div>
+  <div class='h6 mt-3 mb-3 d-flex justify-content-center' 
+       style="font-family: 'Grape Nuts', bold; font-size: large;">
+    made with ♥ by olivier.berlin
+  </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var navigationTag = document.getElementById('navigateTo');
+  if (navigationTag) {
+    var anchor = navigationTag.getAttribute('data-anchor');
+    if (anchor) {
+      window.location.hash = anchor;
+    }
+  }
+});
+</script>
+</body>
+</html>
+)html";
+
+  pn(pageEndBuffer);
 }
