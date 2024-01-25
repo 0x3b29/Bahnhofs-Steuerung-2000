@@ -397,7 +397,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
 void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
                          uint16_t channelId) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
-  
+
   uint16_t brightness =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
@@ -420,6 +420,9 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   char enabledBuffer[] = "An";
   char disabledBuffer[] = "Aus";
 
+  char yesBuffer[] = "Ja";
+  char noBuffer[] = "Nein";
+
   char *toggleInitialStateCheckedBuffer =
       initialState ? enabledBuffer : disabledBuffer;
 
@@ -430,7 +433,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   uint8_t randomOnFreq =
       readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON_FREQ);
 
-  char *randomOnEventsEnabledBuffer = randomOn ? enabledBuffer : disabledBuffer;
+  char *randomOnEventsEnabledBuffer = randomOn ? yesBuffer : noBuffer;
 
   char randomOnFrequencyHtmlInputBuffer[] =
       "  <div class='row'>"
@@ -458,8 +461,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   uint8_t randomOffFreq =
       readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
 
-  char *randomOffEventsEnabledBuffer =
-      randomOff ? enabledBuffer : disabledBuffer;
+  char *randomOffEventsEnabledBuffer = randomOff ? yesBuffer : noBuffer;
 
   char randomOffFrequencyHtmlInputBuffer[] =
       "  <div class='row'>"
@@ -491,7 +493,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   uint16_t linkedChannelIdToDisplay =
       toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
 
-  char *isChannelLinkedBuffer = isLinked ? enabledBuffer : disabledBuffer;
+  char *isChannelLinkedBuffer = isLinked ? yesBuffer : noBuffer;
 
   char linkedChannelHtmlInputBuffer[] = R"html(
   <div class='row'>
@@ -621,7 +623,8 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
           boardIndexToDisplay, boardSubAddressToDisplay, channelId, channelId,
           channelId, m_channelNameBuffer, toggleInitialStateCheckedBuffer,
           brightnessAsPercentage, randomOnEventsEnabledBuffer,
-          randomOnEventsFrequencyHtmlToDisplayBuffer, randomOffEventsEnabledBuffer,
+          randomOnEventsFrequencyHtmlToDisplayBuffer,
+          randomOffEventsEnabledBuffer,
           randomOffEventsFrequencyHtmlToDisplayBuffer, isChannelLinkedBuffer,
           linkedChannelHtmlToDisplayBuffer);
 
