@@ -834,7 +834,9 @@ function sendCheckbox(checkbox, reloadAfterRequest) {
     optionsDiv.style.display = checkbox.checked ? "block" : "none";
     if (checkbox.checked) {
       optionsHeading.classList.remove("text-muted");
+      optionsHeading.classList.add("text-body");
     } else {
+      optionsHeading.classList.remove("text-body");
       optionsHeading.classList.add("text-muted");
     }
   }
@@ -845,7 +847,9 @@ function sendCheckbox(checkbox, reloadAfterRequest) {
     actionsDiv.style.display = checkbox.checked ? "block" : "none";
     if (checkbox.checked) {
       actionsHeading.classList.remove("text-muted");
+      actionsHeading.classList.add("text-body");
     } else {
+      actionsHeading.classList.remove("text-body");
       actionsHeading.classList.add("text-muted");
     }
   }
