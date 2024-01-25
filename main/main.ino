@@ -107,7 +107,13 @@ void applyAndPropagateValue(int channel, uint16_t brightness) {
 
   if (m_togglePropagateEvents && !m_toggleForceAllOff && !m_toggleForceAllOn &&
       !m_toggleRandomChaos) {
-    commandLinkedChannel(channel, brightness, 0, 5);
+    bool turnOn = false;
+
+    if (brightness > 0) {
+      turnOn = true;
+    }
+
+    commandLinkedChannel(channel, turnOn, 0, 5);
   }
 }
 
@@ -631,8 +637,8 @@ bool shouldInvokeEvent(uint8_t freq) {
   return randNumber < freq;
 }
 
-void commandLinkedChannel(uint16_t commandingChannelId, uint16_t brightness,
-                          int depth, int maxDepth) {
+void commandLinkedChannel(uint16_t commandingChannelId, bool turnOn, int depth,
+                          int maxDepth) {
 
   if (depth > maxDepth) {
     st("Detected and broke recusrion for commandingChannelId ");
@@ -651,15 +657,19 @@ void commandLinkedChannel(uint16_t commandingChannelId, uint16_t brightness,
         readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
 
     if (isChannelLinked == true) {
-
       uint16_t linkedChannelId =
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
       if (linkedChannelId == commandingChannelId) {
+        uint16_t brightness = 0;
+
+        if (turnOn) {
+          brightness =
+              readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+        }
 
         setChannelBrightness(i, brightness);
-
-        commandLinkedChannel(i, brightness, depth + 1, maxDepth);
+        commandLinkedChannel(i, turnOn, depth + 1, maxDepth);
       }
     }
   }
