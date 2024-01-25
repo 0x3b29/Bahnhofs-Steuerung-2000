@@ -111,12 +111,12 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
     %s
   />
   <label class="form-check-label" for="toggleForceAllOff">
-    Alle Kanäle dauerhaft auf 0%%
+    Alle Kanäle dauerhaft auf 0 %%
   </label>
 </div>
 <!-- Force all lights off -->
 
-<!-- Force all lights 100%% -->
+<!-- Force all lights 100 %% -->
 <div class="form-check form-switch">
   <input
     class="form-check-input"
@@ -128,10 +128,10 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
     %s
   />
   <label class="form-check-label" for="toggleForceAllOn">
-    Alle Kanäle dauerhaft auf 100%%
+    Alle Kanäle dauerhaft auf 100 %%
   </label>
 </div>
-<!-- /Force all lights 100%% -->
+<!-- /Force all lights 100 %% -->
 
 <!-- Enable random events -->
 <div class="form-check form-switch">
@@ -356,7 +356,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   <div class="col">
     <div class="col d-flex">
       <div>Helligkeit</div>
-      <div id="rangeAsPercentage" class="ps-1 text-muted">(%d%%)</div>
+      <div id="rangeAsPercentage" class="ps-1 text-muted">(%d %%)</div>
     </div>
   </div>
   <div class="col-12">
@@ -384,7 +384,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     %s
   />
   <label class="form-check-label" for="randomOn">
-    Zufälliges Einschalten
+    Zufällig Einschalten
   </label>
 </div>
 <div class="row">
@@ -413,7 +413,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     %s
   />
   <label class="form-check-label" for="randomOff">
-    Zufälliges Ausschalten
+    Zufällig Ausschalten
   </label>
 </div>
 
@@ -446,7 +446,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
 </div>
 
 <div class="row">
-  <div class="col">Gesteuert durch Kanal</div>
+  <div class="col">Gesteuert von Kanal</div>
   <div class="col d-flex align-items-center justify-content-end">
     <input
       class="form-control"
@@ -667,12 +667,12 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
     <div class="col">
       <span class="h6"> Helligkeit </span>
     </div>
-    <div class="col">%d%%</div>
+    <div class="col">%d %%</div>
   </div>
 
   <div class="row">
     <div class="col">
-      <span class="h6"> Zufälliges Einschalten </span>
+      <span class="h6"> Zufällig Einschalten </span>
     </div>
     <div class="col">%s</div>
   </div>
@@ -681,7 +681,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
 
   <div class="row">
     <div class="col">
-      <span class="h6"> Zufälliges Ausschalten </span>
+      <span class="h6"> Zufällig Ausschalten </span>
     </div>
     <div class="col">%s</div>
   </div>
@@ -761,7 +761,7 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
       >
         <p class="text-start m-0">%s</p>
       </button>
-      <div class="text-muted">%d%%</div>
+      <div class="text-muted">%d %%</div>
     </div>
     <div class="d-flex">
       <button
