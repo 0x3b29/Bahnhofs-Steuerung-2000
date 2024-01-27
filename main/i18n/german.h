@@ -27,8 +27,30 @@
 #define I18N_EDIT_DISCARD "Verwerfen"
 #define I18N_EDIT_SAVE "Speichern"
 
+#define I18N_CHANNEL_CHANNEL "Kanal"
+#define I18N_CHANNEL_BOARD "Board"
+#define I18N_CHANNEL_PIN "Pin"
+#define I18N_CHANNEL_DESCRIPTION "Beschreibung"
+#define I18N_CHANNEL_START_STATE "Startzustand"
+#define I18N_CHANNEL_BRIGHTNESS "Helligkeit"
+#define I18N_CHANNEL_RANDOMLY_ON "Zufällig Einschalten"
+#define I18N_CHANNEL_RANDOM_FREQ "~ Zufälle/h"
+#define I18N_CHANNEL_RANDOMLY_OFF "Zufällig Ausschalten"
+#define I18N_CHANNEL_LINKED "Verknüpft"
+#define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Gesteuert durch Kanal"
+#define I18N_CHANNEL_ON "An"
+#define I18N_CHANNEL_OFF "Aus"
+#define I18N_CHANNEL_YES "Ja"
+#define I18N_CHANNEL_NO "Nein"
+
 #define I18N_HEADING_OPTIONS "Optionen"
 #define I18N_HEADING_ACTIONS "Aktionen"
 #define I18N_HEADING_CHANNELS "Kanäle"
 
+#define I18N_WARNING_RECURSION_BEFORE_MAX                                      \
+  "Achtung: Eine Schleife oder zu eine zu tiefe Verschachtelung (mehr als"
+#define I18N_WARNING_RECURSION_AFTER_MAX                                         \
+  "Ebenen) wurde in den verknüpften Kanälen entdeckt. Bitte überprüfe alle " \
+  "Verknüpfungen auf Schleifen oder erhöhe die maximale "                      \
+  "Verschachtelungstiefe!"
 #endif // german

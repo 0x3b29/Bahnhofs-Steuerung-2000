@@ -3,8 +3,8 @@
 #include "helpers.h"
 #include <WiFiNINA.h>
 
-#include "i18n/english.h"
-// #include "i18n/german.h"
+// #include "i18n/english.h"
+#include "i18n/german.h"
 
 char m_checkedBuffer[] = "checked";
 char m_emptyBuffer[] = "";
@@ -543,11 +543,11 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   uint8_t boardSubAddressToDisplay =
       toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
-  char enabledBuffer[] = "An";
-  char disabledBuffer[] = "Aus";
+  char enabledBuffer[] = I18N_CHANNEL_ON;
+  char disabledBuffer[] = I18N_CHANNEL_OFF;
 
-  char yesBuffer[] = "Ja";
-  char noBuffer[] = "Nein";
+  char yesBuffer[] = I18N_CHANNEL_YES;
+  char noBuffer[] = I18N_CHANNEL_NO;
 
   char *toggleInitialStateCheckedBuffer =
       initialState ? enabledBuffer : disabledBuffer;
@@ -564,7 +564,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   char randomOnFrequencyHtmlInputBuffer[] = R"html(
   <div class='row'>
     <div class='col'>
-      <span class='h6'>~Zufälle/h</span>
+      <span class='h6'>%s</span>
     </div>
     <div class='col'>
       %d/h
@@ -574,7 +574,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   char randomOnFrequencyHtmlOutputBuffer[512];
 
   sprintf(randomOnFrequencyHtmlOutputBuffer, randomOnFrequencyHtmlInputBuffer,
-          randomOnFreq);
+          I18N_CHANNEL_RANDOM_FREQ, randomOnFreq);
 
   char *randomOnEventsFrequencyHtmlToDisplayBuffer =
       randomOn ? randomOnFrequencyHtmlOutputBuffer : m_emptyBuffer;
@@ -592,7 +592,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   char randomOffFrequencyHtmlInputBuffer[] = R"html(
   <div class="row">
     <div class="col">
-      <span class="h6"> ~Zufälle/h </span>
+      <span class="h6">%s</span>
     </div>
     <div class="col">%d/h</div>
   </div>
@@ -601,7 +601,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   char randomOffFrequencyHtmlOutputBuffer[512];
 
   sprintf(randomOffFrequencyHtmlOutputBuffer, randomOffFrequencyHtmlInputBuffer,
-          randomOffFreq);
+          I18N_CHANNEL_RANDOM_FREQ, randomOffFreq);
 
   char *randomOffEventsFrequencyHtmlToDisplayBuffer =
       randomOff ? randomOffFrequencyHtmlOutputBuffer : m_emptyBuffer;
@@ -623,9 +623,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   char linkedChannelHtmlInputBuffer[] = R"html(
   <div class='row'>
     <div class='col'>
-      <span class='h6'>
-        Gesteuert durch Kanal
-      </span>
+      <span class='h6'>%s</span>
     </div>
     <div class='col'>
       %d
@@ -635,7 +633,7 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
 
   char linkedChannelHtmlOutputBuffer[512];
   sprintf(linkedChannelHtmlOutputBuffer, linkedChannelHtmlInputBuffer,
-          linkedChannelIdToDisplay);
+          I18N_CHANNEL_COMMANDED_BY_CHANNEL, linkedChannelIdToDisplay);
 
   char *linkedChannelHtmlToDisplayBuffer =
       isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
@@ -652,8 +650,8 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
 <div id="channel-%d" class="pl-1 pr-1">
   <div class="row">
     <div class="col-9">
-      <span class="h4"> Kanal %d </span>
-      Board %d, Pin %d
+      <span class="h4">%s %d</span>
+      %s %d, %s %d
     </div>
 
     <div class="col-3">
@@ -674,50 +672,57 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
     </div>
   </div>
 
+  <!-- Description -->
   <div class="row">
     <div class="col">
-      <span class="h6"> Beschreibung </span>
+      <span class="h6">%s</span>
     </div>
     <div class="col font-weight-bold">
       <b> %s </b>
     </div>
   </div>
 
+  <!-- Start State -->
   <div class="row">
     <div class="col">
-      <span class="h6"> Startzustand </span>
+      <span class="h6">%s</span>
     </div>
     <div class="col">%s</div>
   </div>
 
+  <!-- Brightness -->
   <div class="row">
     <div class="col">
-      <span class="h6"> Helligkeit </span>
+      <span class="h6">%s</span>
     </div>
     <div class="col">%d %%</div>
   </div>
 
+  <!-- Randomly turning on -->
   <div class="row">
     <div class="col">
-      <span class="h6"> Zufällig Einschalten </span>
+      <span class="h6">%s</span>
     </div>
     <div class="col">%s</div>
   </div>
 
+<!-- Randomly turning on frequency if randomly turning on -->
   %s
 
+<!-- Randomly turning off -->
   <div class="row">
     <div class="col">
-      <span class="h6"> Zufällig Ausschalten </span>
+      <span class="h6">%s</span>
     </div>
     <div class="col">%s</div>
   </div>
 
+<!-- Randomly turning off frequency if randomly turning off -->
   %s
 
   <div class="row">
     <div class="col">
-      <span class="h6"> Verknüpft </span>
+      <span class="h6">%s</span>
     </div>
     <div class="col">%s</div>
   </div>
@@ -727,14 +732,18 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
 
 %s
 )html",
-          channelId, channelIdToDisplay, boardIndexToDisplay,
+          channelId, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
+          I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
           boardSubAddressToDisplay, channelId, channelId, channelId,
-          m_channelNameBuffer, toggleInitialStateCheckedBuffer,
-          brightnessAsPercentage, randomOnEventsEnabledBuffer,
-          randomOnEventsFrequencyHtmlToDisplayBuffer,
+          I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer,
+          I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer,
+          I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage,
+          I18N_CHANNEL_RANDOMLY_ON, randomOnEventsEnabledBuffer,
+          randomOnEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_RANDOMLY_OFF,
           randomOffEventsEnabledBuffer,
-          randomOffEventsFrequencyHtmlToDisplayBuffer, isChannelLinkedBuffer,
-          linkedChannelHtmlToDisplayBuffer, horizontalRuleHtmlToDisplayBuffer);
+          randomOffEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_LINKED,
+          isChannelLinkedBuffer, linkedChannelHtmlToDisplayBuffer,
+          horizontalRuleHtmlToDisplayBuffer);
 
   pt(outputBuffer);
 }
@@ -1022,12 +1031,12 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
             R"html(
 <div class='pb-3'>
   <span class='text-danger'>
-    Achtung: Eine Schleife oder zu eine zu tiefe Verschachtelung (mehr als 5 Ebenen) wurde in den verknüpften Kanälen entdeckt. 
-    Bitte überprüfe alle Verknüpfungen auf Schleifen oder erhöhe die maximale Verschachtelungstiefe!
+  %s %d %s
   </span>
 </div>
     )html",
-            MAX_RECURSION);
+            I18N_WARNING_RECURSION_BEFORE_MAX, MAX_RECURSION,
+            I18N_WARNING_RECURSION_AFTER_MAX);
 
     pn(renderRecursionWarningBuffer);
   }
@@ -1045,7 +1054,9 @@ void renderWebPage(WiFiClient client, bool foundRecursion,
     renderActionsHeading(client, toggleShowActions);
     renderActions(client, toggleShowActions);
 
-    pn("<h3>Kanäle</h3>");
+    char renderAnchorBuffer[20];
+    sprintf(renderAnchorBuffer, "<h3>%s</h3>", I18N_HEADING_CHANNELS);
+    pn(renderAnchorBuffer);
 
     if (renderAnchor) {
       char renderAnchorBuffer[100];

@@ -27,8 +27,30 @@
 #define I18N_EDIT_DISCARD "Discard"
 #define I18N_EDIT_SAVE "Save"
 
+#define I18N_CHANNEL_CHANNEL "Channel"
+#define I18N_CHANNEL_BOARD "Board"
+#define I18N_CHANNEL_PIN "Pin"
+#define I18N_CHANNEL_DESCRIPTION "Description"
+#define I18N_CHANNEL_START_STATE "Initial State"
+#define I18N_CHANNEL_BRIGHTNESS "Brightness"
+#define I18N_CHANNEL_RANDOMLY_ON "Randomly Turn On"
+#define I18N_CHANNEL_RANDOM_FREQ "~ Events/h"
+#define I18N_CHANNEL_RANDOMLY_OFF "Randomly Turn Off"
+#define I18N_CHANNEL_LINKED "Linked"
+#define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Controlled by Channel"
+#define I18N_CHANNEL_ON "On"
+#define I18N_CHANNEL_OFF "Off"
+#define I18N_CHANNEL_YES "Yes"
+#define I18N_CHANNEL_NO "No"
+
 #define I18N_HEADING_OPTIONS "Options"
 #define I18N_HEADING_ACTIONS "Actions"
 #define I18N_HEADING_CHANNELS "Channels"
+
+#define I18N_WARNING_RECURSION_BEFORE_MAX                                      \
+  "Warning: A loop or too deep nesting (more than"
+#define I18N_WARNING_RECURSION_AFTER_MAX                                       \
+  "levels) was detected in the linked channels. Please check all linkages "    \
+  "for loops or increase the maximum nesting depth!"
 
 #endif // english_h
