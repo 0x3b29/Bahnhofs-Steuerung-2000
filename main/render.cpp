@@ -3,6 +3,9 @@
 #include "helpers.h"
 #include <WiFiNINA.h>
 
+#include "i18n/english.h"
+// #include "i18n/german.h"
+
 char m_checkedBuffer[] = "checked";
 char m_emptyBuffer[] = "";
 char m_renderHiddenBuffer[] = "style='display: none;'";
@@ -43,7 +46,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
 <div id="options" class="mb-3" %s>
   <!-- Number of channels -->
   <div class="row">
-    <div class="col-3 d-flex align-items-center">Kanäle:</div>
+    <div class="col-3 d-flex align-items-center">%s</div>
     <div class="col-5">
       <input
         type="number"
@@ -61,7 +64,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
         name="updateSettings"
         value="Absenden"
       >
-        Senden
+        %s
       </button>
     </div>
   </div>
@@ -81,7 +84,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
       %s
     />
     <label class="form-check-label" for="toggleOneBasedAddresses">
-      Adressierung startet bei 1
+      %s
     </label>
   </div>
   <!-- /1 based addresses -->
@@ -98,7 +101,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
       %s
     />
     <label class="form-check-label" for="toggleCompactDisplay">
-      Kompakte Übersicht
+      %s
     </label>
   </div>
   <!-- /Compact view -->
@@ -115,7 +118,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
       %s
     />
     <label class="form-check-label" for="toggleForceAllOff">
-      Alle Kanäle dauerhaft auf 0 %%
+      %s
     </label>
   </div>
   <!-- Force all lights off -->
@@ -132,7 +135,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
       %s
     />
     <label class="form-check-label" for="toggleForceAllOn">
-      Alle Kanäle dauerhaft auf 100 %%
+      %s
     </label>
   </div>
   <!-- /Force all lights 100 %% -->
@@ -150,7 +153,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
       %s
     />
     <label class="form-check-label" for="toggleRandomEvents">
-      Zufällige Ereignisse
+      %s
     </label>
   </div>
   <!-- /Enable random events -->
@@ -168,7 +171,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
       %s
     />
     <label class="form-check-label" for="togglePropagateEvents">
-      Verknüpfungen aktiv
+      %s
     </label>
   </div>
   <!-- /Enable event propagation -->
@@ -186,7 +189,7 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
       %s
     />
     <label class="form-check-label" for="toggleRandomChaos">
-      Verrücktes Blinken
+      %s
     </label>
   </div>
   <!-- /Enable random blink -->
@@ -196,11 +199,15 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
   <input type="hidden" name="clearEeprom" value="0" />
 </div>
 )html",
-          renderHiddenBuffer, MAX_TOTAL_CHANNELS, numChannels,
-          toggleOneBasedAddressesCheckedBuffer,
-          toggleCompactDisplayCheckedBuffer, toggleForceAllOffCheckedBuffer,
-          toggleForceAllOnCheckedBuffer, toggleRandomEventsCheckedBuffer,
-          togglePropagateEventsCheckedBuffer, toggleRandomChaosCheckedBuffer);
+          renderHiddenBuffer, I18N_OPTIONS_CHANNELS, MAX_TOTAL_CHANNELS,
+          numChannels, I18N_OPTIONS_SEND, toggleOneBasedAddressesCheckedBuffer,
+          I18N_OPTIONS_ONE_BASED_ADDRESSES, toggleCompactDisplayCheckedBuffer,
+          I18N_OPTIONS_COMPACT_VIEW, toggleForceAllOffCheckedBuffer,
+          I18N_OPTIONS_FORCE_ALL_OFF, toggleForceAllOnCheckedBuffer,
+          I18N_OPTIONS_FORCE_ALL_ON, toggleRandomEventsCheckedBuffer,
+          I18N_OPTIONS_RANDOM_EVENTS, togglePropagateEventsCheckedBuffer,
+          I18N_OPTIONS_PROPAGATE_EVENTS, toggleRandomChaosCheckedBuffer,
+          I18N_OPTIONS_CRAZY_BLINK);
 
   pn(optionsOutputBuffer);
 }
@@ -254,14 +261,14 @@ void renderActions(WiFiClient client, bool showActions) {
     class="btn btn-primary text-white me-2 mb-2"
     onclick="sendValue('turnEvenChannelsOn','1')"
   >
-    Gerade
+    %s
   </button>
 
   <button
     class="btn btn-primary text-white me-2 mb-2"
     onclick="sendValue('turnOddChannelsOn','1')"
   >
-    Ungerade
+    %s
   </button>
 
   <button
@@ -272,7 +279,7 @@ void renderActions(WiFiClient client, bool showActions) {
   </button>
 </div>
 )html",
-          renderHiddenBuffer);
+          renderHiddenBuffer, I18N_ACTIONS_EVEN, I18N_ACTIONS_ODD);
 
   pn(outputBuffer);
 }
@@ -335,13 +342,14 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
       toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
 
   char outputBuffer[4096] = {0};
-  sprintf(outputBuffer, R"html(
-<h3>Kanal %d Bearbeiten</h3>
+  sprintf(
+      outputBuffer, R"html(
+<h3>%s %d %s</h3>
 
 <input type="hidden" name="channelId" value="%d" />
 
 <div class="row">
-  <div class="col">Beschreibung</div>
+  <div class="col">%s</div>
   <div class="col d-flex flex-fill justify-content-end">
     <input
       class="form-control"
@@ -365,13 +373,13 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     value="1"
     %s
   />
-  <label class="form-check-label" for="initialState"> Startzustand </label>
+  <label class="form-check-label" for="initialState">%s</label>
 </div>
 
 <div class="row pt-1">
   <div class="col">
     <div class="col d-flex">
-      <div>Helligkeit</div>
+      <div>%s</div>
       <div id="rangeAsPercentage" class="ps-1 text-muted">(%d %%)</div>
     </div>
   </div>
@@ -400,11 +408,11 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     %s
   />
   <label class="form-check-label" for="randomOn">
-    Zufällig Einschalten
+    %s
   </label>
 </div>
 <div class="row">
-  <div class="col d-flex align-items-center">~ Zufälle/h</div>
+  <div class="col d-flex align-items-center">%s</div>
   <div class="col d-flex justify-content-end">
     <input
       class="form-control"
@@ -429,12 +437,12 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     %s
   />
   <label class="form-check-label" for="randomOff">
-    Zufällig Ausschalten
+    %s
   </label>
 </div>
 
 <div class="row">
-  <div class="col d-flex align-items-center">~ Zufälle/h</div>
+  <div class="col d-flex align-items-center">%s</div>
   <div class="col d-flex justify-content-end">
     <input
       class="form-control"
@@ -458,11 +466,11 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     value="1"
     %s
   />
-  <label class="form-check-label" for="channelLinked"> Verknüpft </label>
+  <label class="form-check-label" for="channelLinked">%s</label>
 </div>
 
 <div class="row">
-  <div class="col">Gesteuert von Kanal</div>
+  <div class="col">%s</div>
   <div class="col d-flex align-items-center justify-content-end">
     <input
       class="form-control"
@@ -483,7 +491,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
       class="btn btn-warning"
       type="submit"
       name="ignoreChannel"
-      value="Verwerfen"
+      value="%s"
     />
   </div>
   <div class="col d-flex justify-content-end">
@@ -491,20 +499,23 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
       class="btn btn-primary"
       type="submit"
       name="updateChannel"
-      value="Speichern"
+      value="%s"
     />
     &nbsp;
   </div>
 </div>
 )html",
-          channelIdToDisplay, channelIdToEdit, maxChannelNameLength,
-          maxChannelNameLength, m_channelNameBuffer,
-          toggleInitialStateCheckedBuffer, brightnessAsPercentage,
-          channelBrightness, channelIdToEdit,
-          toggleHasRandomOnEventsCheckedBuffer, randomOnFreq,
-          toggleHasRandomOffEventsCheckedBuffer, randomOffFreq,
-          toggleIsChannelLinkedCheckedBuffer, smallesPossibleLinkedAddress,
-          largestPossibleLinkedAddress, displayedLinkedChannelId);
+      I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT, channelIdToEdit,
+      I18N_EDIT_DESCRIPTION, maxChannelNameLength, maxChannelNameLength,
+      m_channelNameBuffer, toggleInitialStateCheckedBuffer,
+      I18N_EDIT_START_STATE, I18N_EDIT_BRIGHTNESS, brightnessAsPercentage,
+      channelBrightness, channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
+      I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
+      toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
+      I18N_EDIT_RANDOM_FREQ, randomOffFreq, toggleIsChannelLinkedCheckedBuffer,
+      I18N_EDIT_LINKED, I18N_EDIT_CONTROLLED_BY_CHANNEL,
+      smallesPossibleLinkedAddress, largestPossibleLinkedAddress,
+      displayedLinkedChannelId, I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
 
   pn(outputBuffer);
 }
@@ -904,7 +915,7 @@ void renderOptionsHeading(WiFiClient client, bool toggleOptionsVisible) {
   sprintf(outputBuffer,
           R"html(
 <div class="d-flex align-items-center %s">
-  <div id="options-heading" class="h3">Optionen</div>
+  <div id="options-heading" class="h3">%s</div>
   <div class="form-check form-switch ms-2 ">
     <input
       class="form-check-input"
@@ -918,7 +929,7 @@ void renderOptionsHeading(WiFiClient client, bool toggleOptionsVisible) {
   </div>
 </div>
     )html",
-          mutedBuffer, toggleOptionsVisibleCheckedBuffer);
+          mutedBuffer, I18N_HEADING_OPTIONS, toggleOptionsVisibleCheckedBuffer);
 
   pn(outputBuffer);
 }
@@ -935,7 +946,7 @@ void renderActionsHeading(WiFiClient client, bool toggleActionsVisible) {
   sprintf(outputBuffer,
           R"html(
 <div class="d-flex align-items-center %s">
-  <div id="actions-heading" class="h3">Aktionen</div>
+  <div id="actions-heading" class="h3">%s</div>
   <div class="form-check form-switch ms-2 ">
     <input
       class="form-check-input"
@@ -949,7 +960,7 @@ void renderActionsHeading(WiFiClient client, bool toggleActionsVisible) {
   </div>
 </div>
     )html",
-          mutedBuffer, toggleActionsVisibleCheckedBuffer);
+          mutedBuffer, I18N_HEADING_ACTIONS, toggleActionsVisibleCheckedBuffer);
 
   pn(outputBuffer);
 }
