@@ -470,7 +470,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
 </div>
 
 <div class="row">
-  <div class="col">%s</div>
+  <div class="col d-flex align-items-center">%s</div>
   <div class="col d-flex align-items-center justify-content-end">
     <input
       class="form-control"
