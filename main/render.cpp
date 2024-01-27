@@ -3,8 +3,11 @@
 #include "helpers.h"
 #include <WiFiNINA.h>
 
-// #include "i18n/english.h"
-#include "i18n/german.h"
+#include "i18n/english.h"
+// #include "i18n/german.h"
+// #include "i18n/french.h"
+// #include "i18n/dutch.h"
+// #include "i18n/luxembourgish.h"
 
 char m_checkedBuffer[] = "checked";
 char m_emptyBuffer[] = "";
@@ -19,25 +22,25 @@ void renderOptions(WiFiClient client, uint16_t numChannels,
                    bool showOptions) {
 
   char *toggleOneBasedAddressesCheckedBuffer =
-      toggleOneBasedAddresses ? m_checkedBuffer : m_emptyBuffer;
+    toggleOneBasedAddresses ? m_checkedBuffer : m_emptyBuffer;
 
   char *toggleCompactDisplayCheckedBuffer =
-      toggleCompactDisplay ? m_checkedBuffer : m_emptyBuffer;
+    toggleCompactDisplay ? m_checkedBuffer : m_emptyBuffer;
 
   char *toggleForceAllOffCheckedBuffer =
-      toggleForceAllOff ? m_checkedBuffer : m_emptyBuffer;
+    toggleForceAllOff ? m_checkedBuffer : m_emptyBuffer;
 
   char *toggleForceAllOnCheckedBuffer =
-      toggleForceAllOn ? m_checkedBuffer : m_emptyBuffer;
+    toggleForceAllOn ? m_checkedBuffer : m_emptyBuffer;
 
   char *toggleRandomEventsCheckedBuffer =
-      toggleRandomEvents ? m_checkedBuffer : m_emptyBuffer;
+    toggleRandomEvents ? m_checkedBuffer : m_emptyBuffer;
 
   char *togglePropagateEventsCheckedBuffer =
-      togglePropagateEvents ? m_checkedBuffer : m_emptyBuffer;
+    togglePropagateEvents ? m_checkedBuffer : m_emptyBuffer;
 
   char *toggleRandomChaosCheckedBuffer =
-      toggleRandomChaos ? m_checkedBuffer : m_emptyBuffer;
+    toggleRandomChaos ? m_checkedBuffer : m_emptyBuffer;
 
   char *renderHiddenBuffer = showOptions ? m_emptyBuffer : m_renderHiddenBuffer;
 
@@ -288,62 +291,62 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
                        uint16_t anchorChannelId, uint16_t numChannels,
                        bool toggleOneBasedAddresses, uint16_t channelIdToEdit) {
   uint16_t channelBrightness = readUint16tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_BRIGHTNESS);
+    channelIdToEdit, MEM_SLOT_BRIGHTNESS);
 
   uint8_t brightnessAsPercentage =
-      (int)(((float)channelBrightness / 4095) * 100);
+    (int)(((float)channelBrightness / 4095) * 100);
 
   uint16_t channelIdToDisplay =
-      toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit;
+    toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit;
 
   uint8_t maxChannelNameLength = MAX_CHANNEL_NAME_LENGTH - 1;
 
   char *toggleOneBasedAddressesCheckedBuffer =
-      toggleOneBasedAddresses ? m_checkedBuffer : m_emptyBuffer;
+    toggleOneBasedAddresses ? m_checkedBuffer : m_emptyBuffer;
 
   bool initialState = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_INITIAL_STATE);
+    channelIdToEdit, MEM_SLOT_INITIAL_STATE);
 
   char *toggleInitialStateCheckedBuffer =
-      initialState ? m_checkedBuffer : m_emptyBuffer;
+    initialState ? m_checkedBuffer : m_emptyBuffer;
 
   bool hasRandomOnEvents =
-      readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_ON);
+    readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_ON);
 
   char *toggleHasRandomOnEventsCheckedBuffer =
-      hasRandomOnEvents ? m_checkedBuffer : m_emptyBuffer;
+    hasRandomOnEvents ? m_checkedBuffer : m_emptyBuffer;
 
   uint8_t randomOnFreq = readUint8tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_RANDOM_ON_FREQ);
+    channelIdToEdit, MEM_SLOT_RANDOM_ON_FREQ);
 
   bool hasRandomOffEvents =
-      readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_OFF);
+    readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_OFF);
 
   char *toggleHasRandomOffEventsCheckedBuffer =
-      hasRandomOffEvents ? m_checkedBuffer : m_emptyBuffer;
+    hasRandomOffEvents ? m_checkedBuffer : m_emptyBuffer;
 
   uint8_t randomOffFreq = readUint8tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_RANDOM_OFF_FREQ);
+    channelIdToEdit, MEM_SLOT_RANDOM_OFF_FREQ);
 
   bool isChannelLinked =
-      readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_IS_LINKED);
+    readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_IS_LINKED);
 
   char *toggleIsChannelLinkedCheckedBuffer =
-      isChannelLinked ? m_checkedBuffer : m_emptyBuffer;
+    isChannelLinked ? m_checkedBuffer : m_emptyBuffer;
 
   uint8_t smallesPossibleLinkedAddress = toggleOneBasedAddresses ? 1 : 0;
   uint16_t largestPossibleLinkedAddress =
-      toggleOneBasedAddresses ? numChannels : numChannels - 1;
+    toggleOneBasedAddresses ? numChannels : numChannels - 1;
 
   uint16_t linkedChannelId = readUint16tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_LINKED_CHANNEL);
+    channelIdToEdit, MEM_SLOT_LINKED_CHANNEL);
 
   uint16_t displayedLinkedChannelId =
-      toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
+    toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
 
-  char outputBuffer[4096] = {0};
+  char outputBuffer[4096] = { 0 };
   sprintf(
-      outputBuffer, R"html(
+    outputBuffer, R"html(
 <h3>%s %d %s</h3>
 
 <input type="hidden" name="channelId" value="%d" />
@@ -505,17 +508,17 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
   </div>
 </div>
 )html",
-      I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT, channelIdToEdit,
-      I18N_EDIT_DESCRIPTION, maxChannelNameLength, maxChannelNameLength,
-      m_channelNameBuffer, toggleInitialStateCheckedBuffer,
-      I18N_EDIT_START_STATE, I18N_EDIT_BRIGHTNESS, brightnessAsPercentage,
-      channelBrightness, channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
-      I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
-      toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
-      I18N_EDIT_RANDOM_FREQ, randomOffFreq, toggleIsChannelLinkedCheckedBuffer,
-      I18N_EDIT_LINKED, I18N_EDIT_CONTROLLED_BY_CHANNEL,
-      smallesPossibleLinkedAddress, largestPossibleLinkedAddress,
-      displayedLinkedChannelId, I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
+    I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT, channelIdToEdit,
+    I18N_EDIT_DESCRIPTION, maxChannelNameLength, maxChannelNameLength,
+    m_channelNameBuffer, toggleInitialStateCheckedBuffer,
+    I18N_EDIT_START_STATE, I18N_EDIT_BRIGHTNESS, brightnessAsPercentage,
+    channelBrightness, channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
+    I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
+    toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
+    I18N_EDIT_RANDOM_FREQ, randomOffFreq, toggleIsChannelLinkedCheckedBuffer,
+    I18N_EDIT_LINKED, I18N_EDIT_CONTROLLED_BY_CHANNEL,
+    smallesPossibleLinkedAddress, largestPossibleLinkedAddress,
+    displayedLinkedChannelId, I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
 
   pn(outputBuffer);
 }
@@ -525,23 +528,23 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   uint16_t brightness =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+    readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
   bool initialState =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_INITIAL_STATE);
+    readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_INITIAL_STATE);
 
   uint16_t channelIdToDisplay =
-      toggleOneBasedAddresses ? channelId + 1 : channelId;
+    toggleOneBasedAddresses ? channelId + 1 : channelId;
 
   uint8_t boardIndex = getBoardIndexForChannel(channelId);
   uint8_t subAddress = getBoardSubAddressForChannel(channelId);
 
   uint8_t boardIndexToDisplay =
-      toggleOneBasedAddresses ? boardIndex + 1 : boardIndex;
+    toggleOneBasedAddresses ? boardIndex + 1 : boardIndex;
 
   uint8_t boardSubAddressToDisplay =
-      toggleOneBasedAddresses ? subAddress + 1 : subAddress;
+    toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
   char enabledBuffer[] = I18N_CHANNEL_ON;
   char disabledBuffer[] = I18N_CHANNEL_OFF;
@@ -550,14 +553,14 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
   char noBuffer[] = I18N_CHANNEL_NO;
 
   char *toggleInitialStateCheckedBuffer =
-      initialState ? enabledBuffer : disabledBuffer;
+    initialState ? enabledBuffer : disabledBuffer;
 
   // --- Prepare random on events ---
   bool randomOn =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON);
+    readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON);
 
   uint8_t randomOnFreq =
-      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON_FREQ);
+    readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON_FREQ);
 
   char *randomOnEventsEnabledBuffer = randomOn ? yesBuffer : noBuffer;
 
@@ -577,15 +580,15 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
           I18N_CHANNEL_RANDOM_FREQ, randomOnFreq);
 
   char *randomOnEventsFrequencyHtmlToDisplayBuffer =
-      randomOn ? randomOnFrequencyHtmlOutputBuffer : m_emptyBuffer;
+    randomOn ? randomOnFrequencyHtmlOutputBuffer : m_emptyBuffer;
   // --- /Prepare random on events ---
 
   // --- Prepare random off events ---
   bool randomOff =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
+    readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
 
   uint8_t randomOffFreq =
-      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
+    readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
 
   char *randomOffEventsEnabledBuffer = randomOff ? yesBuffer : noBuffer;
 
@@ -604,19 +607,19 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
           I18N_CHANNEL_RANDOM_FREQ, randomOffFreq);
 
   char *randomOffEventsFrequencyHtmlToDisplayBuffer =
-      randomOff ? randomOffFrequencyHtmlOutputBuffer : m_emptyBuffer;
+    randomOff ? randomOffFrequencyHtmlOutputBuffer : m_emptyBuffer;
 
   // --- /Prepare random off events ---
 
   // --- Prepare linked ---
   bool isLinked =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
+    readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
 
   uint16_t linkedChannelId =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINKED_CHANNEL);
+    readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINKED_CHANNEL);
 
   uint16_t linkedChannelIdToDisplay =
-      toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
+    toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
 
   char *isChannelLinkedBuffer = isLinked ? yesBuffer : noBuffer;
 
@@ -636,14 +639,14 @@ void renderChannelDetail(WiFiClient client, bool toggleOneBasedAddresses,
           I18N_CHANNEL_COMMANDED_BY_CHANNEL, linkedChannelIdToDisplay);
 
   char *linkedChannelHtmlToDisplayBuffer =
-      isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
+    isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
   // --- /Prepare linked ---
 
   char horizontalRuleHtmlBuffer[] = "<hr class='mb-1 mt-1'/>";
   char *horizontalRuleHtmlToDisplayBuffer =
-      renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
+    renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
 
-  char outputBuffer[4096] = {0};
+  char outputBuffer[4096] = { 0 };
   // char inputBuffer[] = ;
 
   sprintf(outputBuffer, R"html(
@@ -756,23 +759,23 @@ void renderChannelDetailCompact(WiFiClient client, bool toggleOneBasedAddresses,
   int subAddress = getBoardSubAddressForChannel(channelId);
 
   int boardIndexToDisplay =
-      toggleOneBasedAddresses ? boardIndex + 1 : boardIndex;
+    toggleOneBasedAddresses ? boardIndex + 1 : boardIndex;
 
   int boardSubAddressToDisplay =
-      toggleOneBasedAddresses ? subAddress + 1 : subAddress;
+    toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
   uint16_t brightness =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+    readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
   char horizontalRuleHtmlBuffer[] = "<hr class='mb-1 mt-1'/>";
   char *horizontalRuleHtmlToDisplayBuffer =
-      renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
+    renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
 
   char outputBuffer[1024];
 
   uint16_t channelIdToDisplay =
-      toggleOneBasedAddresses ? channelId + 1 : channelId;
+    toggleOneBasedAddresses ? channelId + 1 : channelId;
 
   char channelNameToDisplay[MAX_CHANNEL_NAME_LENGTH];
 
@@ -915,7 +918,7 @@ function onBrightnessValueChanged(value, channelId) {
 void renderOptionsHeading(WiFiClient client, bool toggleOptionsVisible) {
 
   char *toggleOptionsVisibleCheckedBuffer =
-      toggleOptionsVisible ? m_checkedBuffer : m_emptyBuffer;
+    toggleOptionsVisible ? m_checkedBuffer : m_emptyBuffer;
 
   char *mutedBuffer = toggleOptionsVisible ? m_emptyBuffer : m_textMutedBuffer;
 
@@ -946,7 +949,7 @@ void renderOptionsHeading(WiFiClient client, bool toggleOptionsVisible) {
 void renderActionsHeading(WiFiClient client, bool toggleActionsVisible) {
 
   char *toggleActionsVisibleCheckedBuffer =
-      toggleActionsVisible ? m_checkedBuffer : m_emptyBuffer;
+    toggleActionsVisible ? m_checkedBuffer : m_emptyBuffer;
 
   char *mutedBuffer = toggleActionsVisible ? m_emptyBuffer : m_textMutedBuffer;
 
