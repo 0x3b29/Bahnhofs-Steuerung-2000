@@ -4,7 +4,6 @@
 #include "main.h"
 #include <Arduino.h>
 
-
 #define EEPROM_ADDRESS 0x50
 
 // Memory Slots for general settings
