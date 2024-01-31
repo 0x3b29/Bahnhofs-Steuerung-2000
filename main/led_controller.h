@@ -13,8 +13,9 @@ private:
   bool m_toggleForceAllOn;
   bool m_toggleOneBasedAddresses;
   bool m_togglePropagateEvents;
-  bool m_binaryCount;
   bool m_foundRecursion;
+  
+  uint16_t m_binaryCount;
 
   Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 

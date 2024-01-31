@@ -124,7 +124,7 @@ void LedController::commandLinkedChannel(uint16_t commandingChannelId,
 }
 
 void LedController::applyInitialState() {
-  m_binaryCount = 0;
+  this->m_binaryCount = 0;
 
   for (int i = 0; i < m_numChannels; i++) {
 
@@ -202,13 +202,14 @@ void LedController::turnOddChannelsOn() {
 
 void LedController::countBinary() {
   for (int i = 0; i < m_numChannels; i++) {
-    if ((m_binaryCount & (1 << i)) == 0) {
+    if ((this->m_binaryCount & (1 << i)) == 0) {
       setChannelBrightness(i, 0);
     } else {
       setChannelBrightness(i, 4095);
     }
   }
-  m_binaryCount++;
+  
+  this->m_binaryCount++;
 }
 
 bool LedController::shouldInvokeEvent(uint8_t freq) {
