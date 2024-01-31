@@ -13,8 +13,8 @@ This project is a scalable, web based LED control platform I developed for my fa
 - Up to 976 single color LEDs
 - Up to 305\*\* RGB LEDs
 
-(_ Not 62 because one address in the usable address space of the PCA9685 boards is used by the eeprom)
-(\*\* 5 RGB LEDs per board _ 61 boards)
+\* Not 62 because one address in the usable address space of the PCA9685 boards is used by the eeprom \
+\*\* 5 RGB LEDs per board x 61 boards
 
 ## Features per channel
 
