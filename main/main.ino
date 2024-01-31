@@ -265,7 +265,7 @@ void processRequest(WiFiClient client) {
   m_renderAnchor = false;
 
   if (strstr(m_pageBuffer, "POST") != NULL) {
-    if (isKeyInData(m_pageBuffer, "ignoreChannel")) {
+    if (isKeyInData(m_pageBuffer, "cancelChannelUpdate")) {
       // User clicked on "Verwerfen" button
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;

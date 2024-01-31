@@ -493,7 +493,7 @@ void renderEditChannel(WiFiClient client, bool renderAnchor,
     <input
       class="btn btn-warning"
       type="submit"
-      name="ignoreChannel"
+      name="cancelChannelUpdate"
       value="%s"
     />
   </div>
