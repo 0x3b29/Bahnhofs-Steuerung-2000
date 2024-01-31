@@ -1,8 +1,8 @@
 #include "eeprom.h"
 #include "helpers.h"
+#include "led_controller.h"
 #include "main.h"
 #include "render.h"
-#include <Adafruit_PWMServoDriver.h>
 #include <ArduinoOTA.h>
 #include <WiFiNINA.h>
 #include <WiFiServer.h>
@@ -16,7 +16,8 @@
 #define RANDOM_EVENT_INTERVAL 1000
 
 WiFiServer server(80);
-Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
+
+LedController m_ledController;
 
 char m_pageBuffer[PAGE_BUFFER_SIZE];
 
@@ -43,9 +44,6 @@ uint16_t m_anchorChannelId;
 
 long m_lastRandom = 0;
 long m_lastRandomEvent = 0;
-
-bool m_foundRecursion = false;
-uint8_t m_binaryCount = 0;
 
 // Function to extract value from form data using char arrays
 // formData: The form data as a char array
@@ -104,131 +102,6 @@ void replyToClientWithFail(WiFiClient client) {
   client.println("Failed to update settings.");
 }
 
-void applyAndPropagateValue(int channel, uint16_t brightness) {
-  setChannelBrightness(channel, brightness);
-
-  if (m_togglePropagateEvents && !m_toggleForceAllOff && !m_toggleForceAllOn &&
-      !m_toggleRandomChaos) {
-    bool turnOn = false;
-
-    if (brightness > 0) {
-      turnOn = true;
-    }
-
-    commandLinkedChannel(channel, turnOn, 0, 5);
-  }
-}
-
-void setChannelBrightness(int channel, uint16_t brightness) {
-  int boardIndex = getBoardIndexForChannel(channel);
-  int subAddress = getBoardSubAddressForChannel(channel);
-
-  if (m_toggleForceAllOff == true) {
-    m_pwmBoards[boardIndex].setPWM(subAddress, 0, 0);
-    return;
-  }
-
-  if (m_toggleForceAllOn) {
-    m_pwmBoards[boardIndex].setPWM(subAddress, 0, 4095);
-    return;
-  }
-
-  if (m_toggleRandomChaos == true) {
-    m_pwmBoards[boardIndex].setPWM(subAddress, 0, random(0, 4095));
-    return;
-  }
-
-  m_pwmBoards[boardIndex].setPWM(subAddress, 0, brightness);
-}
-
-void applyInitialState() {
-  m_binaryCount = 0;
-
-  for (int i = 0; i < m_numChannels; i++) {
-
-    bool initialState =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_INITIAL_STATE);
-
-    uint16_t brightness = 0;
-
-    if (initialState == true) {
-      brightness =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
-    }
-
-    applyAndPropagateValue(i, brightness);
-  }
-}
-
-void turnAllChannelsOff() {
-  for (int i = 0; i < m_numChannels; i++) {
-    setChannelBrightness(i, 0);
-  }
-}
-
-void turnAllChannels25() {
-  for (int i = 0; i < m_numChannels; i++) {
-    setChannelBrightness(i, 1024);
-  }
-}
-
-void turnAllChannels50() {
-  for (int i = 0; i < m_numChannels; i++) {
-    setChannelBrightness(i, 2048);
-  }
-}
-
-void turnAllChannels100() {
-  for (int i = 0; i < m_numChannels; i++) {
-    setChannelBrightness(i, 4095);
-  }
-}
-
-void turnEvenChannelsOn() {
-  for (int i = 0; i < m_numChannels; i++) {
-
-    int userFacingAddress = i;
-
-    if (m_toggleOneBasedAddresses) {
-      userFacingAddress++;
-    }
-
-    if (userFacingAddress % 2 == 0) {
-      setChannelBrightness(i, 4095);
-    } else {
-      setChannelBrightness(i, 0);
-    }
-  }
-}
-
-void turnOddChannelsOn() {
-  for (int i = 0; i < m_numChannels; i++) {
-
-    int userFacingAddress = i;
-
-    if (m_toggleOneBasedAddresses) {
-      userFacingAddress++;
-    }
-
-    if (userFacingAddress % 2 == 1) {
-      setChannelBrightness(i, 4095);
-    } else {
-      setChannelBrightness(i, 0);
-    }
-  }
-}
-
-void countBinary() {
-  for (int i = 0; i < m_numChannels; i++) {
-    if ((m_binaryCount & (1 << i)) == 0) {
-      setChannelBrightness(i, 0);
-    } else {
-      setChannelBrightness(i, 4095);
-    }
-  }
-  m_binaryCount++;
-}
-
 void clearPageBuffer() {
   for (int i = 0; i < PAGE_BUFFER_SIZE; i++) {
     m_pageBuffer[i] = '\0';
@@ -277,7 +150,8 @@ void processRequest(WiFiClient client) {
       uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
           channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
 
-      setChannelBrightness(channelIdAsNumber, originalBrightness);
+      m_ledController.setChannelBrightness(channelIdAsNumber,
+                                           originalBrightness);
 
       m_renderAnchor = true;
       m_anchorChannelId = channelIdAsNumber;
@@ -294,7 +168,8 @@ void processRequest(WiFiClient client) {
                        "channelBrightness=", channelBrightnessBuffer, 5);
       uint16_t channelBrightness = atoi(channelBrightnessBuffer);
 
-      setChannelBrightness(channelIdAsNumber, channelBrightness);
+      m_ledController.setChannelBrightness(channelIdAsNumber,
+                                           channelBrightness);
     }
 
     if (isKeyInData(m_pageBuffer, "toggleOneBasedAddresses")) {
@@ -304,6 +179,7 @@ void processRequest(WiFiClient client) {
       m_toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
       writeToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
                           &m_toggleOneBasedAddresses, 1);
+      m_ledController.setToggleOneBasedAddresses(m_toggleOneBasedAddresses);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -326,7 +202,7 @@ void processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
                        4);
       turnChannelOffId = atoi(turnChannelOffIdBuffer);
-      applyAndPropagateValue(turnChannelOffId, 0);
+      m_ledController.applyAndPropagateValue(turnChannelOffId, 0);
     }
 
     if (isKeyInData(m_pageBuffer, "turnChannelOn")) {
@@ -339,7 +215,7 @@ void processRequest(WiFiClient client) {
       uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
           turnChannelOnId, MEM_SLOT_BRIGHTNESS);
 
-      applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
+      m_ledController.applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
     }
 
     if (isKeyInData(m_pageBuffer, "editChannel")) {
@@ -363,10 +239,11 @@ void processRequest(WiFiClient client) {
                        "toggleForceAllOff=", toggleForceAllOffBuffer, 2);
       m_toggleForceAllOff = atoi(toggleForceAllOffBuffer);
       writeToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
+      m_ledController.setToggleForceAllOff(m_toggleForceAllOff);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
-      applyInitialState();
+      m_ledController.applyInitialState();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleForceAllOn")) {
@@ -375,10 +252,11 @@ void processRequest(WiFiClient client) {
                        "toggleForceAllOn=", toggleForceAllOnBuffer, 2);
       m_toggleForceAllOn = atoi(toggleForceAllOnBuffer);
       writeToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
+      m_ledController.setToggleForceAllOn(m_toggleForceAllOn);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
-      applyInitialState();
+      m_ledController.applyInitialState();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleRandomChaos")) {
@@ -387,6 +265,7 @@ void processRequest(WiFiClient client) {
                        "toggleRandomChaos=", toggleRandomChaosBuffer, 2);
       m_toggleRandomChaos = atoi(toggleRandomChaosBuffer);
       writeToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, &m_toggleRandomChaos, 1);
+      m_ledController.setToggleRandomChaos(m_toggleRandomChaos);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -411,6 +290,7 @@ void processRequest(WiFiClient client) {
       m_togglePropagateEvents = atoi(togglePropagateEventsBuffer);
       writeToEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, &m_togglePropagateEvents,
                           1);
+      m_ledController.setTogglePropagateEvents(m_togglePropagateEvents);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -434,8 +314,8 @@ void processRequest(WiFiClient client) {
       char numChannelsBuffer[4] = "0";
       getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
       m_numChannels = atoi(numChannelsBuffer);
-
       writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, m_numChannels);
+      m_ledController.setNumChannels(m_numChannels);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -544,7 +424,8 @@ void processRequest(WiFiClient client) {
             channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
       }
 
-      applyAndPropagateValue(channelIdAsNumber, channelBrightness);
+      m_ledController.applyAndPropagateValue(channelIdAsNumber,
+                                             channelBrightness);
 
       writePageIntegrity(channelIdAsNumber + 1);
       writePageFromBufferToEeprom(channelIdAsNumber + 1);
@@ -552,39 +433,39 @@ void processRequest(WiFiClient client) {
       shouldRerender = true;
       m_renderAnchor = true;
       m_anchorChannelId = channelIdAsNumber;
-      m_foundRecursion = false;
+      m_ledController.resetRecursionFlag();
     }
 
     if (isKeyInData(m_pageBuffer, "resetAllChannels")) {
-      applyInitialState();
+      m_ledController.applyInitialState();
     }
 
     if (isKeyInData(m_pageBuffer, "turnAllChannelsOff")) {
-      turnAllChannelsOff();
+      m_ledController.turnAllChannelsOff();
     }
 
     if (isKeyInData(m_pageBuffer, "turnAllChannels25")) {
-      turnAllChannels25();
+      m_ledController.turnAllChannels25();
     }
 
     if (isKeyInData(m_pageBuffer, "turnAllChannels50")) {
-      turnAllChannels50();
+      m_ledController.turnAllChannels50();
     }
 
     if (isKeyInData(m_pageBuffer, "turnAllChannels100")) {
-      turnAllChannels100();
+      m_ledController.turnAllChannels100();
     }
 
     if (isKeyInData(m_pageBuffer, "turnEvenChannelsOn")) {
-      turnEvenChannelsOn();
+      m_ledController.turnEvenChannelsOn();
     }
 
     if (isKeyInData(m_pageBuffer, "turnOddChannelsOn")) {
-      turnOddChannelsOn();
+      m_ledController.turnOddChannelsOn();
     }
 
     if (isKeyInData(m_pageBuffer, "countBinary")) {
-      countBinary();
+      m_ledController.countBinary();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleShowOptions")) {
@@ -611,14 +492,15 @@ void processRequest(WiFiClient client) {
 
     if (shouldRerender) {
       renderWebPage(
-          client, m_foundRecursion, m_renderNextPageWithOptionsVisible,
+          client, m_ledController.getFoundRecursion(),
+          m_renderNextPageWithOptionsVisible,
           m_renderNextPageWithChannelEditVisible, m_renderAnchor,
           m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
           m_toggleCompactDisplay, m_toggleForceAllOff, m_toggleForceAllOn,
           m_toggleRandomChaos, m_toggleRandomEvents, m_togglePropagateEvents,
           m_channelIdToEdit, m_toggleShowOptions, m_toggleShowActions);
     } else {
-      if (m_foundRecursion) {
+      if (m_ledController.getFoundRecursion()) {
         replyToClientWithFail(client);
       } else {
         replyToClientWithSuccess(client);
@@ -632,12 +514,14 @@ void processRequest(WiFiClient client) {
     // For get requests, we always want to render the page to the client if its
     // not for the favicon
 
-    renderWebPage(client, m_foundRecursion, m_renderNextPageWithOptionsVisible,
+    renderWebPage(client, m_ledController.getFoundRecursion(),
+                  m_renderNextPageWithOptionsVisible,
                   m_renderNextPageWithChannelEditVisible, m_renderAnchor,
                   m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
                   m_toggleCompactDisplay, m_toggleForceAllOff,
                   m_toggleForceAllOn, m_toggleRandomChaos, m_toggleRandomEvents,
-                  m_togglePropagateEvents, m_channelIdToEdit, m_toggleShowOptions, m_toggleShowActions);
+                  m_togglePropagateEvents, m_channelIdToEdit,
+                  m_toggleShowOptions, m_toggleShowActions);
   }
 }
 
@@ -653,103 +537,13 @@ void loadOptionsToMemberVariables() {
   readFromEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, &m_togglePropagateEvents, 1);
   readFromEepromBuffer(MEM_SLOT_SHOW_OPTIONS, &m_toggleShowOptions, 1);
   readFromEepromBuffer(MEM_SLOT_SHOW_ACTIONS, &m_toggleShowActions, 1);
-}
 
-bool shouldInvokeEvent(uint8_t freq) {
-  // Generate a random number between 0 and 3599
-  uint16_t randNumber = random(3600);
-
-  // Check if the random number is less than the threshold
-  return randNumber < freq;
-}
-
-void commandLinkedChannel(uint16_t commandingChannelId, bool turnOn, int depth,
-                          int maxDepth) {
-
-  if (depth > maxDepth) {
-    st("Detected and broke recusrion for commandingChannelId ");
-    sn(commandingChannelId);
-
-    m_foundRecursion = true;
-    return;
-  }
-
-  for (uint16_t i = 0; i < m_numChannels; i++) {
-    if (i == commandingChannelId) {
-      continue;
-    }
-
-    bool isChannelLinked =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
-
-    if (isChannelLinked == true) {
-      uint16_t linkedChannelId =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
-
-      if (linkedChannelId == commandingChannelId) {
-        uint16_t brightness = 0;
-
-        if (turnOn) {
-          brightness =
-              readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
-        }
-
-        setChannelBrightness(i, brightness);
-        commandLinkedChannel(i, turnOn, depth + 1, maxDepth);
-      }
-    }
-  }
-}
-
-void calculateRandomEvents() {
-  for (int i = 0; i < m_numChannels; i++) {
-    bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
-    bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
-    uint16_t linkedChannel =
-        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
-
-    // No need for further checks if channel has no random events
-    if (!randomOn) {
-      continue;
-    }
-
-    uint8_t randomOnFreq =
-        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON_FREQ);
-
-    uint8_t randomOffFreq =
-        readUint8tForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF_FREQ);
-
-    bool turnOn = shouldInvokeEvent(randomOnFreq);
-    bool turnOff = shouldInvokeEvent(randomOffFreq);
-
-    if (turnOn) {
-      st("Got random on event for channel ");
-      sn(i);
-
-      uint16_t brightness =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
-
-      applyAndPropagateValue(i, brightness);
-
-      if (isLinked) {
-        uint16_t linkedBrightness = readUint16tForChannelFromEepromBuffer(
-            linkedChannel, MEM_SLOT_BRIGHTNESS);
-
-        applyAndPropagateValue(linkedChannel, linkedBrightness);
-      }
-    }
-
-    if (turnOff) {
-      st("Got random off event for channel ");
-      sn(i);
-
-      applyAndPropagateValue(i, 0);
-
-      if (isLinked) {
-        applyAndPropagateValue(linkedChannel, 0);
-      }
-    }
-  }
+  m_ledController.setNumChannels(m_numChannels);
+  m_ledController.setToggleRandomChaos(m_toggleRandomChaos);
+  m_ledController.setToggleForceAllOff(m_toggleForceAllOff);
+  m_ledController.setToggleForceAllOn(m_toggleForceAllOn);
+  m_ledController.setToggleOneBasedAddresses(m_toggleOneBasedAddresses);
+  m_ledController.setTogglePropagateEvents(m_togglePropagateEvents);
 }
 
 void setup() {
@@ -776,18 +570,7 @@ void setup() {
 
   // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
 
-  // Initializte pwm boards
-  for (int i = 0; i < PWM_BOARDS; i++) {
-    int pwmAddress = 0x40 + i;
-
-    m_pwmBoards[i] = Adafruit_PWMServoDriver(pwmAddress);
-    m_pwmBoards[i].begin();
-    m_pwmBoards[i].setOscillatorFrequency(27000000);
-    m_pwmBoards[i].setPWMFreq(PWM_REFRESH_RATE);
-
-    Serial.print("Board added: ");
-    Serial.println(pwmAddress);
-  }
+  m_ledController.initializePwmBoards();
 
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   Serial.println("Attempting to connect to WiFi network...");
@@ -833,7 +616,7 @@ void setup() {
   sn(analogValue);
   randomSeed(analogValue);
 
-  applyInitialState();
+  m_ledController.applyInitialState();
 }
 
 void loop() {
@@ -845,13 +628,13 @@ void loop() {
   if ((m_toggleRandomChaos == 1) &&
       (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
     m_lastRandom = millis();
-    applyInitialState();
+    m_ledController.applyInitialState();
   }
 
   if ((m_toggleRandomEvents == 1) &&
       millis() > (m_lastRandomEvent + RANDOM_EVENT_INTERVAL)) {
     m_lastRandomEvent = millis();
-    calculateRandomEvents();
+    m_ledController.calculateRandomEvents();
   }
 
   if (client) {
