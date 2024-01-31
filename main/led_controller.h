@@ -47,6 +47,7 @@ public:
   bool shouldInvokeEvent(uint8_t freq);
 
   void calculateRandomEvents();
+  void setEveryChannelToRandomValue();
 };
 
 #endif // led_controller

@@ -628,7 +628,7 @@ void loop() {
   if ((m_toggleRandomChaos == 1) &&
       (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
     m_lastRandom = millis();
-    m_ledController.applyInitialState();
+    m_ledController.setEveryChannelToRandomValue();
   }
 
   if ((m_toggleRandomEvents == 1) &&

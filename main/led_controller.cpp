@@ -66,11 +66,6 @@ void LedController::setChannelBrightness(int channel, uint16_t brightness) {
     return;
   }
 
-  if (m_toggleRandomChaos == true) {
-    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, random(0, 4095));
-    return;
-  }
-
   this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, brightness);
 }
 
@@ -272,5 +267,14 @@ void LedController::calculateRandomEvents() {
         applyAndPropagateValue(linkedChannel, 0);
       }
     }
+  }
+}
+
+void LedController::setEveryChannelToRandomValue() {
+  for (int i = 0; i < m_numChannels; i++) {
+    int boardIndex = getBoardIndexForChannel(i);
+    int subAddress = getBoardSubAddressForChannel(i);
+
+    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, random(0, 4095));
   }
 }
