@@ -15,7 +15,7 @@
 #define RANDOM_INTERVAL 200
 #define RANDOM_EVENT_INTERVAL 1000
 
-WiFiServer server(80);
+WiFiServer m_wifiServer(80);
 
 LedController m_ledController;
 
@@ -599,8 +599,8 @@ void setup() {
   Serial.print("Server IP Address: ");
   Serial.println(WiFi.localIP());
 
-  // Start the server
-  server.begin();
+  // Start the m_wifiServer
+  m_wifiServer.begin();
 
   ArduinoOTA.onStart([]() { Serial.println("Start OTA"); });
 
@@ -623,7 +623,7 @@ void loop() {
   // check for WiFi OTA updates
   ArduinoOTA.poll();
 
-  WiFiClient client = server.available(); // Listen for incoming clients
+  WiFiClient client = m_wifiServer.available(); // Listen for incoming clients
 
   if ((m_toggleRandomChaos == 1) &&
       (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
