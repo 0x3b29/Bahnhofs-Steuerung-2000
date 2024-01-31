@@ -1,4 +1,7 @@
 #include "eeprom.h"
+#include "CRC.h"
+#include "CRC16.h"
+#include <Wire.h>
 uint8_t m_eepromBuffer[MAX_EEPROM_RANGE];
 char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH];
 

@@ -1,11 +1,9 @@
 #ifndef eeprom_h
 #define eeprom_h
 
-#include "CRC.h"
-#include "CRC16.h"
 #include "main.h"
 #include <Arduino.h>
-#include <Wire.h>
+
 
 #define EEPROM_ADDRESS 0x50
 
@@ -43,7 +41,6 @@
 
 extern uint8_t m_eepromBuffer[MAX_EEPROM_RANGE];
 extern char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH];
-extern CRC16 crc;
 
 void clearEepromBuffer();
 void clearEeprom();
