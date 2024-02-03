@@ -1,0 +1,526 @@
+
+#include "server_controller.h"
+#include "eeprom.h"
+#include "led_controller.h"
+#include "render.h"
+#include <WiFiServer.h>
+
+WiFiServer m_wifiServer(80);
+char m_pageBuffer[PAGE_BUFFER_SIZE];
+
+ServerController::ServerController(LedController *ledController) {
+  this->clearPageBuffer();
+  this->m_ledController = ledController;
+}
+
+void ServerController::begin() { m_wifiServer.begin(); }
+
+void ServerController::replyToClientWithSuccess(WiFiClient client) {
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-type:text/plain");
+  client.println();
+  client.println("Settings updated successfully.");
+}
+
+void ServerController::replyToClientWithFail(WiFiClient client) {
+  client.println("HTTP/1.1 400 Bad Request");
+  client.println("Content-type:text/plain");
+  client.println();
+  client.println("Failed to update settings.");
+}
+
+void ServerController::processRequest(WiFiClient client) {
+  bool shouldRerender = false;
+  m_renderAnchor = false;
+
+  if (strstr(m_pageBuffer, "POST") != NULL) {
+    if (isKeyInData(m_pageBuffer, "cancelChannelUpdate")) {
+      // User clicked on "Verwerfen" button
+      m_renderNextPageWithOptionsVisible = true;
+      m_renderNextPageWithChannelEditVisible = false;
+
+      // Reload old brigthness
+      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+      uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
+          channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
+
+      m_ledController->setChannelBrightness(channelIdAsNumber,
+                                           originalBrightness);
+
+      m_renderAnchor = true;
+      m_anchorChannelId = channelIdAsNumber;
+      shouldRerender = true;
+    }
+
+    if (isKeyInData(m_pageBuffer, "testBrightness")) {
+      // User changed brightness on edit channel form
+      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+      char channelBrightnessBuffer[5] = "0";
+      getValueFromData(m_pageBuffer,
+                       "channelBrightness=", channelBrightnessBuffer, 5);
+      uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+
+      m_ledController->setChannelBrightness(channelIdAsNumber,
+                                           channelBrightness);
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleOneBasedAddresses")) {
+      char toggleOneBasedAddressesBuffer[2] = "0";
+      getValueFromData(m_pageBuffer, "toggleOneBasedAddresses=",
+                       toggleOneBasedAddressesBuffer, 2);
+      m_toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
+      writeToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
+                          &m_toggleOneBasedAddresses, 1);
+      m_ledController->setToggleOneBasedAddresses(m_toggleOneBasedAddresses);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleCompactDisplay")) {
+      char toggleCompactDisplayBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleCompactDisplay=", toggleCompactDisplayBuffer, 2);
+      m_toggleCompactDisplay = atoi(toggleCompactDisplayBuffer);
+      writeToEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, &m_toggleCompactDisplay, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnChannelOff")) {
+      char turnChannelOffIdBuffer[4];
+      uint16_t turnChannelOffId;
+      getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
+                       4);
+      turnChannelOffId = atoi(turnChannelOffIdBuffer);
+      m_ledController->applyAndPropagateValue(turnChannelOffId, 0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnChannelOn")) {
+      char turnChannelOnIdBuffer[4];
+      uint16_t turnChannelOnId;
+      getValueFromData(m_pageBuffer, "turnChannelOn=", turnChannelOnIdBuffer,
+                       4);
+      turnChannelOnId = atoi(turnChannelOnIdBuffer);
+
+      uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
+          turnChannelOnId, MEM_SLOT_BRIGHTNESS);
+
+      m_ledController->applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
+    }
+
+    if (isKeyInData(m_pageBuffer, "editChannel")) {
+      Serial.println("PREPARE CHANNEL FORM");
+
+      getValueFromData(m_pageBuffer, "editChannel=", m_channelIdToEditBuffer,
+                       4);
+
+      m_renderNextPageWithOptionsVisible = false;
+      m_renderNextPageWithChannelEditVisible = true;
+
+      m_channelIdToEdit = atoi(m_channelIdToEditBuffer);
+      readChannelNameFromEepromBufferToChannelNameBuffer(m_channelIdToEdit);
+
+      shouldRerender = true;
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleForceAllOff")) {
+      char toggleForceAllOffBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleForceAllOff=", toggleForceAllOffBuffer, 2);
+      m_toggleForceAllOff = atoi(toggleForceAllOffBuffer);
+      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
+      m_ledController->setToggleForceAllOff(m_toggleForceAllOff);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+      m_ledController->applyInitialState();
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleForceAllOn")) {
+      char toggleForceAllOnBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleForceAllOn=", toggleForceAllOnBuffer, 2);
+      m_toggleForceAllOn = atoi(toggleForceAllOnBuffer);
+      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
+      m_ledController->setToggleForceAllOn(m_toggleForceAllOn);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+      m_ledController->applyInitialState();
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleRandomChaos")) {
+      char toggleRandomChaosBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleRandomChaos=", toggleRandomChaosBuffer, 2);
+      m_toggleRandomChaos = atoi(toggleRandomChaosBuffer);
+      writeToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, &m_toggleRandomChaos, 1);
+      m_ledController->setToggleRandomChaos(m_toggleRandomChaos);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleRandomEvents")) {
+      char toggleRandomEventsBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleRandomEvents=", toggleRandomEventsBuffer, 2);
+      m_toggleRandomEvents = atoi(toggleRandomEventsBuffer);
+      writeToEepromBuffer(MEM_SLOT_RANDOM_EVENTS, &m_toggleRandomEvents, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "togglePropagateEvents")) {
+      char togglePropagateEventsBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "togglePropagateEvents=", togglePropagateEventsBuffer,
+                       2);
+      m_togglePropagateEvents = atoi(togglePropagateEventsBuffer);
+      writeToEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, &m_togglePropagateEvents,
+                          1);
+      m_ledController->setTogglePropagateEvents(m_togglePropagateEvents);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "updateSettings")) {
+      char clearEepromBuffer[10] = "";
+      getValueFromData(m_pageBuffer, "clearEeprom=", clearEepromBuffer, 10);
+
+      // TODO: move reset2024 to secrets file
+      if (strcmp(clearEepromBuffer, "reset2024") == 0) {
+        Serial.println("Clearing Eeprom!!!");
+        clearEeprom();
+      }
+
+      uint16_t oldNumChannels = m_numChannels;
+
+      m_renderNextPageWithOptionsVisible = true;
+      m_renderNextPageWithChannelEditVisible = false;
+
+      char numChannelsBuffer[4] = "0";
+      getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
+      m_numChannels = atoi(numChannelsBuffer);
+      writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, m_numChannels);
+      m_ledController->setNumChannels(m_numChannels);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+
+      // If we have new channels, we load them, check them and wipe them if
+      // nessesary
+      if (oldNumChannels < m_numChannels) {
+        for (int i = oldNumChannels; i < m_numChannels; i++) {
+          Serial.print("Checking page for channel: ");
+          Serial.println(i);
+          loadPageAndCheckIntegrity(i + 1);
+        }
+      }
+
+      shouldRerender = true;
+    }
+
+    if (isKeyInData(m_pageBuffer, "updateChannel")) {
+      Serial.println("UPDATE CHANNEL");
+
+      m_renderNextPageWithOptionsVisible = true;
+      m_renderNextPageWithChannelEditVisible = false;
+
+      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+      // Worst case, each UTF8 character is 4 bytes long as url encoded
+      char urlEncodedNameBuffer[MAX_CHANNEL_NAME_LENGTH * 4];
+      getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer,
+                       MAX_CHANNEL_NAME_LENGTH * 4);
+      urlDecode(urlEncodedNameBuffer, m_channelNameBuffer,
+                MAX_CHANNEL_NAME_LENGTH);
+
+      char channelBrightnessBuffer[5] = "0";
+      getValueFromData(m_pageBuffer,
+                       "channelBrightness=", channelBrightnessBuffer, 5);
+
+      char initialStateBuffer[2] = "0";
+      getValueFromData(m_pageBuffer, "initialState=", initialStateBuffer, 2);
+      uint8_t initialState = atoi(initialStateBuffer);
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_INITIAL_STATE,
+                                initialState);
+
+      char randomOnBuffer[2] = "0";
+      char randomOnFreqBuffer[4] = "0";
+
+      char randomOffBuffer[2] = "0";
+      char randomOffFreqBuffer[4] = "0";
+
+      char isLinkedBuffer[2] = "0";
+      char linkedChannelIdBuffer[4] = "0";
+
+      getValueFromData(m_pageBuffer, "randomOn=", randomOnBuffer, 2);
+      getValueFromData(m_pageBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
+      getValueFromData(m_pageBuffer, "randomOff=", randomOffBuffer, 2);
+      getValueFromData(m_pageBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
+      getValueFromData(m_pageBuffer, "channelLinked=", isLinkedBuffer, 2);
+      getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer,
+                       4);
+
+      uint8_t randomOn = atoi(randomOnBuffer);
+      uint8_t randomOnFreq = atoi(randomOnFreqBuffer);
+
+      uint8_t randomOff = atoi(randomOffBuffer);
+      uint8_t randomOffFreq = atoi(randomOffFreqBuffer);
+
+      uint8_t isLinked = atoi(isLinkedBuffer);
+      uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
+
+      if (m_toggleOneBasedAddresses) {
+        linkedChannelId--;
+      }
+
+      Serial.print("Channel ");
+      Serial.print(channelIdAsNumber);
+
+      uint16_t startAddress = 64 + channelIdAsNumber * 64;
+      Serial.print(" got startAddress ");
+      Serial.println(startAddress);
+
+      uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+
+      writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
+
+      writeUint16tForChannelToEepromBuffer(
+          channelIdAsNumber, MEM_SLOT_BRIGHTNESS, channelBrightness);
+
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON,
+                                randomOn);
+      if (randomOn == 1) {
+        writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ,
+                                  randomOnFreq);
+      }
+
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF,
+                                randomOff);
+      if (randomOff == 1) {
+        writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ,
+                                  randomOffFreq);
+      }
+
+      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_IS_LINKED,
+                                isLinked);
+      if (isLinked == 1) {
+        writeUint16tForChannelToEepromBuffer(
+            channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
+      }
+
+      m_ledController->applyAndPropagateValue(channelIdAsNumber,
+                                             channelBrightness);
+
+      writePageIntegrity(channelIdAsNumber + 1);
+      writePageFromBufferToEeprom(channelIdAsNumber + 1);
+
+      shouldRerender = true;
+      m_renderAnchor = true;
+      m_anchorChannelId = channelIdAsNumber;
+      m_ledController->resetRecursionFlag();
+    }
+
+    if (isKeyInData(m_pageBuffer, "resetAllChannels")) {
+      m_ledController->applyInitialState();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnAllChannelsOff")) {
+      m_ledController->turnAllChannelsOff();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnAllChannels25")) {
+      m_ledController->turnAllChannels25();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnAllChannels50")) {
+      m_ledController->turnAllChannels50();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnAllChannels100")) {
+      m_ledController->turnAllChannels100();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnEvenChannelsOn")) {
+      m_ledController->turnEvenChannelsOn();
+    }
+
+    if (isKeyInData(m_pageBuffer, "turnOddChannelsOn")) {
+      m_ledController->turnOddChannelsOn();
+    }
+
+    if (isKeyInData(m_pageBuffer, "countBinary")) {
+      m_ledController->countBinary();
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleShowOptions")) {
+      char toggleShowOptionsBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleShowOptions=", toggleShowOptionsBuffer, 2);
+      m_toggleShowOptions = atoi(toggleShowOptionsBuffer);
+      writeToEepromBuffer(MEM_SLOT_SHOW_OPTIONS, &m_toggleShowOptions, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleShowActions")) {
+      char toggleShowActionsBuffer[2] = "0";
+      getValueFromData(m_pageBuffer,
+                       "toggleShowActions=", toggleShowActionsBuffer, 2);
+      m_toggleShowActions = atoi(toggleShowActionsBuffer);
+      writeToEepromBuffer(MEM_SLOT_SHOW_ACTIONS, &m_toggleShowActions, 1);
+
+      writePageIntegrity(0);
+      writePageFromBufferToEeprom(0);
+    }
+
+    if (shouldRerender) {
+      renderWebPage(
+          client, m_ledController->getFoundRecursion(),
+          m_renderNextPageWithOptionsVisible,
+          m_renderNextPageWithChannelEditVisible, m_renderAnchor,
+          m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
+          m_toggleCompactDisplay, m_toggleForceAllOff, m_toggleForceAllOn,
+          m_toggleRandomChaos, m_toggleRandomEvents, m_togglePropagateEvents,
+          m_channelIdToEdit, m_toggleShowOptions, m_toggleShowActions);
+    } else {
+      if (m_ledController->getFoundRecursion()) {
+        replyToClientWithFail(client);
+      } else {
+        replyToClientWithSuccess(client);
+      }
+    }
+
+    // Include line to see whats going on in memory
+    // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
+  } else {
+    sn("processRequest NOT POST");
+    // For get requests, we always want to render the page to the client if its
+    // not for the favicon
+
+    renderWebPage(client, m_ledController->getFoundRecursion(),
+                  m_renderNextPageWithOptionsVisible,
+                  m_renderNextPageWithChannelEditVisible, m_renderAnchor,
+                  m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
+                  m_toggleCompactDisplay, m_toggleForceAllOff,
+                  m_toggleForceAllOn, m_toggleRandomChaos, m_toggleRandomEvents,
+                  m_togglePropagateEvents, m_channelIdToEdit,
+                  m_toggleShowOptions, m_toggleShowActions);
+  }
+}
+
+void ServerController::loopEvent() {
+  WiFiClient client = m_wifiServer.available();
+
+  if (client) {
+    boolean currentLineIsBlank = true;
+
+    this->clearPageBuffer();
+    int pageIndex = 0;
+
+    if (client.connected()) {
+      while (client.available()) {
+        char c = client.read();
+        // Serial.write(c);
+
+        m_pageBuffer[pageIndex] = c;
+        pageIndex++;
+
+        if (pageIndex >= PAGE_BUFFER_SIZE) {
+          Serial.println("WARNING: PAGE EXCEEDED BUFFER SIZE! DANGER!!!");
+        }
+      }
+
+      processRequest(client);
+
+      client.stop();
+    }
+  }
+}
+
+// Function to extract value from form data using char arrays
+// formData: The form data as a char array
+// key: The key as a char array
+// value: A char array buffer where the extracted value will be stored
+// valueLen: The length of the value buffer
+void ServerController::getValueFromData(const char *formData, const char *key,
+                                        char *value, int valueLen) {
+  const char *startPtr = strstr(formData, key);
+  if (startPtr == NULL) {
+    Serial.print("Unable to find key: ");
+    Serial.println(key);
+    return;
+  }
+
+  startPtr += strlen(key); // Move pointer past the key
+
+  const char *endPtr = strchr(startPtr, '&');
+  if (endPtr == NULL) {
+    endPtr =
+        formData +
+        strlen(formData); // Set endPtr to the end of formData if '&' not found
+  }
+
+  int numCharsToCopy = endPtr - startPtr;
+  if (numCharsToCopy >= valueLen) {
+    numCharsToCopy = valueLen - 1; // Ensure we don't exceed buffer size
+  }
+
+  strncpy(value, startPtr, numCharsToCopy);
+  value[numCharsToCopy] = '\0'; // Null-terminate the string
+
+  return;
+}
+
+bool ServerController::isKeyInData(const char *formData, const char *key) {
+  const char *startPtr = strstr(formData, key);
+  if (startPtr == NULL) {
+    return false;
+  }
+
+  return true;
+}
+
+void ServerController::clearPageBuffer() {
+  for (int i = 0; i < PAGE_BUFFER_SIZE; i++) {
+    m_pageBuffer[i] = '\0';
+  }
+}
+
+void ServerController::urlDecode(const char *urlEncoded, char *decoded,
+                                 int maxLen) {
+  int len = strlen(urlEncoded);
+  int decodedIndex = 0;
+
+  for (int i = 0; i < len && decodedIndex < maxLen - 1; ++i) {
+    if (urlEncoded[i] == '+') {
+      decoded[decodedIndex++] = ' ';
+    } else if (urlEncoded[i] == '%' && i + 2 < len) {
+      // Get the next two characters after '%'
+      char hex[3];
+      hex[0] = urlEncoded[++i];
+      hex[1] = urlEncoded[++i];
+      hex[2] = '\0';
+
+      // Convert it into a character
+      decoded[decodedIndex++] = (char)strtol(hex, NULL, 16);
+    } else {
+      decoded[decodedIndex++] = urlEncoded[i];
+    }
+  }
+
+  // Null-terminate the decoded string
+  decoded[decodedIndex] = '\0';
+}

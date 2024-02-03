@@ -1,4 +1,5 @@
 #include "led_controller.h"
+#include "server_controller.h"
 #include "eeprom.h"
 #include "helpers.h"
 
