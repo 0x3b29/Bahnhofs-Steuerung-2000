@@ -25,6 +25,18 @@ private:
   void toggleOneBasedAddresses();
   void testBrightness();
   void updateChannel();
+  void toggleCompactDisplay();
+  void turnChannelOff();
+  void turnChannelOn();
+  void editChannel();
+  void toggleForceAllOff();
+  void toggleForceAllOn();
+  void toggleRandomChaos();
+  void toggleRandomEvents();
+  void togglePropagateEvents();
+  void updateNumberOfChannels();
+  void toggleShowOptions();
+  void toggleShowActions();
 
   void processRequest(WiFiClient client);
   void getValueFromData(const char *formData, const char *key, char *value,

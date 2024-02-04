@@ -55,7 +55,6 @@ void ServerController::toggleOneBasedAddresses() {
   bool toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
                           toggleOneBasedAddresses);
-  sn(toggleOneBasedAddresses);
   m_stateManager->setToggleOneBasedAddresses(toggleOneBasedAddresses);
 
   writePageIntegrity(0);
@@ -76,8 +75,6 @@ void ServerController::testBrightness() {
 }
 
 void ServerController::updateChannel() {
-  Serial.println("UPDATE CHANNEL");
-
   getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
@@ -169,6 +166,177 @@ void ServerController::updateChannel() {
   m_ledController->resetRecursionFlag();
 }
 
+void ServerController::toggleCompactDisplay() {
+  char toggleCompactDisplayBuffer[2] = "0";
+  getValueFromData(m_pageBuffer,
+                   "toggleCompactDisplay=", toggleCompactDisplayBuffer, 2);
+  bool toggleCompactDisplay = atoi(toggleCompactDisplayBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, toggleCompactDisplay);
+  m_stateManager->setToggleCompactDisplay(toggleCompactDisplay);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
+void ServerController::turnChannelOff() {
+  char turnChannelOffIdBuffer[4];
+  uint16_t turnChannelOffId;
+  getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer, 4);
+  turnChannelOffId = atoi(turnChannelOffIdBuffer);
+  m_ledController->applyAndPropagateValue(turnChannelOffId, 0);
+}
+
+void ServerController::turnChannelOn() {
+  char turnChannelOnIdBuffer[4];
+  uint16_t turnChannelOnId;
+  getValueFromData(m_pageBuffer, "turnChannelOn=", turnChannelOnIdBuffer, 4);
+  turnChannelOnId = atoi(turnChannelOnIdBuffer);
+
+  uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
+      turnChannelOnId, MEM_SLOT_BRIGHTNESS);
+
+  m_ledController->applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
+}
+
+void ServerController::editChannel() {
+  getValueFromData(m_pageBuffer, "editChannel=", m_channelIdToEditBuffer, 4);
+
+  uint16_t channelIdToEdit = atoi(m_channelIdToEditBuffer);
+  readChannelNameFromEepromBufferToChannelNameBuffer(channelIdToEdit);
+  m_stateManager->setChannelIdToEdit(channelIdToEdit);
+  m_stateManager->setRenderEditChannel(true);
+}
+
+void ServerController::toggleForceAllOff() {
+  char toggleForceAllOffBuffer[2] = "0";
+  getValueFromData(m_pageBuffer, "toggleForceAllOff=", toggleForceAllOffBuffer,
+                   2);
+  bool toggleForceAllOff = atoi(toggleForceAllOffBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, toggleForceAllOff);
+  m_stateManager->setToggleForceAllOff(toggleForceAllOff);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+  m_ledController->applyInitialState();
+}
+
+void ServerController::toggleForceAllOn() {
+  char toggleForceAllOnBuffer[2] = "0";
+  getValueFromData(m_pageBuffer, "toggleForceAllOn=", toggleForceAllOnBuffer,
+                   2);
+  bool toggleForceAllOn = atoi(toggleForceAllOnBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, toggleForceAllOn);
+  m_stateManager->setToggleForceAllOn(toggleForceAllOn);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+  m_ledController->applyInitialState();
+}
+
+void ServerController::toggleRandomChaos() {
+  char toggleRandomChaosBuffer[2] = "0";
+  getValueFromData(m_pageBuffer, "toggleRandomChaos=", toggleRandomChaosBuffer,
+                   2);
+  bool toggleRandomChaos = atoi(toggleRandomChaosBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, toggleRandomChaos);
+  m_stateManager->setToggleRandomChaos(toggleRandomChaos);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
+void ServerController::toggleRandomEvents() {
+  char toggleRandomEventsBuffer[2] = "0";
+  getValueFromData(m_pageBuffer,
+                   "toggleRandomEvents=", toggleRandomEventsBuffer, 2);
+  bool toggleRandomEvents = atoi(toggleRandomEventsBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_RANDOM_EVENTS, toggleRandomEvents);
+  m_stateManager->setToggleRandomEvents(toggleRandomEvents);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
+void ServerController::togglePropagateEvents() {
+  char togglePropagateEventsBuffer[2] = "0";
+  getValueFromData(m_pageBuffer,
+                   "togglePropagateEvents=", togglePropagateEventsBuffer, 2);
+  bool togglePropagateEvents = atoi(togglePropagateEventsBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, togglePropagateEvents);
+  m_stateManager->setTogglePropagateEvents(togglePropagateEvents);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
+void ServerController::updateNumberOfChannels() {
+  char clearEepromBuffer[10] = "";
+  getValueFromData(m_pageBuffer, "clearEeprom=", clearEepromBuffer, 10);
+
+  // TODO: move reset2024 to secrets file
+  if (strcmp(clearEepromBuffer, "reset2024") == 0) {
+    Serial.println("Clearing Eeprom!!!");
+    clearEeprom();
+  }
+
+  uint16_t oldNumChannels = m_stateManager->getNumChannels();
+
+  char numChannelsBuffer[4] = "0";
+  getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
+  uint16_t numChannels = atoi(numChannelsBuffer);
+  writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, numChannels);
+  m_stateManager->setNumChannels(numChannels);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+
+  // If we have new channels, we load them, check them and wipe them if
+  // nessesary
+  if (oldNumChannels < numChannels) {
+    for (int i = oldNumChannels; i < numChannels; i++) {
+      Serial.print("Checking page for channel: ");
+      Serial.println(i);
+      loadPageFromEepromToEepromBufferAndCheckIntegrity(i + 1);
+    }
+  }
+}
+
+void ServerController::toggleShowOptions() {
+  char toggleShowOptionsBuffer[2] = "0";
+  getValueFromData(m_pageBuffer, "toggleShowOptions=", toggleShowOptionsBuffer,
+                   2);
+  uint8_t toggleShowOptionsInt = atoi(toggleShowOptionsBuffer);
+  bool toggleShowOptions = false;
+
+  if (toggleShowOptionsInt == 1) {
+    toggleShowOptions = true;
+  }
+
+  writeBoolToEepromBuffer(MEM_SLOT_SHOW_OPTIONS, toggleShowOptions);
+  m_stateManager->setToggleShowOptions(toggleShowOptions);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
+void ServerController::toggleShowActions() {
+  char toggleShowActionsBuffer[2] = "0";
+  getValueFromData(m_pageBuffer, "toggleShowActions=", toggleShowActionsBuffer,
+                   2);
+  uint8_t toggleShowActionsInt = atoi(toggleShowActionsBuffer);
+  bool toggleShowActions = false;
+
+  if (toggleShowActionsInt == 1) {
+    toggleShowActions = true;
+  }
+
+  writeBoolToEepromBuffer(MEM_SLOT_SHOW_ACTIONS, toggleShowActions);
+  m_stateManager->setToggleShowActions(toggleShowActions);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
 void ServerController::processRequest(WiFiClient client) {
   bool shouldRerender = false;
   m_stateManager->setRenderAnchor(false);
@@ -190,147 +358,44 @@ void ServerController::processRequest(WiFiClient client) {
     }
 
     if (isKeyInData(m_pageBuffer, "toggleCompactDisplay")) {
-      char toggleCompactDisplayBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "toggleCompactDisplay=", toggleCompactDisplayBuffer, 2);
-      bool toggleCompactDisplay = atoi(toggleCompactDisplayBuffer);
-      writeBoolToEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, toggleCompactDisplay);
-      m_stateManager->setToggleCompactDisplay(toggleCompactDisplay);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
+      toggleCompactDisplay();
     }
 
     if (isKeyInData(m_pageBuffer, "turnChannelOff")) {
-      char turnChannelOffIdBuffer[4];
-      uint16_t turnChannelOffId;
-      getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
-                       4);
-      turnChannelOffId = atoi(turnChannelOffIdBuffer);
-      m_ledController->applyAndPropagateValue(turnChannelOffId, 0);
+      turnChannelOff();
     }
 
     if (isKeyInData(m_pageBuffer, "turnChannelOn")) {
-      char turnChannelOnIdBuffer[4];
-      uint16_t turnChannelOnId;
-      getValueFromData(m_pageBuffer, "turnChannelOn=", turnChannelOnIdBuffer,
-                       4);
-      turnChannelOnId = atoi(turnChannelOnIdBuffer);
-
-      uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
-          turnChannelOnId, MEM_SLOT_BRIGHTNESS);
-
-      m_ledController->applyAndPropagateValue(turnChannelOnId,
-                                              turnOnBrightness);
+      turnChannelOn();
     }
 
     if (isKeyInData(m_pageBuffer, "editChannel")) {
-      Serial.println("PREPARE CHANNEL FORM");
-
-      getValueFromData(m_pageBuffer, "editChannel=", m_channelIdToEditBuffer,
-                       4);
-
-      uint16_t channelIdToEdit = atoi(m_channelIdToEditBuffer);
-      readChannelNameFromEepromBufferToChannelNameBuffer(channelIdToEdit);
-      m_stateManager->setChannelIdToEdit(channelIdToEdit);
-      m_stateManager->setRenderEditChannel(true);
+      editChannel();
       shouldRerender = true;
     }
 
     if (isKeyInData(m_pageBuffer, "toggleForceAllOff")) {
-      char toggleForceAllOffBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "toggleForceAllOff=", toggleForceAllOffBuffer, 2);
-      bool toggleForceAllOff = atoi(toggleForceAllOffBuffer);
-      writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, toggleForceAllOff);
-      m_stateManager->setToggleForceAllOff(toggleForceAllOff);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
-      m_ledController->applyInitialState();
+      toggleForceAllOff();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleForceAllOn")) {
-      char toggleForceAllOnBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "toggleForceAllOn=", toggleForceAllOnBuffer, 2);
-      bool toggleForceAllOn = atoi(toggleForceAllOnBuffer);
-      writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, toggleForceAllOn);
-      m_stateManager->setToggleForceAllOn(toggleForceAllOn);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
-      m_ledController->applyInitialState();
+      toggleForceAllOn();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleRandomChaos")) {
-      char toggleRandomChaosBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "toggleRandomChaos=", toggleRandomChaosBuffer, 2);
-      bool toggleRandomChaos = atoi(toggleRandomChaosBuffer);
-      writeBoolToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, toggleRandomChaos);
-      m_stateManager->setToggleRandomChaos(toggleRandomChaos);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
+      toggleRandomChaos();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleRandomEvents")) {
-      char toggleRandomEventsBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "toggleRandomEvents=", toggleRandomEventsBuffer, 2);
-      bool toggleRandomEvents = atoi(toggleRandomEventsBuffer);
-      writeBoolToEepromBuffer(MEM_SLOT_RANDOM_EVENTS, toggleRandomEvents);
-      m_stateManager->setToggleRandomEvents(toggleRandomEvents);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
+      toggleRandomEvents();
     }
 
     if (isKeyInData(m_pageBuffer, "togglePropagateEvents")) {
-      char togglePropagateEventsBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "togglePropagateEvents=", togglePropagateEventsBuffer,
-                       2);
-      bool togglePropagateEvents = atoi(togglePropagateEventsBuffer);
-      writeBoolToEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, togglePropagateEvents);
-      m_stateManager->setTogglePropagateEvents(togglePropagateEvents);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
+      togglePropagateEvents();
     }
 
-    if (isKeyInData(m_pageBuffer, "updateSettings")) {
-      char clearEepromBuffer[10] = "";
-      getValueFromData(m_pageBuffer, "clearEeprom=", clearEepromBuffer, 10);
-
-      // TODO: move reset2024 to secrets file
-      if (strcmp(clearEepromBuffer, "reset2024") == 0) {
-        Serial.println("Clearing Eeprom!!!");
-        clearEeprom();
-      }
-
-      uint16_t oldNumChannels = m_stateManager->getNumChannels();
-
-      char numChannelsBuffer[4] = "0";
-      getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
-      uint16_t numChannels = atoi(numChannelsBuffer);
-      writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, numChannels);
-      m_stateManager->setNumChannels(numChannels);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
-
-      // If we have new channels, we load them, check them and wipe them if
-      // nessesary
-      if (oldNumChannels < numChannels) {
-        for (int i = oldNumChannels; i < numChannels; i++) {
-          Serial.print("Checking page for channel: ");
-          Serial.println(i);
-          loadPageFromEepromToEepromBufferAndCheckIntegrity(i + 1);
-        }
-      }
-
+    if (isKeyInData(m_pageBuffer, "updateNumberOfChannels")) {
+      updateNumberOfChannels();
       shouldRerender = true;
     }
 
@@ -372,39 +437,11 @@ void ServerController::processRequest(WiFiClient client) {
     }
 
     if (isKeyInData(m_pageBuffer, "toggleShowOptions")) {
-      char toggleShowOptionsBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "toggleShowOptions=", toggleShowOptionsBuffer, 2);
-      uint8_t toggleShowOptionsInt = atoi(toggleShowOptionsBuffer);
-      bool toggleShowOptions = false;
-
-      if (toggleShowOptionsInt == 1) {
-        toggleShowOptions = true;
-      }
-
-      writeBoolToEepromBuffer(MEM_SLOT_SHOW_OPTIONS, toggleShowOptions);
-      m_stateManager->setToggleShowOptions(toggleShowOptions);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
+      toggleShowOptions();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleShowActions")) {
-      char toggleShowActionsBuffer[2] = "0";
-      getValueFromData(m_pageBuffer,
-                       "toggleShowActions=", toggleShowActionsBuffer, 2);
-      uint8_t toggleShowActionsInt = atoi(toggleShowActionsBuffer);
-      bool toggleShowActions = false;
-
-      if (toggleShowActionsInt == 1) {
-        toggleShowActions = true;
-      }
-
-      writeBoolToEepromBuffer(MEM_SLOT_SHOW_ACTIONS, toggleShowActions);
-      m_stateManager->setToggleShowActions(toggleShowActions);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
+      toggleShowActions();
     }
 
     if (shouldRerender) {
@@ -420,10 +457,7 @@ void ServerController::processRequest(WiFiClient client) {
     // Include line to see whats going on in memory
     // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
   } else {
-    sn("processRequest NOT POST");
-    // For get requests, we always want to render the page to the client if its
-    // not for the favicon
-
+    // For get requests, we always want to render the page to the client
     m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
   }
 }

@@ -73,7 +73,7 @@ void Renderer::renderOptions(WiFiClient client) {
       <button
         class="btn btn-primary"
         type="submit"
-        name="updateSettings"
+        name="updateNumberOfChannels"
         value="Absenden"
       >
         %s
