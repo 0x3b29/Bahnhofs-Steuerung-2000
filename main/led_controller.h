@@ -2,33 +2,22 @@
 #define led_controller
 
 #include "main.h"
+#include "state_manager.h"
 #include <Adafruit_PWMServoDriver.h>
 #include <Arduino.h>
 
 class LedController {
 private:
-  uint16_t m_numChannels;
-  bool m_toggleRandomChaos;
-  bool m_toggleForceAllOff;
-  bool m_toggleForceAllOn;
-  bool m_toggleOneBasedAddresses;
-  bool m_togglePropagateEvents;
+  StateManager *m_stateManager;
+
   bool m_foundRecursion;
-  
   uint16_t m_binaryCount;
 
   Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
 public:
-  LedController();
+  LedController(StateManager *stateManager);
   void initializePwmBoards();
-
-  void setNumChannels(uint16_t numChannels);
-  void setToggleRandomChaos(bool toggleRandomChaos);
-  void setToggleForceAllOff(bool toggleForceAllOff);
-  void setToggleForceAllOn(bool toggleForceAllOn);
-  void setToggleOneBasedAddresses(bool toggleOneBasedAddresses);
-  void setTogglePropagateEvents(bool togglePropagateEvents);
 
   bool getFoundRecursion();
   void resetRecursionFlag();

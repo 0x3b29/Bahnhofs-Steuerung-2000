@@ -8,9 +8,13 @@
 WiFiServer m_wifiServer(80);
 char m_pageBuffer[PAGE_BUFFER_SIZE];
 
-ServerController::ServerController(LedController *ledController) {
+ServerController::ServerController(StateManager *stateManager,
+                                   LedController *ledController,
+                                   Renderer *renderer) {
   this->clearPageBuffer();
+  this->m_stateManager = stateManager;
   this->m_ledController = ledController;
+  this->m_renderer = renderer;
 }
 
 void ServerController::begin() { m_wifiServer.begin(); }
@@ -47,7 +51,7 @@ void ServerController::processRequest(WiFiClient client) {
           channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
 
       m_ledController->setChannelBrightness(channelIdAsNumber,
-                                           originalBrightness);
+                                            originalBrightness);
 
       m_renderAnchor = true;
       m_anchorChannelId = channelIdAsNumber;
@@ -65,17 +69,17 @@ void ServerController::processRequest(WiFiClient client) {
       uint16_t channelBrightness = atoi(channelBrightnessBuffer);
 
       m_ledController->setChannelBrightness(channelIdAsNumber,
-                                           channelBrightness);
+                                            channelBrightness);
     }
 
     if (isKeyInData(m_pageBuffer, "toggleOneBasedAddresses")) {
       char toggleOneBasedAddressesBuffer[2] = "0";
       getValueFromData(m_pageBuffer, "toggleOneBasedAddresses=",
                        toggleOneBasedAddressesBuffer, 2);
-      m_toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
-      writeToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
-                          &m_toggleOneBasedAddresses, 1);
-      m_ledController->setToggleOneBasedAddresses(m_toggleOneBasedAddresses);
+      bool toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
+      writeBoolToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
+                              toggleOneBasedAddresses);
+      m_stateManager->setToggleOneBasedAddresses(toggleOneBasedAddresses);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -85,8 +89,9 @@ void ServerController::processRequest(WiFiClient client) {
       char toggleCompactDisplayBuffer[2] = "0";
       getValueFromData(m_pageBuffer,
                        "toggleCompactDisplay=", toggleCompactDisplayBuffer, 2);
-      m_toggleCompactDisplay = atoi(toggleCompactDisplayBuffer);
-      writeToEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, &m_toggleCompactDisplay, 1);
+      bool toggleCompactDisplay = atoi(toggleCompactDisplayBuffer);
+      writeBoolToEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, toggleCompactDisplay);
+      m_stateManager->setToggleCompactDisplay(toggleCompactDisplay);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -111,7 +116,8 @@ void ServerController::processRequest(WiFiClient client) {
       uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
           turnChannelOnId, MEM_SLOT_BRIGHTNESS);
 
-      m_ledController->applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
+      m_ledController->applyAndPropagateValue(turnChannelOnId,
+                                              turnOnBrightness);
     }
 
     if (isKeyInData(m_pageBuffer, "editChannel")) {
@@ -133,9 +139,9 @@ void ServerController::processRequest(WiFiClient client) {
       char toggleForceAllOffBuffer[2] = "0";
       getValueFromData(m_pageBuffer,
                        "toggleForceAllOff=", toggleForceAllOffBuffer, 2);
-      m_toggleForceAllOff = atoi(toggleForceAllOffBuffer);
-      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, &m_toggleForceAllOff, 1);
-      m_ledController->setToggleForceAllOff(m_toggleForceAllOff);
+      bool toggleForceAllOff = atoi(toggleForceAllOffBuffer);
+      writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, toggleForceAllOff);
+      m_stateManager->setToggleForceAllOff(toggleForceAllOff);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -146,9 +152,9 @@ void ServerController::processRequest(WiFiClient client) {
       char toggleForceAllOnBuffer[2] = "0";
       getValueFromData(m_pageBuffer,
                        "toggleForceAllOn=", toggleForceAllOnBuffer, 2);
-      m_toggleForceAllOn = atoi(toggleForceAllOnBuffer);
-      writeToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, &m_toggleForceAllOn, 1);
-      m_ledController->setToggleForceAllOn(m_toggleForceAllOn);
+      bool toggleForceAllOn = atoi(toggleForceAllOnBuffer);
+      writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, toggleForceAllOn);
+      m_stateManager->setToggleForceAllOn(toggleForceAllOn);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -159,9 +165,9 @@ void ServerController::processRequest(WiFiClient client) {
       char toggleRandomChaosBuffer[2] = "0";
       getValueFromData(m_pageBuffer,
                        "toggleRandomChaos=", toggleRandomChaosBuffer, 2);
-      m_toggleRandomChaos = atoi(toggleRandomChaosBuffer);
-      writeToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, &m_toggleRandomChaos, 1);
-      m_ledController->setToggleRandomChaos(m_toggleRandomChaos);
+      bool toggleRandomChaos = atoi(toggleRandomChaosBuffer);
+      writeBoolToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, toggleRandomChaos);
+      m_stateManager->setToggleRandomChaos(toggleRandomChaos);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -171,8 +177,9 @@ void ServerController::processRequest(WiFiClient client) {
       char toggleRandomEventsBuffer[2] = "0";
       getValueFromData(m_pageBuffer,
                        "toggleRandomEvents=", toggleRandomEventsBuffer, 2);
-      m_toggleRandomEvents = atoi(toggleRandomEventsBuffer);
-      writeToEepromBuffer(MEM_SLOT_RANDOM_EVENTS, &m_toggleRandomEvents, 1);
+      bool toggleRandomEvents = atoi(toggleRandomEventsBuffer);
+      writeBoolToEepromBuffer(MEM_SLOT_RANDOM_EVENTS, toggleRandomEvents);
+      m_stateManager->setToggleRandomEvents(toggleRandomEvents);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -183,10 +190,9 @@ void ServerController::processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer,
                        "togglePropagateEvents=", togglePropagateEventsBuffer,
                        2);
-      m_togglePropagateEvents = atoi(togglePropagateEventsBuffer);
-      writeToEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, &m_togglePropagateEvents,
-                          1);
-      m_ledController->setTogglePropagateEvents(m_togglePropagateEvents);
+      bool togglePropagateEvents = atoi(togglePropagateEventsBuffer);
+      writeBoolToEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, togglePropagateEvents);
+      m_stateManager->setTogglePropagateEvents(togglePropagateEvents);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -202,27 +208,27 @@ void ServerController::processRequest(WiFiClient client) {
         clearEeprom();
       }
 
-      uint16_t oldNumChannels = m_numChannels;
+      uint16_t oldNumChannels = m_stateManager->getNumChannels();
 
       m_renderNextPageWithOptionsVisible = true;
       m_renderNextPageWithChannelEditVisible = false;
 
       char numChannelsBuffer[4] = "0";
       getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
-      m_numChannels = atoi(numChannelsBuffer);
-      writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, m_numChannels);
-      m_ledController->setNumChannels(m_numChannels);
+      uint16_t numChannels = atoi(numChannelsBuffer);
+      writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, numChannels);
+      m_stateManager->setNumChannels(numChannels);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
 
       // If we have new channels, we load them, check them and wipe them if
       // nessesary
-      if (oldNumChannels < m_numChannels) {
-        for (int i = oldNumChannels; i < m_numChannels; i++) {
+      if (oldNumChannels < numChannels) {
+        for (int i = oldNumChannels; i < numChannels; i++) {
           Serial.print("Checking page for channel: ");
           Serial.println(i);
-          loadPageAndCheckIntegrity(i + 1);
+          loadPageFromEepromToEepromBufferAndCheckIntegrity(i + 1);
         }
       }
 
@@ -272,6 +278,7 @@ void ServerController::processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer,
                        4);
 
+      // Todo convert to bool
       uint8_t randomOn = atoi(randomOnBuffer);
       uint8_t randomOnFreq = atoi(randomOnFreqBuffer);
 
@@ -281,7 +288,7 @@ void ServerController::processRequest(WiFiClient client) {
       uint8_t isLinked = atoi(isLinkedBuffer);
       uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
 
-      if (m_toggleOneBasedAddresses) {
+      if (m_stateManager->getToggleOneBasedAddresses()) {
         linkedChannelId--;
       }
 
@@ -321,7 +328,7 @@ void ServerController::processRequest(WiFiClient client) {
       }
 
       m_ledController->applyAndPropagateValue(channelIdAsNumber,
-                                             channelBrightness);
+                                              channelBrightness);
 
       writePageIntegrity(channelIdAsNumber + 1);
       writePageFromBufferToEeprom(channelIdAsNumber + 1);
@@ -368,8 +375,14 @@ void ServerController::processRequest(WiFiClient client) {
       char toggleShowOptionsBuffer[2] = "0";
       getValueFromData(m_pageBuffer,
                        "toggleShowOptions=", toggleShowOptionsBuffer, 2);
-      m_toggleShowOptions = atoi(toggleShowOptionsBuffer);
-      writeToEepromBuffer(MEM_SLOT_SHOW_OPTIONS, &m_toggleShowOptions, 1);
+      uint8_t toggleShowOptionsInt = atoi(toggleShowOptionsBuffer);
+      bool toggleShowOptions = false;
+
+      if (toggleShowOptionsInt == 1) {
+        toggleShowOptions = true;
+      }
+
+      writeBoolToEepromBuffer(MEM_SLOT_SHOW_OPTIONS, toggleShowOptions);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -379,22 +392,21 @@ void ServerController::processRequest(WiFiClient client) {
       char toggleShowActionsBuffer[2] = "0";
       getValueFromData(m_pageBuffer,
                        "toggleShowActions=", toggleShowActionsBuffer, 2);
-      m_toggleShowActions = atoi(toggleShowActionsBuffer);
-      writeToEepromBuffer(MEM_SLOT_SHOW_ACTIONS, &m_toggleShowActions, 1);
+      uint8_t toggleShowActionsInt = atoi(toggleShowActionsBuffer);
+      bool toggleShowActions = false;
+
+      if (toggleShowActionsInt == 1) {
+        toggleShowActions = true;
+      }
+
+      writeBoolToEepromBuffer(MEM_SLOT_SHOW_ACTIONS, toggleShowActions);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
     }
 
     if (shouldRerender) {
-      renderWebPage(
-          client, m_ledController->getFoundRecursion(),
-          m_renderNextPageWithOptionsVisible,
-          m_renderNextPageWithChannelEditVisible, m_renderAnchor,
-          m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
-          m_toggleCompactDisplay, m_toggleForceAllOff, m_toggleForceAllOn,
-          m_toggleRandomChaos, m_toggleRandomEvents, m_togglePropagateEvents,
-          m_channelIdToEdit, m_toggleShowOptions, m_toggleShowActions);
+      m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
     } else {
       if (m_ledController->getFoundRecursion()) {
         replyToClientWithFail(client);
@@ -410,14 +422,7 @@ void ServerController::processRequest(WiFiClient client) {
     // For get requests, we always want to render the page to the client if its
     // not for the favicon
 
-    renderWebPage(client, m_ledController->getFoundRecursion(),
-                  m_renderNextPageWithOptionsVisible,
-                  m_renderNextPageWithChannelEditVisible, m_renderAnchor,
-                  m_anchorChannelId, m_numChannels, m_toggleOneBasedAddresses,
-                  m_toggleCompactDisplay, m_toggleForceAllOff,
-                  m_toggleForceAllOn, m_toggleRandomChaos, m_toggleRandomEvents,
-                  m_togglePropagateEvents, m_channelIdToEdit,
-                  m_toggleShowOptions, m_toggleShowActions);
+    m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
   }
 }
 

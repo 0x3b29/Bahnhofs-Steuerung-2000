@@ -1,6 +1,7 @@
 #ifndef STATE_MANAGER_H
 #define STATE_MANAGER_H
 
+#include "eeprom.h"
 #include "main.h"
 #include <Arduino.h>
 
@@ -17,7 +18,14 @@ private:
   bool m_toggleShowOptions = false;
   bool m_toggleShowActions = false;
 
+  bool m_renderEditChannel = false;
+  uint16_t m_channelIdToEdit = 0;
+  bool m_renderAnchor = false;
+  uint16_t m_anchorChannelId = 0;
+
 public:
+  void loadStateFromEepromBuffer();
+
   void setNumChannels(uint16_t numChannels);
   uint16_t getNumChannels();
 
@@ -47,6 +55,18 @@ public:
 
   void setToggleShowActions(bool toggleShowActions);
   bool getToggleShowActions();
+
+  void setRenderEditChannel(bool renderEditChannel);
+  bool getRenderEditChannel();
+
+  void setChannelIdToEdit(uint16_t channelIdToEdit);
+  uint16_t getChannelIdToEdit();
+
+  void setRenderAnchor(bool renderAnchor);
+  bool getRenderAnchor();
+
+  void setAnchorChannelId(uint16_t anchorChannelId);
+  uint16_t getAnchorChannelId();
 };
 
 #endif // STATE_MANAGER_H

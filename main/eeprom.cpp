@@ -44,10 +44,26 @@ void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value) {
   writeToEepromBuffer(writeAddress, data, 2);
 }
 
+void writeBoolToEepromBuffer(uint16_t writeAddress, bool value) {
+  uint8_t uint8tValue = 0;
+
+  if (value) {
+    uint8tValue = 1;
+  }
+
+  writeToEepromBuffer(writeAddress, &uint8tValue, 1);
+}
+
 void writeToEepromBuffer(uint16_t writeAddress, uint8_t *data, uint8_t length) {
   for (int i = 0; i < length; i++) {
     m_eepromBuffer[writeAddress + i] = data[i];
   }
+}
+
+boolean readBoolFromEepromBuffer(uint16_t readAddress) {
+  uint8_t value = m_eepromBuffer[readAddress];
+  bool valueAsBool = value != 0;
+  return valueAsBool;
 }
 
 void readFromEepromBuffer(uint16_t readAddress, uint8_t *data, uint8_t length) {
@@ -280,7 +296,7 @@ void wipePage(int page) {
   }
 }
 
-void loadPageAndCheckIntegrity(int page) {
+void loadPageFromEepromToEepromBufferAndCheckIntegrity(int page) {
   loadPageFromEepromToBuffer(page);
 
   if (isPageIntegrityGood(page) == false) {

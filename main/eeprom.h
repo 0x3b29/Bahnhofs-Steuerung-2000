@@ -47,8 +47,10 @@ void clearEeprom();
 void readFromEeprom(uint16_t readAddress, uint8_t *data, uint8_t length);
 void writeToEeprom(uint16_t writeAddress, uint8_t *data, uint8_t length);
 void writeToEepromBuffer(uint16_t writeAddress, uint8_t *data, uint8_t length);
+void writeBoolToEepromBuffer(uint16_t writeAddress, bool value);
 void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value);
 
+bool readBoolFromEepromBuffer(uint16_t readAddress);
 void readFromEepromBuffer(uint16_t readAddress, uint8_t *data, uint8_t length);
 uint16_t readUInt16FromEepromBuffer(uint16_t readAddress);
 void readChannelNameFromEepromBufferToChannelNameBuffer(int channel);
@@ -70,6 +72,6 @@ void writePageFromBufferToEeprom(int page);
 bool isPageIntegrityGood(uint8_t page);
 void writePageIntegrity(int page);
 void wipePage(int page);
-void loadPageAndCheckIntegrity(int page);
+void loadPageFromEepromToEepromBufferAndCheckIntegrity(int page);
 
 #endif // eeprom_h

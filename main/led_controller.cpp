@@ -1,13 +1,12 @@
 #include "led_controller.h"
-#include "server_controller.h"
 #include "eeprom.h"
 #include "helpers.h"
+#include "server_controller.h"
 
-LedController::LedController()
-    : m_numChannels(0), m_toggleRandomChaos(false), m_toggleForceAllOff(false),
-      m_toggleForceAllOn(false), m_toggleOneBasedAddresses(false),
-      m_togglePropagateEvents(false), m_binaryCount(0),
-      m_foundRecursion(false) {}
+LedController::LedController(StateManager *stateManager)
+    : m_binaryCount(0), m_foundRecursion(false) {
+  this->m_stateManager = stateManager;
+}
 
 Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
@@ -25,30 +24,6 @@ void LedController ::initializePwmBoards() {
   }
 }
 
-void LedController::setNumChannels(uint16_t numChannels) {
-  this->m_numChannels = numChannels;
-}
-
-void LedController::setToggleRandomChaos(bool toggleRandomChaos) {
-  this->m_toggleRandomChaos = toggleRandomChaos;
-}
-
-void LedController::setToggleForceAllOff(bool toggleForceAllOff) {
-  this->m_toggleForceAllOff = toggleForceAllOff;
-}
-
-void LedController::setToggleForceAllOn(bool toggleForceAllOn) {
-  this->m_toggleForceAllOn = toggleForceAllOn;
-}
-
-void LedController::setToggleOneBasedAddresses(bool toggleOneBasedAddresses) {
-  this->m_toggleOneBasedAddresses = toggleOneBasedAddresses;
-}
-
-void LedController::setTogglePropagateEvents(bool togglePropagateEvents) {
-  this->m_togglePropagateEvents = togglePropagateEvents;
-}
-
 bool LedController::getFoundRecursion() { return this->m_foundRecursion; }
 
 void LedController::resetRecursionFlag() { this->m_foundRecursion = false; }
@@ -57,12 +32,12 @@ void LedController::setChannelBrightness(int channel, uint16_t brightness) {
   int boardIndex = getBoardIndexForChannel(channel);
   int subAddress = getBoardSubAddressForChannel(channel);
 
-  if (m_toggleForceAllOff == true) {
+  if (m_stateManager->getToggleForceAllOff() == true) {
     this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, 0);
     return;
   }
 
-  if (m_toggleForceAllOn) {
+  if (m_stateManager->getToggleForceAllOn() == true) {
     this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, 4095);
     return;
   }
@@ -73,8 +48,10 @@ void LedController::setChannelBrightness(int channel, uint16_t brightness) {
 void LedController::applyAndPropagateValue(int channel, uint16_t brightness) {
   setChannelBrightness(channel, brightness);
 
-  if (m_togglePropagateEvents && !m_toggleForceAllOff && !m_toggleForceAllOn &&
-      !m_toggleRandomChaos) {
+  if (m_stateManager->getTogglePropagateEvents() &&
+      !m_stateManager->getToggleForceAllOff() &&
+      !m_stateManager->getToggleForceAllOn() &&
+      !m_stateManager->getToggleRandomChaos()) {
 
     bool turnOn = false;
 
@@ -97,7 +74,7 @@ void LedController::commandLinkedChannel(uint16_t commandingChannelId,
     return;
   }
 
-  for (uint16_t i = 0; i < m_numChannels; i++) {
+  for (uint16_t i = 0; i < m_stateManager->getNumChannels(); i++) {
     if (i == commandingChannelId) {
       continue;
     }
@@ -127,7 +104,7 @@ void LedController::commandLinkedChannel(uint16_t commandingChannelId,
 void LedController::applyInitialState() {
   this->m_binaryCount = 0;
 
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
     bool initialState =
         readBoolForChannelFromEepromBuffer(i, MEM_SLOT_INITIAL_STATE);
@@ -144,35 +121,35 @@ void LedController::applyInitialState() {
 }
 
 void LedController::turnAllChannelsOff() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     setChannelBrightness(i, 0);
   }
 }
 
 void LedController::turnAllChannels25() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     setChannelBrightness(i, 1024);
   }
 }
 
 void LedController::turnAllChannels50() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     setChannelBrightness(i, 2048);
   }
 }
 
 void LedController::turnAllChannels100() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     setChannelBrightness(i, 4095);
   }
 }
 
 void LedController::turnEvenChannelsOn() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
     int userFacingAddress = i;
 
-    if (m_toggleOneBasedAddresses) {
+    if (m_stateManager->getToggleOneBasedAddresses()) {
       userFacingAddress++;
     }
 
@@ -185,11 +162,11 @@ void LedController::turnEvenChannelsOn() {
 }
 
 void LedController::turnOddChannelsOn() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
     int userFacingAddress = i;
 
-    if (m_toggleOneBasedAddresses) {
+    if (m_stateManager->getToggleOneBasedAddresses()) {
       userFacingAddress++;
     }
 
@@ -202,14 +179,14 @@ void LedController::turnOddChannelsOn() {
 }
 
 void LedController::countBinary() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     if ((this->m_binaryCount & (1 << i)) == 0) {
       setChannelBrightness(i, 0);
     } else {
       setChannelBrightness(i, 4095);
     }
   }
-  
+
   this->m_binaryCount++;
 }
 
@@ -222,7 +199,7 @@ bool LedController::shouldInvokeEvent(uint8_t freq) {
 }
 
 void LedController::calculateRandomEvents() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
     bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
     uint16_t linkedChannel =
@@ -273,7 +250,7 @@ void LedController::calculateRandomEvents() {
 }
 
 void LedController::setEveryChannelToRandomValue() {
-  for (int i = 0; i < m_numChannels; i++) {
+  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     int boardIndex = getBoardIndexForChannel(i);
     int subAddress = getBoardSubAddressForChannel(i);
 
