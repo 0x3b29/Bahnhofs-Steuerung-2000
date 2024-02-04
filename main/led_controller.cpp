@@ -251,9 +251,7 @@ void LedController::calculateRandomEvents() {
 
 void LedController::setEveryChannelToRandomValue() {
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
-    int boardIndex = getBoardIndexForChannel(i);
-    int subAddress = getBoardSubAddressForChannel(i);
-
-    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, random(0, 4095));
+    uint16_t randomBrightness = random(0, 4095);
+    setChannelBrightness(i, randomBrightness);
   }
 }
