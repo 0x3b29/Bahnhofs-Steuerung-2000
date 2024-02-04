@@ -33,56 +33,160 @@ void ServerController::replyToClientWithFail(WiFiClient client) {
   client.println("Failed to update settings.");
 }
 
+void ServerController::cancelChannelUpdate() {
+  // Reload old brigthness
+  getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+  uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+  uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
+      channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
+
+  m_ledController->setChannelBrightness(channelIdAsNumber, originalBrightness);
+
+  m_stateManager->setRenderAnchor(true);
+  m_stateManager->setAnchorChannelId(channelIdAsNumber);
+}
+
+void ServerController::toggleOneBasedAddresses() {
+  char toggleOneBasedAddressesBuffer[2] = "0";
+  getValueFromData(m_pageBuffer,
+                   "toggleOneBasedAddresses=", toggleOneBasedAddressesBuffer,
+                   2);
+  bool toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
+                          toggleOneBasedAddresses);
+  sn(toggleOneBasedAddresses);
+  m_stateManager->setToggleOneBasedAddresses(toggleOneBasedAddresses);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
+void ServerController::testBrightness() {
+  // User changed brightness on edit channel form
+  getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+  uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+  char channelBrightnessBuffer[5] = "0";
+  getValueFromData(m_pageBuffer, "channelBrightness=", channelBrightnessBuffer,
+                   5);
+  uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+
+  m_ledController->setChannelBrightness(channelIdAsNumber, channelBrightness);
+}
+
+void ServerController::updateChannel() {
+  Serial.println("UPDATE CHANNEL");
+
+  getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+  uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
+
+  // Worst case, each UTF8 character is 4 bytes long as url encoded
+  char urlEncodedNameBuffer[MAX_CHANNEL_NAME_LENGTH * 4];
+  getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer,
+                   MAX_CHANNEL_NAME_LENGTH * 4);
+  urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, MAX_CHANNEL_NAME_LENGTH);
+
+  char channelBrightnessBuffer[5] = "0";
+  getValueFromData(m_pageBuffer, "channelBrightness=", channelBrightnessBuffer,
+                   5);
+
+  char initialStateBuffer[2] = "0";
+  getValueFromData(m_pageBuffer, "initialState=", initialStateBuffer, 2);
+  uint8_t initialState = atoi(initialStateBuffer);
+  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_INITIAL_STATE,
+                            initialState);
+
+  char randomOnBuffer[2] = "0";
+  char randomOnFreqBuffer[4] = "0";
+
+  char randomOffBuffer[2] = "0";
+  char randomOffFreqBuffer[4] = "0";
+
+  char isLinkedBuffer[2] = "0";
+  char linkedChannelIdBuffer[4] = "0";
+
+  getValueFromData(m_pageBuffer, "randomOn=", randomOnBuffer, 2);
+  getValueFromData(m_pageBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
+  getValueFromData(m_pageBuffer, "randomOff=", randomOffBuffer, 2);
+  getValueFromData(m_pageBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
+  getValueFromData(m_pageBuffer, "channelLinked=", isLinkedBuffer, 2);
+  getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer, 4);
+
+  // Todo convert to bool
+  uint8_t randomOn = atoi(randomOnBuffer);
+  uint8_t randomOnFreq = atoi(randomOnFreqBuffer);
+
+  uint8_t randomOff = atoi(randomOffBuffer);
+  uint8_t randomOffFreq = atoi(randomOffFreqBuffer);
+
+  uint8_t isLinked = atoi(isLinkedBuffer);
+  uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
+
+  if (m_stateManager->getToggleOneBasedAddresses()) {
+    linkedChannelId--;
+  }
+
+  Serial.print("Channel ");
+  Serial.print(channelIdAsNumber);
+
+  uint16_t startAddress = 64 + channelIdAsNumber * 64;
+  Serial.print(" got startAddress ");
+  Serial.println(startAddress);
+
+  uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+
+  writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
+
+  writeUint16tForChannelToEepromBuffer(channelIdAsNumber, MEM_SLOT_BRIGHTNESS,
+                                       channelBrightness);
+
+  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON, randomOn);
+  if (randomOn == 1) {
+    writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ,
+                              randomOnFreq);
+  }
+
+  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF, randomOff);
+  if (randomOff == 1) {
+    writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ,
+                              randomOffFreq);
+  }
+
+  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_IS_LINKED, isLinked);
+  if (isLinked == 1) {
+    writeUint16tForChannelToEepromBuffer(
+        channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
+  }
+
+  m_ledController->applyAndPropagateValue(channelIdAsNumber, channelBrightness);
+
+  writePageIntegrity(channelIdAsNumber + 1);
+  writePageFromBufferToEeprom(channelIdAsNumber + 1);
+
+  m_stateManager->setRenderAnchor(true);
+  m_stateManager->setAnchorChannelId(channelIdAsNumber);
+  m_ledController->resetRecursionFlag();
+}
+
 void ServerController::processRequest(WiFiClient client) {
   bool shouldRerender = false;
-  m_renderAnchor = false;
+  m_stateManager->setRenderAnchor(false);
+  m_stateManager->setRenderEditChannel(false);
 
   if (strstr(m_pageBuffer, "POST") != NULL) {
+
     if (isKeyInData(m_pageBuffer, "cancelChannelUpdate")) {
-      // User clicked on "Verwerfen" button
-      m_renderNextPageWithOptionsVisible = true;
-      m_renderNextPageWithChannelEditVisible = false;
-
-      // Reload old brigthness
-      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
-      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
-
-      uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
-          channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
-
-      m_ledController->setChannelBrightness(channelIdAsNumber,
-                                            originalBrightness);
-
-      m_renderAnchor = true;
-      m_anchorChannelId = channelIdAsNumber;
+      cancelChannelUpdate();
       shouldRerender = true;
     }
 
     if (isKeyInData(m_pageBuffer, "testBrightness")) {
-      // User changed brightness on edit channel form
-      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
-      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
-
-      char channelBrightnessBuffer[5] = "0";
-      getValueFromData(m_pageBuffer,
-                       "channelBrightness=", channelBrightnessBuffer, 5);
-      uint16_t channelBrightness = atoi(channelBrightnessBuffer);
-
-      m_ledController->setChannelBrightness(channelIdAsNumber,
-                                            channelBrightness);
+      testBrightness();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleOneBasedAddresses")) {
-      char toggleOneBasedAddressesBuffer[2] = "0";
-      getValueFromData(m_pageBuffer, "toggleOneBasedAddresses=",
-                       toggleOneBasedAddressesBuffer, 2);
-      bool toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
-      writeBoolToEepromBuffer(MEM_SLOT_ONE_BASED_ADDRESSES,
-                              toggleOneBasedAddresses);
-      m_stateManager->setToggleOneBasedAddresses(toggleOneBasedAddresses);
-
-      writePageIntegrity(0);
-      writePageFromBufferToEeprom(0);
+      toggleOneBasedAddresses();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleCompactDisplay")) {
@@ -126,12 +230,10 @@ void ServerController::processRequest(WiFiClient client) {
       getValueFromData(m_pageBuffer, "editChannel=", m_channelIdToEditBuffer,
                        4);
 
-      m_renderNextPageWithOptionsVisible = false;
-      m_renderNextPageWithChannelEditVisible = true;
-
-      m_channelIdToEdit = atoi(m_channelIdToEditBuffer);
-      readChannelNameFromEepromBufferToChannelNameBuffer(m_channelIdToEdit);
-
+      uint16_t channelIdToEdit = atoi(m_channelIdToEditBuffer);
+      readChannelNameFromEepromBufferToChannelNameBuffer(channelIdToEdit);
+      m_stateManager->setChannelIdToEdit(channelIdToEdit);
+      m_stateManager->setRenderEditChannel(true);
       shouldRerender = true;
     }
 
@@ -210,9 +312,6 @@ void ServerController::processRequest(WiFiClient client) {
 
       uint16_t oldNumChannels = m_stateManager->getNumChannels();
 
-      m_renderNextPageWithOptionsVisible = true;
-      m_renderNextPageWithChannelEditVisible = false;
-
       char numChannelsBuffer[4] = "0";
       getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
       uint16_t numChannels = atoi(numChannelsBuffer);
@@ -236,107 +335,8 @@ void ServerController::processRequest(WiFiClient client) {
     }
 
     if (isKeyInData(m_pageBuffer, "updateChannel")) {
-      Serial.println("UPDATE CHANNEL");
-
-      m_renderNextPageWithOptionsVisible = true;
-      m_renderNextPageWithChannelEditVisible = false;
-
-      getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
-      uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
-
-      // Worst case, each UTF8 character is 4 bytes long as url encoded
-      char urlEncodedNameBuffer[MAX_CHANNEL_NAME_LENGTH * 4];
-      getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer,
-                       MAX_CHANNEL_NAME_LENGTH * 4);
-      urlDecode(urlEncodedNameBuffer, m_channelNameBuffer,
-                MAX_CHANNEL_NAME_LENGTH);
-
-      char channelBrightnessBuffer[5] = "0";
-      getValueFromData(m_pageBuffer,
-                       "channelBrightness=", channelBrightnessBuffer, 5);
-
-      char initialStateBuffer[2] = "0";
-      getValueFromData(m_pageBuffer, "initialState=", initialStateBuffer, 2);
-      uint8_t initialState = atoi(initialStateBuffer);
-      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_INITIAL_STATE,
-                                initialState);
-
-      char randomOnBuffer[2] = "0";
-      char randomOnFreqBuffer[4] = "0";
-
-      char randomOffBuffer[2] = "0";
-      char randomOffFreqBuffer[4] = "0";
-
-      char isLinkedBuffer[2] = "0";
-      char linkedChannelIdBuffer[4] = "0";
-
-      getValueFromData(m_pageBuffer, "randomOn=", randomOnBuffer, 2);
-      getValueFromData(m_pageBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
-      getValueFromData(m_pageBuffer, "randomOff=", randomOffBuffer, 2);
-      getValueFromData(m_pageBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
-      getValueFromData(m_pageBuffer, "channelLinked=", isLinkedBuffer, 2);
-      getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer,
-                       4);
-
-      // Todo convert to bool
-      uint8_t randomOn = atoi(randomOnBuffer);
-      uint8_t randomOnFreq = atoi(randomOnFreqBuffer);
-
-      uint8_t randomOff = atoi(randomOffBuffer);
-      uint8_t randomOffFreq = atoi(randomOffFreqBuffer);
-
-      uint8_t isLinked = atoi(isLinkedBuffer);
-      uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
-
-      if (m_stateManager->getToggleOneBasedAddresses()) {
-        linkedChannelId--;
-      }
-
-      Serial.print("Channel ");
-      Serial.print(channelIdAsNumber);
-
-      uint16_t startAddress = 64 + channelIdAsNumber * 64;
-      Serial.print(" got startAddress ");
-      Serial.println(startAddress);
-
-      uint16_t channelBrightness = atoi(channelBrightnessBuffer);
-
-      writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
-
-      writeUint16tForChannelToEepromBuffer(
-          channelIdAsNumber, MEM_SLOT_BRIGHTNESS, channelBrightness);
-
-      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON,
-                                randomOn);
-      if (randomOn == 1) {
-        writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ,
-                                  randomOnFreq);
-      }
-
-      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF,
-                                randomOff);
-      if (randomOff == 1) {
-        writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ,
-                                  randomOffFreq);
-      }
-
-      writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_IS_LINKED,
-                                isLinked);
-      if (isLinked == 1) {
-        writeUint16tForChannelToEepromBuffer(
-            channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
-      }
-
-      m_ledController->applyAndPropagateValue(channelIdAsNumber,
-                                              channelBrightness);
-
-      writePageIntegrity(channelIdAsNumber + 1);
-      writePageFromBufferToEeprom(channelIdAsNumber + 1);
-
+      updateChannel();
       shouldRerender = true;
-      m_renderAnchor = true;
-      m_anchorChannelId = channelIdAsNumber;
-      m_ledController->resetRecursionFlag();
     }
 
     if (isKeyInData(m_pageBuffer, "resetAllChannels")) {
@@ -383,6 +383,7 @@ void ServerController::processRequest(WiFiClient client) {
       }
 
       writeBoolToEepromBuffer(MEM_SLOT_SHOW_OPTIONS, toggleShowOptions);
+      m_stateManager->setToggleShowOptions(toggleShowOptions);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);
@@ -400,6 +401,7 @@ void ServerController::processRequest(WiFiClient client) {
       }
 
       writeBoolToEepromBuffer(MEM_SLOT_SHOW_ACTIONS, toggleShowActions);
+      m_stateManager->setToggleShowActions(toggleShowActions);
 
       writePageIntegrity(0);
       writePageFromBufferToEeprom(0);

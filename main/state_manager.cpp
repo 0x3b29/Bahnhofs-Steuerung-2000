@@ -98,7 +98,7 @@ void StateManager::setRenderAnchor(bool renderAnchor) {
 bool StateManager::getRenderAnchor() { return m_renderAnchor; }
 
 void StateManager::setAnchorChannelId(uint16_t anchorChannelId) {
-  anchorChannelId = anchorChannelId;
+  m_anchorChannelId = anchorChannelId;
 }
 
 uint16_t StateManager::getAnchorChannelId() { return m_anchorChannelId; }

@@ -22,16 +22,6 @@ Renderer m_renderer(&m_stateManager);
 ServerController m_serverController(&m_stateManager, &m_ledController,
                                     &m_renderer);
 
-char m_channelIdBuffer[4] = "0";
-
-char m_channelIdToEditBuffer[4] = "";
-uint16_t m_channelIdToEdit = 0;
-bool m_renderNextPageWithOptionsVisible = true;
-bool m_renderNextPageWithChannelEditVisible = false;
-
-bool m_renderAnchor = false;
-uint16_t m_anchorChannelId;
-
 long m_lastRandom = 0;
 long m_lastRandomEvent = 0;
 

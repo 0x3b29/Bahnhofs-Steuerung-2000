@@ -16,17 +16,16 @@ private:
   Renderer *m_renderer;
 
   char m_channelIdBuffer[4] = "0";
-
   char m_channelIdToEditBuffer[4] = "";
-  uint16_t m_channelIdToEdit = 0;
-  bool m_renderNextPageWithOptionsVisible = true;
-  bool m_renderNextPageWithChannelEditVisible = false;
-
-  bool m_renderAnchor = false;
-  uint16_t m_anchorChannelId;
 
   void replyToClientWithSuccess(WiFiClient client);
   void replyToClientWithFail(WiFiClient client);
+
+  void cancelChannelUpdate();
+  void toggleOneBasedAddresses();
+  void testBrightness();
+  void updateChannel();
+
   void processRequest(WiFiClient client);
   void getValueFromData(const char *formData, const char *key, char *value,
                         int valueLen);
