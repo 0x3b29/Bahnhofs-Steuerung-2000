@@ -238,9 +238,7 @@ void LedController::calculateRandomEvents() {
 
         applyAndPropagateValue(linkedChannel, linkedBrightness);
       }
-    }
-
-    if (turnOff) {
+    } else if (turnOff) {
       st("Got random off event for channel ");
       sn(i);
 
