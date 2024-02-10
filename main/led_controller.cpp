@@ -191,8 +191,12 @@ void LedController::countBinary() {
 }
 
 bool LedController::shouldInvokeEvent(uint8_t freq) {
-  // Generate a random number between 0 and 3599
-  uint16_t randNumber = random(3600);
+  // This function is called 10x per secod, so the probability 
+  // of events per hour (called freq) is seconds * minutes * 10 = 
+  // 60 * 60 * 10 = 
+  
+  // Generate a random number between 0 and 35999
+  uint16_t randNumber = random(36000);
 
   // Check if the random number is less than the threshold
   return randNumber < freq;

@@ -13,8 +13,7 @@
 // arduino_secrets.h and fill in your WiFI name and password
 #include "arduino_secrets.h"
 
-#define RANDOM_INTERVAL 200
-#define RANDOM_EVENT_INTERVAL 1000
+#define RANDOM_EVENT_INTERVAL 100
 
 StateManager m_stateManager;
 LedController m_ledController(&m_stateManager);
