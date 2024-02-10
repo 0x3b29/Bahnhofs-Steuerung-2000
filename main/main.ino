@@ -13,6 +13,7 @@
 // arduino_secrets.h and fill in your WiFI name and password
 #include "arduino_secrets.h"
 
+#define RANDOM_INTERVAL 1000
 #define RUNNING_LIGHT_INTERVAL 25
 #define RANDOM_EVENT_INTERVAL 100
 
