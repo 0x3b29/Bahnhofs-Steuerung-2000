@@ -38,6 +38,7 @@ private:
   void updateNumberOfChannels();
   void toggleShowOptions();
   void toggleShowActions();
+  void setAllChannels();
 
   void processRequest(WiFiClient client);
   void getValueFromData(const char *formData, const char *key, char *value,

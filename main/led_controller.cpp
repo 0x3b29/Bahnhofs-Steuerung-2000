@@ -120,27 +120,9 @@ void LedController::applyInitialState() {
   }
 }
 
-void LedController::turnAllChannelsOff() {
+void LedController::setAllChannels(uint16_t brightness) {
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
-    setChannelBrightness(i, 0);
-  }
-}
-
-void LedController::turnAllChannels25() {
-  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
-    setChannelBrightness(i, 1024);
-  }
-}
-
-void LedController::turnAllChannels50() {
-  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
-    setChannelBrightness(i, 2048);
-  }
-}
-
-void LedController::turnAllChannels100() {
-  for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
-    setChannelBrightness(i, 4095);
+    setChannelBrightness(i, brightness);
   }
 }
 

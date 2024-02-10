@@ -28,10 +28,7 @@ public:
                             int depth, int maxDepth);
   void applyAndPropagateValue(int channel, uint16_t brightness);
   void applyInitialState();
-  void turnAllChannelsOff();
-  void turnAllChannels25();
-  void turnAllChannels50();
-  void turnAllChannels100();
+  void setAllChannels(uint16_t brightness);
   void turnEvenChannelsOn();
   void turnOddChannelsOn();
   void countBinary();

@@ -247,8 +247,8 @@ void ServerController::toggleRandomChaos() {
 
 void ServerController::toggleRunningLights() {
   char toggleRunningLightsBuffer[2] = "0";
-  getValueFromData(m_pageBuffer, "toggleRunningLights=", toggleRunningLightsBuffer,
-                   2);
+  getValueFromData(m_pageBuffer,
+                   "toggleRunningLights=", toggleRunningLightsBuffer, 2);
   bool toggleRunningLights = atoi(toggleRunningLightsBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_RUNNING_LIGHTS, toggleRunningLights);
   m_stateManager->setToggleRunningLights(toggleRunningLights);
@@ -349,6 +349,13 @@ void ServerController::toggleShowActions() {
   writePageFromBufferToEeprom(0);
 }
 
+void ServerController::setAllChannels() {
+  char channelBrightnessBuffer[5] = "0";
+  getValueFromData(m_pageBuffer, "setAllChannels=", channelBrightnessBuffer, 5);
+  uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+  m_ledController->setAllChannels(channelBrightness);
+}
+
 void ServerController::processRequest(WiFiClient client) {
   bool shouldRerender = false;
   m_stateManager->setRenderAnchor(false);
@@ -424,20 +431,8 @@ void ServerController::processRequest(WiFiClient client) {
       m_ledController->applyInitialState();
     }
 
-    if (isKeyInData(m_pageBuffer, "turnAllChannelsOff")) {
-      m_ledController->turnAllChannelsOff();
-    }
-
-    if (isKeyInData(m_pageBuffer, "turnAllChannels25")) {
-      m_ledController->turnAllChannels25();
-    }
-
-    if (isKeyInData(m_pageBuffer, "turnAllChannels50")) {
-      m_ledController->turnAllChannels50();
-    }
-
-    if (isKeyInData(m_pageBuffer, "turnAllChannels100")) {
-      m_ledController->turnAllChannels100();
+    if (isKeyInData(m_pageBuffer, "setAllChannels")) {
+      setAllChannels();
     }
 
     if (isKeyInData(m_pageBuffer, "turnEvenChannelsOn")) {
