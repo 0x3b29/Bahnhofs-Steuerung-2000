@@ -17,6 +17,7 @@ private:
   bool m_togglePropagateEvents = false;
   bool m_toggleShowOptions = false;
   bool m_toggleShowActions = false;
+  bool m_toggleRunningLights = false;
 
   bool m_renderEditChannel = false;
   uint16_t m_channelIdToEdit = 0;
@@ -43,6 +44,9 @@ public:
 
   void setToggleCompactDisplay(bool toggleCompactDisplay);
   bool getToggleCompactDisplay();
+
+  void setToggleRunningLights(bool toggleRunningLights);
+  bool getToggleRunningLights();
 
   void setToggleRandomEvents(bool toggleRandomEvents);
   bool getToggleRandomEvents();

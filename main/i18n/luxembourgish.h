@@ -10,6 +10,7 @@
 #define I18N_OPTIONS_RANDOM_EVENTS "Zoufälleg Un/Aus"
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Verbindungen aktiv"
 #define I18N_OPTIONS_CRAZY_BLINK "Verréckt Blénken"
+#define I18N_OPTIONS_RUNNING_LIGHTS "Laaf-Liichter"
 
 #define I18N_ACTIONS_EVEN "Gerued"
 #define I18N_ACTIONS_ODD "Ongerued"

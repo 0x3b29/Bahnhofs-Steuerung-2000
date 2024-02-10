@@ -49,6 +49,10 @@ void Renderer::renderOptions(WiFiClient client) {
   char *toggleRandomChaosCheckedBuffer =
       m_stateManager->getToggleRandomChaos() ? m_checkedBuffer : m_emptyBuffer;
 
+  char *toggleRunningLightsCheckedBuffer =
+      m_stateManager->getToggleRunningLights() ? m_checkedBuffer
+                                               : m_emptyBuffer;
+
   char *renderHiddenBuffer = m_stateManager->getToggleShowOptions()
                                  ? m_emptyBuffer
                                  : m_renderHiddenBuffer;
@@ -205,11 +209,6 @@ void Renderer::renderOptions(WiFiClient client) {
     </label>
   </div>
   <!-- /Enable random blink -->
-
-  <!-- This hidden field is meant to provide an 'easy' access to reset the // eeprom
-  from the web interface -->
-  <input type="hidden" name="clearEeprom" value="0" />
-</div>
 )html",
           renderHiddenBuffer, I18N_OPTIONS_CHANNELS, MAX_TOTAL_CHANNELS,
           numChannels, I18N_OPTIONS_SEND, toggleOneBasedAddressesCheckedBuffer,
@@ -220,6 +219,35 @@ void Renderer::renderOptions(WiFiClient client) {
           I18N_OPTIONS_RANDOM_EVENTS, togglePropagateEventsCheckedBuffer,
           I18N_OPTIONS_PROPAGATE_EVENTS, toggleRandomChaosCheckedBuffer,
           I18N_OPTIONS_CRAZY_BLINK);
+
+  pn(optionsOutputBuffer);
+
+  char optionsOutputBufferPt2[1024];
+  sprintf(optionsOutputBuffer, R"html(
+  <!-- Enable running lights -->
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleRunningLights"
+      value="1"
+      role="switch"
+      id="toggleRunningLights"
+      onchange="sendCheckbox(this, false)"
+      %s
+    />
+    <label class="form-check-label" for="toggleRunningLights">
+      %s
+    </label>
+  </div>
+  <!-- /Enable running lights -->
+
+  <!-- This hidden field is meant to provide an 'easy' access to reset the // eeprom
+  from the web interface -->
+  <input type="hidden" name="clearEeprom" value="0" />
+</div>
+)html",
+          toggleRunningLightsCheckedBuffer, I18N_OPTIONS_RUNNING_LIGHTS);
 
   pn(optionsOutputBuffer);
 }

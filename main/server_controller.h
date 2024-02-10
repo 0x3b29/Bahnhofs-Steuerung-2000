@@ -32,6 +32,7 @@ private:
   void toggleForceAllOff();
   void toggleForceAllOn();
   void toggleRandomChaos();
+  void toggleRunningLights();
   void toggleRandomEvents();
   void togglePropagateEvents();
   void updateNumberOfChannels();

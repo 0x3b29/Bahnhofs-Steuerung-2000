@@ -12,6 +12,7 @@ void StateManager::loadStateFromEepromBuffer() {
   m_togglePropagateEvents = readBoolFromEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS);
   m_toggleShowOptions = readBoolFromEepromBuffer(MEM_SLOT_SHOW_OPTIONS);
   m_toggleShowActions = readBoolFromEepromBuffer(MEM_SLOT_SHOW_ACTIONS);
+  m_toggleRunningLights = readBoolFromEepromBuffer(MEM_SLOT_RUNNING_LIGHTS);
 }
 
 void StateManager::setNumChannels(uint16_t numChannels) {
@@ -49,6 +50,12 @@ bool StateManager::getToggleOneBasedAddresses() {
 
 void StateManager::setToggleCompactDisplay(bool toggleCompactDisplay) {
   m_toggleCompactDisplay = toggleCompactDisplay;
+}
+
+bool StateManager::getToggleRunningLights() { return m_toggleRunningLights; }
+
+void StateManager::setToggleRunningLights(bool toggleRunningLights) {
+  m_toggleRunningLights = toggleRunningLights;
 }
 
 bool StateManager::getToggleCompactDisplay() { return m_toggleCompactDisplay; }

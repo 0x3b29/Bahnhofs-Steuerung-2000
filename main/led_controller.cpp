@@ -257,3 +257,14 @@ void LedController::setEveryChannelToRandomValue() {
     setChannelBrightness(i, randomBrightness);
   }
 }
+
+void LedController::setNextRunningLight() {
+  setChannelBrightness(m_nextRunningLight, 0);
+  m_nextRunningLight++;
+
+  if (m_nextRunningLight >= m_stateManager->getNumChannels()) {
+    m_nextRunningLight = 0;
+  }
+
+  setChannelBrightness(m_nextRunningLight, 4095);
+}

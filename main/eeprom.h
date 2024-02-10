@@ -17,6 +17,7 @@
 #define MEM_SLOT_SHOW_ACTIONS 8
 #define MEM_SLOT_ONE_BASED_ADDRESSES 9
 #define MEM_SLOT_COMPACT_DISPLAY 10
+#define MEM_SLOT_RUNNING_LIGHTS 11
 
 // Memory Slots for each channel
 #define MEM_SLOT_BRIGHTNESS 30

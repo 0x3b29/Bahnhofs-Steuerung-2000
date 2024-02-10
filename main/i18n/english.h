@@ -10,6 +10,7 @@
 #define I18N_OPTIONS_RANDOM_EVENTS "Random Events"
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Linkages Active"
 #define I18N_OPTIONS_CRAZY_BLINK "Crazy Blinking"
+#define I18N_OPTIONS_RUNNING_LIGHTS "Running Lights"
 
 #define I18N_ACTIONS_EVEN "Even"
 #define I18N_ACTIONS_ODD "Odd"

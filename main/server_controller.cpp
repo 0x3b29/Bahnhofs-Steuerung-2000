@@ -245,6 +245,18 @@ void ServerController::toggleRandomChaos() {
   writePageFromBufferToEeprom(0);
 }
 
+void ServerController::toggleRunningLights() {
+  char toggleRunningLightsBuffer[2] = "0";
+  getValueFromData(m_pageBuffer, "toggleRunningLights=", toggleRunningLightsBuffer,
+                   2);
+  bool toggleRunningLights = atoi(toggleRunningLightsBuffer);
+  writeBoolToEepromBuffer(MEM_SLOT_RUNNING_LIGHTS, toggleRunningLights);
+  m_stateManager->setToggleRunningLights(toggleRunningLights);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+}
+
 void ServerController::toggleRandomEvents() {
   char toggleRandomEventsBuffer[2] = "0";
   getValueFromData(m_pageBuffer,
@@ -384,6 +396,10 @@ void ServerController::processRequest(WiFiClient client) {
 
     if (isKeyInData(m_pageBuffer, "toggleRandomChaos")) {
       toggleRandomChaos();
+    }
+
+    if (isKeyInData(m_pageBuffer, "toggleRunningLights")) {
+      toggleRunningLights();
     }
 
     if (isKeyInData(m_pageBuffer, "toggleRandomEvents")) {

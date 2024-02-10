@@ -10,6 +10,7 @@
 #define I18N_OPTIONS_RANDOM_EVENTS "Événements Aléatoires"
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Liaisons Actives"
 #define I18N_OPTIONS_CRAZY_BLINK "Clignotement Fou"
+#define I18N_OPTIONS_RUNNING_LIGHTS "Lumières en Mouvement"
 
 #define I18N_ACTIONS_EVEN "Pair"
 #define I18N_ACTIONS_ODD "Impair"
@@ -49,8 +50,9 @@
 
 #define I18N_WARNING_RECURSION_BEFORE_MAX                                      \
   "Avertissement : Une boucle ou un enchevêtrement trop profond (plus de"
-#define I18N_WARNING_RECURSION_AFTER_MAX                                       \
-  "niveaux) a été détecté dans les canaux liés. Veuillez vérifier toutes les liaisons "    \
+#define I18N_WARNING_RECURSION_AFTER_MAX                                             \
+  "niveaux) a été détecté dans les canaux liés. Veuillez vérifier toutes les " \
+  "liaisons "                                                                        \
   "pour les boucles ou augmenter la profondeur maximale d'enchevêtrement!"
 
 #endif // french_h

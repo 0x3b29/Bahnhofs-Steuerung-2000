@@ -10,6 +10,7 @@
 #define I18N_OPTIONS_RANDOM_EVENTS "Zufällige Ereignisse"
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Verknüpfungen aktiv"
 #define I18N_OPTIONS_CRAZY_BLINK "Verrücktes Blinken"
+#define I18N_OPTIONS_RUNNING_LIGHTS "Lauf Licht"
 
 #define I18N_ACTIONS_EVEN "Gerade"
 #define I18N_ACTIONS_ODD "Ungerade"

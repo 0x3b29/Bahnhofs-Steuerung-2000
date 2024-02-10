@@ -12,6 +12,7 @@ private:
 
   bool m_foundRecursion;
   uint16_t m_binaryCount;
+  uint16_t m_nextRunningLight;
 
   Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
@@ -38,6 +39,7 @@ public:
 
   void calculateRandomEvents();
   void setEveryChannelToRandomValue();
+  void setNextRunningLight();
 };
 
 #endif // led_controller

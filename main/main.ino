@@ -13,6 +13,7 @@
 // arduino_secrets.h and fill in your WiFI name and password
 #include "arduino_secrets.h"
 
+#define RUNNING_LIGHT_INTERVAL 25
 #define RANDOM_EVENT_INTERVAL 100
 
 StateManager m_stateManager;
@@ -23,6 +24,7 @@ ServerController m_serverController(&m_stateManager, &m_ledController,
 
 long m_lastRandom = 0;
 long m_lastRandomEvent = 0;
+long m_lastRunningLightEvent = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -109,6 +111,12 @@ void loop() {
       millis() > (m_lastRandomEvent + RANDOM_EVENT_INTERVAL)) {
     m_lastRandomEvent = millis();
     m_ledController.calculateRandomEvents();
+  }
+
+  if ((m_stateManager.getToggleRunningLights() == 1) &&
+      millis() > (m_lastRunningLightEvent + RUNNING_LIGHT_INTERVAL)) {
+    m_lastRunningLightEvent = millis();
+    m_ledController.setNextRunningLight();
   }
 
   m_serverController.loopEvent();

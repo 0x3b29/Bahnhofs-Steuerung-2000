@@ -10,6 +10,7 @@
 #define I18N_OPTIONS_RANDOM_EVENTS "Willekeurige Gebeurtenissen"
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Koppelingen Actief"
 #define I18N_OPTIONS_CRAZY_BLINK "Geknipper"
+#define I18N_OPTIONS_RUNNING_LIGHTS "Lopende Lichtjes"
 
 #define I18N_ACTIONS_EVEN "Even"
 #define I18N_ACTIONS_ODD "Oneven"
@@ -50,7 +51,8 @@
 #define I18N_WARNING_RECURSION_BEFORE_MAX                                      \
   "Waarschuwing: Een lus of te diepe nesting (meer dan"
 #define I18N_WARNING_RECURSION_AFTER_MAX                                       \
-  "niveaus) is gedetecteerd in de gekoppelde kanalen. Controleer alle koppelingen "    \
+  "niveaus) is gedetecteerd in de gekoppelde kanalen. Controleer alle "        \
+  "koppelingen "                                                               \
   "op lussen of verhoog de maximale nestdiepte!"
 
 #endif // dutch_h
