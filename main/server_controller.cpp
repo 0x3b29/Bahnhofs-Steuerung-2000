@@ -537,12 +537,25 @@ void ServerController::getValueFromData(const char *formData, const char *key,
 }
 
 bool ServerController::isKeyInData(const char *formData, const char *key) {
-  const char *startPtr = strstr(formData, key);
-  if (startPtr == NULL) {
-    return false;
+  const char *startPtr = formData;
+  while ((startPtr = strstr(startPtr, key)) != NULL) {
+    // Check if the key is at the start of formData or preceded by '&' or '\n'
+    bool atStart = startPtr == formData || *(startPtr - 1) == '&' ||
+                   *(startPtr - 1) == '\n';
+
+    // Check if the key is followed by '=', '&' or is at the end of formData
+    const char *endPtr = startPtr + strlen(key);
+    bool atEnd = *endPtr == '\0' || *endPtr == '&' || *endPtr == '=';
+
+    if (atStart && atEnd) {
+      return true;
+    }
+
+    // Move past this occurrence to check for another
+    startPtr = endPtr;
   }
 
-  return true;
+  return false; // Key not found with proper boundaries
 }
 
 void ServerController::clearPageBuffer() {
