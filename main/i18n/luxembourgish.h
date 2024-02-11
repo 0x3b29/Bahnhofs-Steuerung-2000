@@ -24,7 +24,7 @@
 #define I18N_EDIT_RANDOM_FREQ "~ Un/Aus pro Stonn"
 #define I18N_EDIT_RANDOM_OFF "Zoufälleg Aus"
 #define I18N_EDIT_LINKED "Verbonnen"
-#define I18N_EDIT_CONTROLLED_BY_CHANNEL "Gesteiert duerch Kanal"
+#define I18N_EDIT_CONTROLLED_BY_CHANNEL "Gesteiert vu Kanal"
 #define I18N_EDIT_DISCARD "Ofbriechen"
 #define I18N_EDIT_SAVE "Späicheren"
 
@@ -38,7 +38,7 @@
 #define I18N_CHANNEL_RANDOM_FREQ "~ Un/Aus pro Stonn"
 #define I18N_CHANNEL_RANDOMLY_OFF "Zoufälleg Aus"
 #define I18N_CHANNEL_LINKED "Verbonnen"
-#define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Gesteiert duerch Kanal"
+#define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Gesteiert vu Kanal"
 #define I18N_CHANNEL_ON "Un"
 #define I18N_CHANNEL_OFF "Aus"
 #define I18N_CHANNEL_YES "Jo"
@@ -51,7 +51,8 @@
 #define I18N_WARNING_RECURSION_BEFORE_MAX                                      \
   "Warnung: Eng Schleef oder ze déif Verschachtlung (méi wéi"
 #define I18N_WARNING_RECURSION_AFTER_MAX                                       \
-  "Niveauen) gouf an de verbonne Kanäl entdeckt. Iwwerpréift w.e.g all Verbindungen "    \
+  "Niveauen) gouf an de verbonne Kanäl entdeckt. Iwwerpréift w.e.g all "     \
+  "Verbindungen "                                                              \
   "op Schleefen oder erhéicht déi maximal Verschachtlungsdéift!"
 
 #endif // luxembourgish_h
