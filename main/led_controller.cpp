@@ -187,12 +187,13 @@ bool LedController::shouldInvokeEvent(uint8_t freq) {
 void LedController::calculateRandomEvents() {
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
     bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
-    bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
+    bool randomOff = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF);
+    bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
     uint16_t linkedChannel =
         readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
 
     // No need for further checks if channel has no random events
-    if (!randomOn) {
+    if (!randomOn && !randomOff) {
       continue;
     }
 
@@ -205,7 +206,7 @@ void LedController::calculateRandomEvents() {
     bool turnOn = shouldInvokeEvent(randomOnFreq);
     bool turnOff = shouldInvokeEvent(randomOffFreq);
 
-    if (turnOn) {
+    if (randomOn & turnOn) {
       st("Got random on event for channel ");
       sn(i);
 
@@ -220,7 +221,7 @@ void LedController::calculateRandomEvents() {
 
         applyAndPropagateValue(linkedChannel, linkedBrightness);
       }
-    } else if (turnOff) {
+    } else if (randomOff & turnOff) {
       st("Got random off event for channel ");
       sn(i);
 
