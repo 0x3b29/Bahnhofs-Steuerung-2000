@@ -6,15 +6,15 @@ This project is a scalable, web based LED control platform I developed for my fa
 
 ## Required Components
 
-- 1 x Arduino MKR 1010 WiFi
+- 1 x Arduino MKR WiFi 1010
 - 1 x 4 channel I2C logic level converter
 - 1 x AT24C256 eeprom
-- Up to 61\* x PCA9685 Boards
-- Up to 976 single color LEDs
-- Up to 305\*\* RGB LEDs
+- Up to 16\* x PCA9685 Boards
+- Up to 256 single color LEDs
+- Up to 80\*\* RGB LEDs
 
-\* Not 62 because one address in the usable address space of the PCA9685 boards is used by the eeprom \
-\*\* 5 RGB LEDs per board x 61 boards
+\* With the MKR WiFi 1010, only 16 PWM boards are available due to sram memory constraints. Currently, each LED has 64 bytes of memory (30 bytes for the label, 32 for settings, 2 for CRC). With a different microcontroller or different memory mapping, many more LEDs can be controlled at once. This memory layout however was a good compromise between usability and amount of usable channels with the MKR WiFi 1010
+\*\* 5 RGB LEDs per board x 16 boards
 
 ## Features per channel
 
@@ -27,6 +27,7 @@ This project is a scalable, web based LED control platform I developed for my fa
 - A flag to set if the channel is linked
 - A field for the other channels id that controls this channels on/off state
 - A max 30 bytes long description. (Up to 30 characters)
+- Automatic CRC to check the integrity of the data
 
 ## App Features
 
@@ -61,9 +62,9 @@ After wiring the project up, the Arduino can be programmed. First the example_ar
 
 ## Notes
 
-### Note on the Arduino MKR 1010 WiFi
+### Note on the Arduino MKR WiFi 1010
 
-The official documentation says that the Arduino MKR 1010 WiFi can be powered using the VIN pin with 5V to 7V DC. However, I found during my tests that the WiFi did not connect reliably at 5V. After some experimentation, I found out that slightly increasing the voltage to 5.3V ensured that the WiFi connection worked much more consistently. I therefore opted to use two different power sources. One 5V Dc power source for the LEDs and the eeprom and one 6V DC power source for the Arduinos VIN. For my father, this was not necessary. His Arduino worked fine with 5V DC on the VIN pin.
+The official documentation says that the Arduino MKR WiFi 1010 can be powered using the VIN pin with 5V to 7V DC. However, I found during my tests that the WiFi did not connect reliably at 5V. After some experimentation, I found out that slightly increasing the voltage to 5.3V ensured that the WiFi connection worked much more consistently. I therefore opted to use two different power sources. One 5V Dc power source for the LEDs and the eeprom and one 6V DC power source for the Arduinos VIN. For my father, this was not necessary. His Arduino worked fine with 5V DC on the VIN pin.
 
 ### Note on Arduino Uno R4
 
@@ -80,6 +81,10 @@ Each PCA9685 board must have a unique I2C address. Since the EEPROM (specificall
 ### Note on security
 
 Currently, this project has no built in security. Every device in your WiFi can access the IP address and control all the channels. Furthermore, every setting can be modified. If a basic layer of security is necessary, use a separate password protected WiFi only for this purpose with no other devices connected.
+
+### Note on the memory layout
+
+For each LED, a block of memory of 64 bytes in the SRAM is reserved. This block is a carbon copy of the same block of memory stored on the EEPROM. Such an architecture was chosen to speed up the rendering of the webpage, to avoid needing to fetch data from the external EEPROM when a client requests the user interface. The memory on the EEPROM is only rewritten when changes to an LED's settings occured, and only reread when the Arduino coldstarts. If more LED's are required and naming channels is not important, a different memory layout could easily be implemented to double the amount of usable LED'S with minimal changes to the remaining code.
 
 ### Note on electricity
 
