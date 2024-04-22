@@ -39,6 +39,7 @@
 #define I18N_CHANNEL_RANDOMLY_OFF "Zoufälleg Aus"
 #define I18N_CHANNEL_LINKED "Verbonnen"
 #define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Gesteiert vu Kanal"
+#define I18N_IS_HIDDEN_IN_COMPACT_VIEW "Verstoppt am Kompakt Vue"
 #define I18N_CHANNEL_ON "Un"
 #define I18N_CHANNEL_OFF "Aus"
 #define I18N_CHANNEL_YES "Jo"

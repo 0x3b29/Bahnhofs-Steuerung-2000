@@ -399,6 +399,12 @@ void Renderer::renderEditChannel(WiFiClient client) {
   uint16_t displayedLinkedChannelId =
       toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
 
+  bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_HIDE_IN_COMPACT_VIEW);
+
+  char *toggleIsHiddenInCompactViewCheckedBuffer =
+      isChannelHiddenInCompactView ? m_checkedBuffer : m_emptyBuffer;
+
   char outputBuffer[4096] = {0};
   sprintf(
       outputBuffer, R"html(
@@ -541,6 +547,36 @@ void Renderer::renderEditChannel(WiFiClient client) {
   </div>
 </div>
 
+<div class="form-check form-switch pt-3">
+  <input
+    class="form-check-input"
+    type="checkbox"
+    name="channelHiddenInCompactView"
+    value="1"
+    role="switch"
+    id="channelHiddenInCompactView"
+    value="1"
+    %s
+  />
+  <label class="form-check-label" for="channelHiddenInCompactView">%s</label>
+</div>
+)html",
+      I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT, channelIdToEdit,
+      I18N_EDIT_DESCRIPTION, maxChannelNameLength, maxChannelNameLength,
+      m_channelNameBuffer, toggleInitialStateCheckedBuffer,
+      I18N_EDIT_START_STATE, I18N_EDIT_BRIGHTNESS, brightnessAsPercentage,
+      channelBrightness, channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
+      I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
+      toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
+      I18N_EDIT_RANDOM_FREQ, randomOffFreq, toggleIsChannelLinkedCheckedBuffer,
+      I18N_EDIT_LINKED, I18N_EDIT_CONTROLLED_BY_CHANNEL,
+      smallesPossibleLinkedAddress, largestPossibleLinkedAddress,
+      displayedLinkedChannelId, toggleIsHiddenInCompactViewCheckedBuffer,
+      I18N_IS_HIDDEN_IN_COMPACT_VIEW);
+
+  pn(outputBuffer);
+
+  sprintf(outputBuffer, R"html(
 <br />
 
 <div class="row">
@@ -563,17 +599,7 @@ void Renderer::renderEditChannel(WiFiClient client) {
   </div>
 </div>
 )html",
-      I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT, channelIdToEdit,
-      I18N_EDIT_DESCRIPTION, maxChannelNameLength, maxChannelNameLength,
-      m_channelNameBuffer, toggleInitialStateCheckedBuffer,
-      I18N_EDIT_START_STATE, I18N_EDIT_BRIGHTNESS, brightnessAsPercentage,
-      channelBrightness, channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
-      I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
-      toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
-      I18N_EDIT_RANDOM_FREQ, randomOffFreq, toggleIsChannelLinkedCheckedBuffer,
-      I18N_EDIT_LINKED, I18N_EDIT_CONTROLLED_BY_CHANNEL,
-      smallesPossibleLinkedAddress, largestPossibleLinkedAddress,
-      displayedLinkedChannelId, I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
+          I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
 
   pn(outputBuffer);
 }
@@ -699,12 +725,37 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
       isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
   // --- /Prepare linked ---
 
-  char horizontalRuleHtmlBuffer[] = "<hr class='mb-1 mt-1'/>";
+  // --- Prepare note on visibility in compact view
+  bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_HIDE_IN_COMPACT_VIEW);
+
+  char isChannelHiddenInCompactViewHtmlInputBuffer[] = R"html(
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>%s</span>
+    </div>
+    <div class='col'>
+      %s
+    </div>
+  </div>
+  )html";
+
+  char *isChannelHiddenBuffer =
+      isChannelHiddenInCompactView ? yesBuffer : noBuffer;
+
+  char isChannelHiddenInCompactViewHtmlToDisplayBuffer[512];
+  sprintf(isChannelHiddenInCompactViewHtmlToDisplayBuffer,
+          isChannelHiddenInCompactViewHtmlInputBuffer,
+          I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
+  // --- /Prepare note on visibility in compact view
+
+  // --- Prepare horizontal seperator
+  char horizontalRuleHtmlBuffer[] = "<hr class='mb-2 mt-2'/>";
   char *horizontalRuleHtmlToDisplayBuffer =
       renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
+  // --- /Prepare horizontal seperator
 
   char outputBuffer[4096] = {0};
-  // char inputBuffer[] = ;
 
   sprintf(outputBuffer, R"html(
 <div id="channel-%d" class="pl-1 pr-1">
@@ -766,10 +817,10 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">%s</div>
   </div>
 
-<!-- Randomly turning on frequency if randomly turning on -->
+  <!-- Randomly turning on frequency if randomly turning on -->
   %s
 
-<!-- Randomly turning off -->
+  <!-- Randomly turning off -->
   <div class="row">
     <div class="col">
       <span class="h6">%s</span>
@@ -777,9 +828,10 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">%s</div>
   </div>
 
-<!-- Randomly turning off frequency if randomly turning off -->
+  <!-- Randomly turning off frequency if randomly turning off -->
   %s
 
+  <!-- Is channel linked -->
   <div class="row">
     <div class="col">
       <span class="h6">%s</span>
@@ -787,9 +839,14 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">%s</div>
   </div>
 
+  <!-- Linked channel if channel is linked -->
+  %s
+
+  <!-- Information if channel is hidden in compact view -->
   %s
 </div>
 
+<!-- Newline -->
 %s
 )html",
           channelId, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
@@ -803,6 +860,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
           randomOffEventsEnabledBuffer,
           randomOffEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_LINKED,
           isChannelLinkedBuffer, linkedChannelHtmlToDisplayBuffer,
+          isChannelHiddenInCompactViewHtmlToDisplayBuffer,
           horizontalRuleHtmlToDisplayBuffer);
 
   pt(outputBuffer);
@@ -810,6 +868,13 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 
 void Renderer::renderChannelDetailCompact(WiFiClient client, uint16_t channelId,
                                           bool renderHorizontalRule) {
+  bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_HIDE_IN_COMPACT_VIEW);
+
+  if (isChannelHiddenInCompactView) {
+    return;
+  }
+
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   int boardIndex = getBoardIndexForChannel(channelId);

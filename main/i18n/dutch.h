@@ -39,6 +39,7 @@
 #define I18N_CHANNEL_RANDOMLY_OFF "Willekeurig Uitzetten"
 #define I18N_CHANNEL_LINKED "Gekoppeld"
 #define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Gecontroleerd door Kanaal"
+#define I18N_IS_HIDDEN_IN_COMPACT_VIEW "Verborgen in Compact Weergave"
 #define I18N_CHANNEL_ON "Aan"
 #define I18N_CHANNEL_OFF "Uit"
 #define I18N_CHANNEL_YES "Ja"

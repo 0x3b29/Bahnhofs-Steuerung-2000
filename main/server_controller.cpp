@@ -103,12 +103,16 @@ void ServerController::updateChannel() {
   char isLinkedBuffer[2] = "0";
   char linkedChannelIdBuffer[4] = "0";
 
+  char isChannelHiddenInCompactViewBuffer[2] = "0";
+
   getValueFromData(m_pageBuffer, "randomOn=", randomOnBuffer, 2);
   getValueFromData(m_pageBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
   getValueFromData(m_pageBuffer, "randomOff=", randomOffBuffer, 2);
   getValueFromData(m_pageBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
   getValueFromData(m_pageBuffer, "channelLinked=", isLinkedBuffer, 2);
   getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer, 4);
+  getValueFromData(m_pageBuffer, "channelHiddenInCompactView=",
+                   isChannelHiddenInCompactViewBuffer, 2);
 
   // Todo convert to bool
   uint8_t randomOn = atoi(randomOnBuffer);
@@ -119,6 +123,9 @@ void ServerController::updateChannel() {
 
   uint8_t isLinked = atoi(isLinkedBuffer);
   uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
+
+  uint8_t isChannelHiddenInCompactView =
+      atoi(isChannelHiddenInCompactViewBuffer);
 
   if (m_stateManager->getToggleOneBasedAddresses()) {
     linkedChannelId--;
@@ -155,6 +162,9 @@ void ServerController::updateChannel() {
     writeUint16tForChannelToEepromBuffer(
         channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
   }
+
+  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_HIDE_IN_COMPACT_VIEW,
+                            isChannelHiddenInCompactView);
 
   m_ledController->applyAndPropagateValue(channelIdAsNumber, channelBrightness);
 
