@@ -17,8 +17,7 @@ private:
   void renderHeadJavascript(WiFiClient client);
   void renderHeadCss(WiFiClient client);
 
-  void renderChannelDetailCompact(WiFiClient client, uint16_t channelId,
-                                  bool renderHorizontalRule);
+  void renderChannelDetailCompact(WiFiClient client, uint16_t channelId);
 
   void renderChannelDetail(WiFiClient client, uint16_t channelId,
                            bool renderHorizontalRule);

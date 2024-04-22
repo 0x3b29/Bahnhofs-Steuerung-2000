@@ -750,7 +750,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
   // --- /Prepare note on visibility in compact view
 
   // --- Prepare horizontal seperator
-  char horizontalRuleHtmlBuffer[] = "<hr class='mb-2 mt-2'/>";
+  char horizontalRuleHtmlBuffer[] = "<hr class='mb-3 mt-3'/>";
   char *horizontalRuleHtmlToDisplayBuffer =
       renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
   // --- /Prepare horizontal seperator
@@ -866,8 +866,8 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
   pt(outputBuffer);
 }
 
-void Renderer::renderChannelDetailCompact(WiFiClient client, uint16_t channelId,
-                                          bool renderHorizontalRule) {
+void Renderer::renderChannelDetailCompact(WiFiClient client,
+                                          uint16_t channelId) {
   bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
       channelId, MEM_SLOT_HIDE_IN_COMPACT_VIEW);
 
@@ -892,10 +892,6 @@ void Renderer::renderChannelDetailCompact(WiFiClient client, uint16_t channelId,
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
-  char horizontalRuleHtmlBuffer[] = "<hr class='mb-1 mt-1'/>";
-  char *horizontalRuleHtmlToDisplayBuffer =
-      renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
-
   char outputBuffer[1024];
 
   uint16_t channelIdToDisplay =
@@ -917,7 +913,7 @@ void Renderer::renderChannelDetailCompact(WiFiClient client, uint16_t channelId,
     <div class="d-flex flex-fill align-items-center">
       <div class="text-muted">%d.</div>
       <button
-        class="btn p-0 ps-1 flex-fill align-items-start"
+        class="btn p-0 ps-2 flex-fill align-items-start"
         type="submit"
         name="editChannel"
         value="%d"
@@ -942,11 +938,9 @@ void Renderer::renderChannelDetailCompact(WiFiClient client, uint16_t channelId,
     </div>
   </div>
 </div>
-%s
 )html",
           channelId, channelIdToDisplay, channelId, channelNameToDisplay,
-          brightnessAsPercentage, channelId, channelId,
-          horizontalRuleHtmlToDisplayBuffer);
+          brightnessAsPercentage, channelId, channelId);
 
   pt(outputBuffer);
 }
@@ -1204,13 +1198,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
 
     if (toggleCompactDisplay) {
       for (int channelId = 0; channelId < numChannels; channelId++) {
-        bool renderHorizontalRule = true;
-
-        if (channelId == numChannels - 1) {
-          renderHorizontalRule = false;
-        }
-
-        renderChannelDetailCompact(client, channelId, renderHorizontalRule);
+        renderChannelDetailCompact(client, channelId);
       }
     } else {
       for (int channelId = 0; channelId < numChannels; channelId++) {
