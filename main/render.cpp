@@ -652,7 +652,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class='col'>
       <span class='h6'>%s</span>
     </div>
-    <div class='col'>
+    <div class='col mtba'>
       %d/h
     </div>
   </div>)html";
@@ -680,7 +680,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">
       <span class="h6">%s</span>
     </div>
-    <div class="col">%d/h</div>
+    <div class="col mtba">%d/h</div>
   </div>
       )html";
 
@@ -711,7 +711,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class='col'>
       <span class='h6'>%s</span>
     </div>
-    <div class='col'>
+    <div class='col mtba'>
       %d
     </div>
   </div>
@@ -734,7 +734,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class='col'>
       <span class='h6'>%s</span>
     </div>
-    <div class='col'>
+    <div class='col mtba'>
       %s
     </div>
   </div>
@@ -788,7 +788,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">
       <span class="h6">%s</span>
     </div>
-    <div class="col font-weight-bold">
+    <div class="col font-weight-bold mtba">
       <b> %s </b>
     </div>
   </div>
@@ -798,7 +798,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">
       <span class="h6">%s</span>
     </div>
-    <div class="col">%s</div>
+    <div class="col mtba">%s</div>
   </div>
 
   <!-- Brightness -->
@@ -806,7 +806,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">
       <span class="h6">%s</span>
     </div>
-    <div class="col">%d %%</div>
+    <div class="col mtba">%d %%</div>
   </div>
 
   <!-- Randomly turning on -->
@@ -814,7 +814,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">
       <span class="h6">%s</span>
     </div>
-    <div class="col">%s</div>
+    <div class="col mtba">%s</div>
   </div>
 
   <!-- Randomly turning on frequency if randomly turning on -->
@@ -825,7 +825,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">
       <span class="h6">%s</span>
     </div>
-    <div class="col">%s</div>
+    <div class="col mtba">%s</div>
   </div>
 
   <!-- Randomly turning off frequency if randomly turning off -->
@@ -836,7 +836,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
     <div class="col">
       <span class="h6">%s</span>
     </div>
-    <div class="col">%s</div>
+    <div class="col mtba">%s</div>
   </div>
 
   <!-- Linked channel if channel is linked -->
@@ -1039,6 +1039,17 @@ function onBrightnessValueChanged(value, channelId) {
 )html");
 }
 
+void Renderer::renderHeadCss(WiFiClient client) {
+  pn(R"html(
+<style>
+  .mtba {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+</style>
+)html");
+}
+
 void Renderer::renderOptionsHeading(WiFiClient client) {
   bool toggleOptionsVisible = m_stateManager->getToggleShowOptions();
 
@@ -1136,6 +1147,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
   )html");
 
   renderHeadJavascript(client);
+  renderHeadCss(client);
 
   pn(R"html(
 </head>
