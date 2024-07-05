@@ -71,7 +71,7 @@ void dumpEepromData(int startAddress, int endAddress);
 
 void loadPageFromEepromToBuffer(int page);
 void writePageFromBufferToEeprom(int page);
-bool isPageIntegrityGood(uint8_t page);
+bool isPageIntegrityGood(uint16_t page);
 void writePageIntegrity(int page);
 void wipePage(int page);
 void loadPageFromEepromToEepromBufferAndCheckIntegrity(int page);

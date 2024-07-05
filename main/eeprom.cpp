@@ -248,7 +248,7 @@ void writePageFromBufferToEeprom(int page) {
   }
 }
 
-bool isPageIntegrityGood(uint8_t page) {
+bool isPageIntegrityGood(uint16_t page) {
   uint16_t pageStart = page * 64;
   uint16_t pageCrcHighByteAddress = page * EEPROM_PAGE_SIZE + 62;
   uint16_t pageCrcLowByteAddress = pageCrcHighByteAddress + 1;
