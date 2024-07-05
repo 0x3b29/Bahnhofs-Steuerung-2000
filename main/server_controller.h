@@ -41,10 +41,12 @@ private:
   void setAllChannels();
 
   void processRequest(WiFiClient client);
+  void sendHttp413Response(WiFiClient client);
+
   void getValueFromData(const char *formData, const char *key, char *value,
                         int valueLen);
   bool isKeyInData(const char *formData, const char *key);
-  void clearPageBuffer();
+  void clearRequestBuffer();
   void urlDecode(const char *urlEncoded, char *decoded, int maxLen);
 
 public:

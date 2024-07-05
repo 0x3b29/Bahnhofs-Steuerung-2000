@@ -1,4 +1,3 @@
-
 #include "server_controller.h"
 #include "eeprom.h"
 #include "led_controller.h"
@@ -13,7 +12,7 @@ WiFiServer m_wifiServer(80);
 ServerController::ServerController(StateManager *stateManager,
                                    LedController *ledController,
                                    Renderer *renderer) {
-  this->clearPageBuffer();
+  this->clearRequestBuffer();
   this->m_stateManager = stateManager;
   this->m_ledController = ledController;
   this->m_renderer = renderer;
@@ -69,8 +68,8 @@ void ServerController::testBrightness() {
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
   char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_requestBuffer, "channelBrightness=", channelBrightnessBuffer,
-                   5);
+  getValueFromData(m_requestBuffer,
+                   "channelBrightness=", channelBrightnessBuffer, 5);
   uint16_t channelBrightness = atoi(channelBrightnessBuffer);
 
   m_ledController->setChannelBrightness(channelIdAsNumber, channelBrightness);
@@ -87,8 +86,8 @@ void ServerController::updateChannel() {
   urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, MAX_CHANNEL_NAME_LENGTH);
 
   char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_requestBuffer, "channelBrightness=", channelBrightnessBuffer,
-                   5);
+  getValueFromData(m_requestBuffer,
+                   "channelBrightness=", channelBrightnessBuffer, 5);
 
   char initialStateBuffer[2] = "0";
   getValueFromData(m_requestBuffer, "initialState=", initialStateBuffer, 2);
@@ -112,7 +111,8 @@ void ServerController::updateChannel() {
   getValueFromData(m_requestBuffer, "randomOff=", randomOffBuffer, 2);
   getValueFromData(m_requestBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
   getValueFromData(m_requestBuffer, "channelLinked=", isLinkedBuffer, 2);
-  getValueFromData(m_requestBuffer, "linkedChannelId=", linkedChannelIdBuffer, 4);
+  getValueFromData(m_requestBuffer, "linkedChannelId=", linkedChannelIdBuffer,
+                   4);
   getValueFromData(m_requestBuffer, "channelHiddenInCompactView=",
                    isChannelHiddenInCompactViewBuffer, 2);
 
@@ -193,7 +193,8 @@ void ServerController::toggleCompactDisplay() {
 void ServerController::turnChannelOff() {
   char turnChannelOffIdBuffer[4];
   uint16_t turnChannelOffId;
-  getValueFromData(m_requestBuffer, "turnChannelOff=", turnChannelOffIdBuffer, 4);
+  getValueFromData(m_requestBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
+                   4);
   turnChannelOffId = atoi(turnChannelOffIdBuffer);
   m_ledController->applyAndPropagateValue(turnChannelOffId, 0);
 }
@@ -221,8 +222,8 @@ void ServerController::editChannel() {
 
 void ServerController::toggleForceAllOff() {
   char toggleForceAllOffBuffer[2] = "0";
-  getValueFromData(m_requestBuffer, "toggleForceAllOff=", toggleForceAllOffBuffer,
-                   2);
+  getValueFromData(m_requestBuffer,
+                   "toggleForceAllOff=", toggleForceAllOffBuffer, 2);
   bool toggleForceAllOff = atoi(toggleForceAllOffBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, toggleForceAllOff);
   m_stateManager->setToggleForceAllOff(toggleForceAllOff);
@@ -247,8 +248,8 @@ void ServerController::toggleForceAllOn() {
 
 void ServerController::toggleRandomChaos() {
   char toggleRandomChaosBuffer[2] = "0";
-  getValueFromData(m_requestBuffer, "toggleRandomChaos=", toggleRandomChaosBuffer,
-                   2);
+  getValueFromData(m_requestBuffer,
+                   "toggleRandomChaos=", toggleRandomChaosBuffer, 2);
   bool toggleRandomChaos = atoi(toggleRandomChaosBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, toggleRandomChaos);
   m_stateManager->setToggleRandomChaos(toggleRandomChaos);
@@ -327,8 +328,8 @@ void ServerController::updateNumberOfChannels() {
 
 void ServerController::toggleShowOptions() {
   char toggleShowOptionsBuffer[2] = "0";
-  getValueFromData(m_requestBuffer, "toggleShowOptions=", toggleShowOptionsBuffer,
-                   2);
+  getValueFromData(m_requestBuffer,
+                   "toggleShowOptions=", toggleShowOptionsBuffer, 2);
   uint8_t toggleShowOptionsInt = atoi(toggleShowOptionsBuffer);
   bool toggleShowOptions = false;
 
@@ -345,8 +346,8 @@ void ServerController::toggleShowOptions() {
 
 void ServerController::toggleShowActions() {
   char toggleShowActionsBuffer[2] = "0";
-  getValueFromData(m_requestBuffer, "toggleShowActions=", toggleShowActionsBuffer,
-                   2);
+  getValueFromData(m_requestBuffer,
+                   "toggleShowActions=", toggleShowActionsBuffer, 2);
   uint8_t toggleShowActionsInt = atoi(toggleShowActionsBuffer);
   bool toggleShowActions = false;
 
@@ -363,7 +364,8 @@ void ServerController::toggleShowActions() {
 
 void ServerController::setAllChannels() {
   char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_requestBuffer, "setAllChannels=", channelBrightnessBuffer, 5);
+  getValueFromData(m_requestBuffer, "setAllChannels=", channelBrightnessBuffer,
+                   5);
   uint16_t channelBrightness = atoi(channelBrightnessBuffer);
   m_ledController->setAllChannels(channelBrightness);
 }
@@ -488,19 +490,44 @@ void ServerController::processRequest(WiFiClient client) {
 void ServerController::loopEvent() {
   WiFiClient client = m_wifiServer.available();
 
-  if (client) {
+  if (!client) {
+    return;
+  }
 
-    this->clearPageBuffer();
-    int pageIndex = 0;
+  this->clearRequestBuffer();
+  int requestBufferIndex = 0;
 
-    if (client.connected() && client.available() > 0) {
-      char c = client.read((uint8_t *)m_requestBuffer, REQUEST_BUFFER_SIZE);
+  if (client.connected() == 0) {
+    return;
+  }
 
-      processRequest(client);
-      client.flush();
+  while (client.available()) {
+    char c = client.read();
+    // Serial.write(c);
+
+    m_requestBuffer[requestBufferIndex] = c;
+    requestBufferIndex++;
+
+    if (requestBufferIndex >= REQUEST_BUFFER_SIZE) {
+      Serial.println("WARNING: REQUEST EXCEEDED BUFFER SIZE -> IGNORE!");
+      sendHttp413Response(client);
       client.stop();
+      return;
     }
   }
+
+  processRequest(client);
+
+  client.flush();
+  client.stop();
+}
+
+void ServerController::sendHttp413Response(WiFiClient client) {
+    client.println("HTTP/1.1 413 Payload Too Large");
+    client.println("Content-Type: text/html");
+    client.println("Connection: close");
+    client.println();
+    client.println("<html><body><h1>413 Payload Too Large</h1><p>Your request is too large for this server.</p></body></html>");
 }
 
 // Function to extract value from form data using char arrays
@@ -559,7 +586,7 @@ bool ServerController::isKeyInData(const char *formData, const char *key) {
   return false; // Key not found with proper boundaries
 }
 
-void ServerController::clearPageBuffer() {
+void ServerController::clearRequestBuffer() {
   for (int i = 0; i < REQUEST_BUFFER_SIZE; i++) {
     m_requestBuffer[i] = '\0';
   }
