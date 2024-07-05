@@ -21,6 +21,15 @@ Renderer::Renderer(StateManager *stateManager) {
   this->m_stateManager = stateManager;
 }
 
+void Renderer::pn(WiFiClient client, char *buffer) {
+  if (client.connected() == 0) {
+    return;
+  }
+
+  client.flush();
+  client.println(buffer);
+}
+
 void Renderer::renderOptions(WiFiClient client) {
 
   uint16_t numChannels = m_stateManager->getNumChannels();
@@ -58,7 +67,7 @@ void Renderer::renderOptions(WiFiClient client) {
                                  : m_renderHiddenBuffer;
 
   char optionsOutputBuffer[4096];
-  sprintf(optionsOutputBuffer, R"html(
+  snprintf(optionsOutputBuffer, sizeof(optionsOutputBuffer), R"html(
 <div id="options" class="mb-3" %s>
   <!-- Number of channels -->
   <div class="row">
@@ -210,20 +219,20 @@ void Renderer::renderOptions(WiFiClient client) {
   </div>
   <!-- /Enable random blink -->
 )html",
-          renderHiddenBuffer, I18N_OPTIONS_CHANNELS, MAX_TOTAL_CHANNELS,
-          numChannels, I18N_OPTIONS_SEND, toggleOneBasedAddressesCheckedBuffer,
-          I18N_OPTIONS_ONE_BASED_ADDRESSES, toggleCompactDisplayCheckedBuffer,
-          I18N_OPTIONS_COMPACT_VIEW, toggleForceAllOffCheckedBuffer,
-          I18N_OPTIONS_FORCE_ALL_OFF, toggleForceAllOnCheckedBuffer,
-          I18N_OPTIONS_FORCE_ALL_ON, toggleRandomEventsCheckedBuffer,
-          I18N_OPTIONS_RANDOM_EVENTS, togglePropagateEventsCheckedBuffer,
-          I18N_OPTIONS_PROPAGATE_EVENTS, toggleRandomChaosCheckedBuffer,
-          I18N_OPTIONS_CRAZY_BLINK);
+           renderHiddenBuffer, I18N_OPTIONS_CHANNELS, MAX_TOTAL_CHANNELS,
+           numChannels, I18N_OPTIONS_SEND, toggleOneBasedAddressesCheckedBuffer,
+           I18N_OPTIONS_ONE_BASED_ADDRESSES, toggleCompactDisplayCheckedBuffer,
+           I18N_OPTIONS_COMPACT_VIEW, toggleForceAllOffCheckedBuffer,
+           I18N_OPTIONS_FORCE_ALL_OFF, toggleForceAllOnCheckedBuffer,
+           I18N_OPTIONS_FORCE_ALL_ON, toggleRandomEventsCheckedBuffer,
+           I18N_OPTIONS_RANDOM_EVENTS, togglePropagateEventsCheckedBuffer,
+           I18N_OPTIONS_PROPAGATE_EVENTS, toggleRandomChaosCheckedBuffer,
+           I18N_OPTIONS_CRAZY_BLINK);
 
-  pn(optionsOutputBuffer);
+  pn(client, optionsOutputBuffer);
 
   char optionsOutputBufferPt2[1024];
-  sprintf(optionsOutputBuffer, R"html(
+  snprintf(optionsOutputBuffer, sizeof(optionsOutputBuffer), R"html(
   <!-- Enable running lights -->
   <div class="form-check form-switch">
     <input
@@ -247,9 +256,9 @@ void Renderer::renderOptions(WiFiClient client) {
   <input type="hidden" name="clearEeprom" value="0" />
 </div>
 )html",
-          toggleRunningLightsCheckedBuffer, I18N_OPTIONS_RUNNING_LIGHTS);
+           toggleRunningLightsCheckedBuffer, I18N_OPTIONS_RUNNING_LIGHTS);
 
-  pn(optionsOutputBuffer);
+  pn(client, optionsOutputBuffer);
 }
 
 void Renderer::renderActions(WiFiClient client) {
@@ -260,9 +269,9 @@ void Renderer::renderActions(WiFiClient client) {
 
   char outputBuffer[2048];
 
-  sprintf(outputBuffer,
+  snprintf(outputBuffer, sizeof(outputBuffer),
 
-          R"html(
+           R"html(
 <div id="actions" class="mb-3" %s>
   <button
     class="btn btn-primary text-white me-2 mb-2"
@@ -335,9 +344,9 @@ void Renderer::renderActions(WiFiClient client) {
   </button>
 </div>
 )html",
-          renderHiddenBuffer, I18N_ACTIONS_EVEN, I18N_ACTIONS_ODD);
+           renderHiddenBuffer, I18N_ACTIONS_EVEN, I18N_ACTIONS_ODD);
 
-  pn(outputBuffer);
+  pn(client, outputBuffer);
 }
 
 void Renderer::renderEditChannel(WiFiClient client) {
@@ -406,8 +415,8 @@ void Renderer::renderEditChannel(WiFiClient client) {
       isChannelHiddenInCompactView ? m_checkedBuffer : m_emptyBuffer;
 
   char outputBuffer[4096] = {0};
-  sprintf(
-      outputBuffer, R"html(
+  snprintf(
+      outputBuffer, sizeof(outputBuffer), R"html(
 <h3>%s %d %s</h3>
 
 <input type="hidden" name="channelId" value="%d" />
@@ -574,9 +583,9 @@ void Renderer::renderEditChannel(WiFiClient client) {
       displayedLinkedChannelId, toggleIsHiddenInCompactViewCheckedBuffer,
       I18N_IS_HIDDEN_IN_COMPACT_VIEW);
 
-  pn(outputBuffer);
+  pn(client, outputBuffer);
 
-  sprintf(outputBuffer, R"html(
+  snprintf(outputBuffer, sizeof(outputBuffer), R"html(
 <br />
 
 <div class="row">
@@ -599,9 +608,9 @@ void Renderer::renderEditChannel(WiFiClient client) {
   </div>
 </div>
 )html",
-          I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
+           I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
 
-  pn(outputBuffer);
+  pn(client, outputBuffer);
 }
 
 void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
@@ -659,8 +668,10 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 
   char randomOnFrequencyHtmlOutputBuffer[512];
 
-  sprintf(randomOnFrequencyHtmlOutputBuffer, randomOnFrequencyHtmlInputBuffer,
-          I18N_CHANNEL_RANDOM_FREQ, randomOnFreq);
+  snprintf(randomOnFrequencyHtmlOutputBuffer,
+           sizeof(randomOnFrequencyHtmlOutputBuffer),
+           randomOnFrequencyHtmlInputBuffer, I18N_CHANNEL_RANDOM_FREQ,
+           randomOnFreq);
 
   char *randomOnEventsFrequencyHtmlToDisplayBuffer =
       randomOn ? randomOnFrequencyHtmlOutputBuffer : m_emptyBuffer;
@@ -686,8 +697,10 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 
   char randomOffFrequencyHtmlOutputBuffer[512];
 
-  sprintf(randomOffFrequencyHtmlOutputBuffer, randomOffFrequencyHtmlInputBuffer,
-          I18N_CHANNEL_RANDOM_FREQ, randomOffFreq);
+  snprintf(randomOffFrequencyHtmlOutputBuffer,
+           sizeof(randomOffFrequencyHtmlOutputBuffer),
+           randomOffFrequencyHtmlInputBuffer, I18N_CHANNEL_RANDOM_FREQ,
+           randomOffFreq);
 
   char *randomOffEventsFrequencyHtmlToDisplayBuffer =
       randomOff ? randomOffFrequencyHtmlOutputBuffer : m_emptyBuffer;
@@ -718,8 +731,9 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
   )html";
 
   char linkedChannelHtmlOutputBuffer[512];
-  sprintf(linkedChannelHtmlOutputBuffer, linkedChannelHtmlInputBuffer,
-          I18N_CHANNEL_COMMANDED_BY_CHANNEL, linkedChannelIdToDisplay);
+  snprintf(linkedChannelHtmlOutputBuffer, sizeof(linkedChannelHtmlOutputBuffer),
+           linkedChannelHtmlInputBuffer, I18N_CHANNEL_COMMANDED_BY_CHANNEL,
+           linkedChannelIdToDisplay);
 
   char *linkedChannelHtmlToDisplayBuffer =
       isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
@@ -744,9 +758,10 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
       isChannelHiddenInCompactView ? yesBuffer : noBuffer;
 
   char isChannelHiddenInCompactViewHtmlToDisplayBuffer[512];
-  sprintf(isChannelHiddenInCompactViewHtmlToDisplayBuffer,
-          isChannelHiddenInCompactViewHtmlInputBuffer,
-          I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
+  snprintf(isChannelHiddenInCompactViewHtmlToDisplayBuffer,
+           sizeof(isChannelHiddenInCompactViewHtmlToDisplayBuffer),
+           isChannelHiddenInCompactViewHtmlInputBuffer,
+           I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
   // --- /Prepare note on visibility in compact view
 
   // --- Prepare horizontal seperator
@@ -757,7 +772,7 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 
   char outputBuffer[4096] = {0};
 
-  sprintf(outputBuffer, R"html(
+  snprintf(outputBuffer, sizeof(outputBuffer), R"html(
 <div id="channel-%d" class="pl-1 pr-1">
   <div class="row">
     <div class="col-9">
@@ -849,21 +864,21 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 <!-- Newline -->
 %s
 )html",
-          channelId, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
-          I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
-          boardSubAddressToDisplay, channelId, channelId, channelId,
-          I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer,
-          I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer,
-          I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage,
-          I18N_CHANNEL_RANDOMLY_ON, randomOnEventsEnabledBuffer,
-          randomOnEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_RANDOMLY_OFF,
-          randomOffEventsEnabledBuffer,
-          randomOffEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_LINKED,
-          isChannelLinkedBuffer, linkedChannelHtmlToDisplayBuffer,
-          isChannelHiddenInCompactViewHtmlToDisplayBuffer,
-          horizontalRuleHtmlToDisplayBuffer);
+           channelId, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
+           I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
+           boardSubAddressToDisplay, channelId, channelId, channelId,
+           I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer,
+           I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer,
+           I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage,
+           I18N_CHANNEL_RANDOMLY_ON, randomOnEventsEnabledBuffer,
+           randomOnEventsFrequencyHtmlToDisplayBuffer,
+           I18N_CHANNEL_RANDOMLY_OFF, randomOffEventsEnabledBuffer,
+           randomOffEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_LINKED,
+           isChannelLinkedBuffer, linkedChannelHtmlToDisplayBuffer,
+           isChannelHiddenInCompactViewHtmlToDisplayBuffer,
+           horizontalRuleHtmlToDisplayBuffer);
 
-  pt(outputBuffer);
+  pn(client, outputBuffer);
 }
 
 void Renderer::renderChannelDetailCompact(WiFiClient client,
@@ -902,12 +917,12 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
   if (strcmp(m_channelNameBuffer, "")) {
     strcpy(channelNameToDisplay, m_channelNameBuffer);
   } else {
-    sprintf(channelNameToDisplay, "Board %d, Pin %d", boardIndexToDisplay,
-            boardSubAddressToDisplay);
+    snprintf(channelNameToDisplay, sizeof(channelNameToDisplay),
+             "Board %d, Pin %d", boardIndexToDisplay, boardSubAddressToDisplay);
   }
 
-  sprintf(outputBuffer,
-          R"html(
+  snprintf(outputBuffer, sizeof(outputBuffer),
+           R"html(
 <div id="channel-%d" class="pl-1 pr-1">
   <div class="d-flex g-0 align-items-center">
     <div class="d-flex flex-fill align-items-center">
@@ -939,14 +954,14 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
   </div>
 </div>
 )html",
-          channelId, channelIdToDisplay, channelId, channelNameToDisplay,
-          brightnessAsPercentage, channelId, channelId);
+           channelId, channelIdToDisplay, channelId, channelNameToDisplay,
+           brightnessAsPercentage, channelId, channelId);
 
-  pt(outputBuffer);
+  pn(client, outputBuffer);
 }
 
 void Renderer::renderHeadJavascript(WiFiClient client) {
-  pn(R"html(
+  pn(client, R"html(
 <script>
 function sendValue(buttonName, buttonValue) {
   event.preventDefault();
@@ -1034,7 +1049,7 @@ function onBrightnessValueChanged(value, channelId) {
 }
 
 void Renderer::renderHeadCss(WiFiClient client) {
-  pn(R"html(
+  pn(client, R"html(
 <style>
   .mtba {
     margin-top: auto;
@@ -1054,8 +1069,8 @@ void Renderer::renderOptionsHeading(WiFiClient client) {
 
   char outputBuffer[512];
 
-  sprintf(outputBuffer,
-          R"html(
+  snprintf(outputBuffer, sizeof(outputBuffer),
+           R"html(
 <div class="d-flex align-items-center %s">
   <div id="options-heading" class="h3">%s</div>
   <div class="form-check form-switch ms-2 ">
@@ -1071,9 +1086,10 @@ void Renderer::renderOptionsHeading(WiFiClient client) {
   </div>
 </div>
     )html",
-          mutedBuffer, I18N_HEADING_OPTIONS, toggleOptionsVisibleCheckedBuffer);
+           mutedBuffer, I18N_HEADING_OPTIONS,
+           toggleOptionsVisibleCheckedBuffer);
 
-  pn(outputBuffer);
+  pn(client, outputBuffer);
 }
 
 void Renderer::renderActionsHeading(WiFiClient client) {
@@ -1086,8 +1102,8 @@ void Renderer::renderActionsHeading(WiFiClient client) {
 
   char outputBuffer[512];
 
-  sprintf(outputBuffer,
-          R"html(
+  snprintf(outputBuffer, sizeof(outputBuffer),
+           R"html(
 <div class="d-flex align-items-center %s">
   <div id="actions-heading" class="h3">%s</div>
   <div class="form-check form-switch ms-2 ">
@@ -1103,9 +1119,10 @@ void Renderer::renderActionsHeading(WiFiClient client) {
   </div>
 </div>
     )html",
-          mutedBuffer, I18N_HEADING_ACTIONS, toggleActionsVisibleCheckedBuffer);
+           mutedBuffer, I18N_HEADING_ACTIONS,
+           toggleActionsVisibleCheckedBuffer);
 
-  pn(outputBuffer);
+  pn(client, outputBuffer);
 }
 
 void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
@@ -1114,12 +1131,13 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
   bool renderAnchor = m_stateManager->getRenderAnchor();
   uint16_t anchorChannelId = m_stateManager->getAnchorChannelId();
   // Send a standard HTTP response header
-  pn("HTTP/1.1 200 OK");
-  pn("Content-type:text/html");
-  pn();
+  pn(client, "HTTP/1.1 200 OK");
+  pn(client, "Content-type:text/html");
+  pn(client, "Connection: close");
+  pn(client, m_emptyBuffer);
 
-  pn("<!DOCTYPE html>");
-  pn(R"html(
+  pn(client, "<!DOCTYPE html>");
+  pn(client, R"html(
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -1143,7 +1161,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
   renderHeadJavascript(client);
   renderHeadCss(client);
 
-  pn(R"html(
+  pn(client, R"html(
 </head>
 <body style="min-height: 100vh">
   <div class="container" style="min-height: 93vh">
@@ -1157,18 +1175,18 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
 
   if (foundRecursion) {
     char renderRecursionWarningBuffer[512];
-    sprintf(renderRecursionWarningBuffer,
-            R"html(
+    snprintf(renderRecursionWarningBuffer, sizeof(renderRecursionWarningBuffer),
+             R"html(
 <div class='pb-3'>
   <span class='text-danger'>
   %s %d %s
   </span>
 </div>
     )html",
-            I18N_WARNING_RECURSION_BEFORE_MAX, MAX_RECURSION,
-            I18N_WARNING_RECURSION_AFTER_MAX);
+             I18N_WARNING_RECURSION_BEFORE_MAX, MAX_RECURSION,
+             I18N_WARNING_RECURSION_AFTER_MAX);
 
-    pn(renderRecursionWarningBuffer);
+    pn(client, renderRecursionWarningBuffer);
   }
 
   if (m_stateManager->getRenderEditChannel() == true) {
@@ -1180,22 +1198,23 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
     renderActions(client);
 
     char renderAnchorBuffer[20];
-    sprintf(renderAnchorBuffer, "<h3>%s</h3>", I18N_HEADING_CHANNELS);
-    pn(renderAnchorBuffer);
+    snprintf(renderAnchorBuffer, sizeof(renderAnchorBuffer), "<h3>%s</h3>",
+             I18N_HEADING_CHANNELS);
+
+    pn(client, renderAnchorBuffer);
 
     if (renderAnchor) {
       char renderAnchorBuffer[100];
       renderAnchorBuffer[0] = 0;
-      sprintf(renderAnchorBuffer,
-              R"html(
+      snprintf(renderAnchorBuffer, sizeof(renderAnchorBuffer),
+               R"html(
             <div id="navigateTo" data-anchor="#channel-%d" style="display: none"></div>
                   )html",
-              anchorChannelId);
-      pn(renderAnchorBuffer);
+               anchorChannelId);
+      pn(client, renderAnchorBuffer);
     }
 
-    pn("<div>");
-
+    pn(client, "<div>");
     if (toggleCompactDisplay) {
       for (int channelId = 0; channelId < numChannels; channelId++) {
         renderChannelDetailCompact(client, channelId);
@@ -1211,11 +1230,10 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
         renderChannelDetail(client, channelId, renderHorizontalRule);
       }
     }
-
-    pn("</div>");
+    pn(client, "</div>");
   }
 
-  pn(R"html(
+  pn(client, R"html(
             </form>
         </div>
       </div>

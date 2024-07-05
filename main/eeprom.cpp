@@ -156,8 +156,8 @@ void dumpEepromData(int startAddress, int endAddress) {
       if (i != startAddress && (i - startAddress) % EEPROM_PAGE_SIZE == 0) {
         Serial.println(); // Newline to separate pages
       }
-      sprintf(lineBufferEEPROM,
-              "%04X: ", i);              // Start a new line for EEPROM data
+      snprintf(lineBufferEEPROM, sizeof(lineBufferEEPROM),
+               "%04X: ", i);             // Start a new line for EEPROM data
       strcpy(lineBufferMirror, "     "); // Align m_eepromBuffer data
     }
 
@@ -166,14 +166,14 @@ void dumpEepromData(int startAddress, int endAddress) {
 
     // Add HEX and ASCII for EEPROM data
     char hexBuffer[5];
-    sprintf(hexBuffer, "%02X ", byteValueEEPROM);
+    snprintf(hexBuffer, sizeof(hexBuffer), "%02X ", byteValueEEPROM);
     strcat(lineBufferEEPROM, hexBuffer);
     asciiBufferEEPROM[bufferIndex] =
         (byteValueEEPROM >= 32 && byteValueEEPROM <= 126) ? byteValueEEPROM
                                                           : '.';
 
     // Add HEX and ASCII for m_eepromBuffer data
-    sprintf(hexBuffer, "%02X ", m_eepromBuffer[i]);
+    snprintf(hexBuffer, sizeof(hexBuffer), "%02X ", m_eepromBuffer[i]);
     strcat(lineBufferMirror, hexBuffer);
     asciiBufferMirror[bufferIndex] =
         (m_eepromBuffer[i] >= 32 && m_eepromBuffer[i] <= 126)

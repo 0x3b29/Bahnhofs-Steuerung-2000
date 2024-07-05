@@ -6,12 +6,10 @@
 #include <Arduino.h>
 #include <WiFiNINA.h>
 
-#define pt client.print
-#define pn client.println
-
 class Renderer {
 private:
   StateManager *m_stateManager;
+  void pn(WiFiClient client, char* buffer);
   void renderActionsHeading(WiFiClient client);
   void renderOptionsHeading(WiFiClient client);
   void renderHeadJavascript(WiFiClient client);
