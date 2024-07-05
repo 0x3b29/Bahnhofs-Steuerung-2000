@@ -5,8 +5,10 @@
 #include "render.h"
 #include <WiFiServer.h>
 
+#define REQUEST_BUFFER_SIZE 1024
+char m_requestBuffer[REQUEST_BUFFER_SIZE];
+
 WiFiServer m_wifiServer(80);
-char m_pageBuffer[PAGE_BUFFER_SIZE];
 
 ServerController::ServerController(StateManager *stateManager,
                                    LedController *ledController,
@@ -35,7 +37,7 @@ void ServerController::replyToClientWithFail(WiFiClient client) {
 
 void ServerController::cancelChannelUpdate() {
   // Reload old brigthness
-  getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+  getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
   uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
@@ -49,7 +51,7 @@ void ServerController::cancelChannelUpdate() {
 
 void ServerController::toggleOneBasedAddresses() {
   char toggleOneBasedAddressesBuffer[2] = "0";
-  getValueFromData(m_pageBuffer,
+  getValueFromData(m_requestBuffer,
                    "toggleOneBasedAddresses=", toggleOneBasedAddressesBuffer,
                    2);
   bool toggleOneBasedAddresses = atoi(toggleOneBasedAddressesBuffer);
@@ -63,11 +65,11 @@ void ServerController::toggleOneBasedAddresses() {
 
 void ServerController::testBrightness() {
   // User changed brightness on edit channel form
-  getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+  getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
   char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_pageBuffer, "channelBrightness=", channelBrightnessBuffer,
+  getValueFromData(m_requestBuffer, "channelBrightness=", channelBrightnessBuffer,
                    5);
   uint16_t channelBrightness = atoi(channelBrightnessBuffer);
 
@@ -75,21 +77,21 @@ void ServerController::testBrightness() {
 }
 
 void ServerController::updateChannel() {
-  getValueFromData(m_pageBuffer, "channelId=", m_channelIdBuffer, 5);
+  getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
   // Worst case, each UTF8 character is 4 bytes long as url encoded
   char urlEncodedNameBuffer[MAX_CHANNEL_NAME_LENGTH * 4];
-  getValueFromData(m_pageBuffer, "channelName=", urlEncodedNameBuffer,
+  getValueFromData(m_requestBuffer, "channelName=", urlEncodedNameBuffer,
                    MAX_CHANNEL_NAME_LENGTH * 4);
   urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, MAX_CHANNEL_NAME_LENGTH);
 
   char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_pageBuffer, "channelBrightness=", channelBrightnessBuffer,
+  getValueFromData(m_requestBuffer, "channelBrightness=", channelBrightnessBuffer,
                    5);
 
   char initialStateBuffer[2] = "0";
-  getValueFromData(m_pageBuffer, "initialState=", initialStateBuffer, 2);
+  getValueFromData(m_requestBuffer, "initialState=", initialStateBuffer, 2);
   uint8_t initialState = atoi(initialStateBuffer);
   writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_INITIAL_STATE,
                             initialState);
@@ -105,13 +107,13 @@ void ServerController::updateChannel() {
 
   char isChannelHiddenInCompactViewBuffer[2] = "0";
 
-  getValueFromData(m_pageBuffer, "randomOn=", randomOnBuffer, 2);
-  getValueFromData(m_pageBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
-  getValueFromData(m_pageBuffer, "randomOff=", randomOffBuffer, 2);
-  getValueFromData(m_pageBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
-  getValueFromData(m_pageBuffer, "channelLinked=", isLinkedBuffer, 2);
-  getValueFromData(m_pageBuffer, "linkedChannelId=", linkedChannelIdBuffer, 4);
-  getValueFromData(m_pageBuffer, "channelHiddenInCompactView=",
+  getValueFromData(m_requestBuffer, "randomOn=", randomOnBuffer, 2);
+  getValueFromData(m_requestBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
+  getValueFromData(m_requestBuffer, "randomOff=", randomOffBuffer, 2);
+  getValueFromData(m_requestBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
+  getValueFromData(m_requestBuffer, "channelLinked=", isLinkedBuffer, 2);
+  getValueFromData(m_requestBuffer, "linkedChannelId=", linkedChannelIdBuffer, 4);
+  getValueFromData(m_requestBuffer, "channelHiddenInCompactView=",
                    isChannelHiddenInCompactViewBuffer, 2);
 
   // Todo convert to bool
@@ -178,7 +180,7 @@ void ServerController::updateChannel() {
 
 void ServerController::toggleCompactDisplay() {
   char toggleCompactDisplayBuffer[2] = "0";
-  getValueFromData(m_pageBuffer,
+  getValueFromData(m_requestBuffer,
                    "toggleCompactDisplay=", toggleCompactDisplayBuffer, 2);
   bool toggleCompactDisplay = atoi(toggleCompactDisplayBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_COMPACT_DISPLAY, toggleCompactDisplay);
@@ -191,7 +193,7 @@ void ServerController::toggleCompactDisplay() {
 void ServerController::turnChannelOff() {
   char turnChannelOffIdBuffer[4];
   uint16_t turnChannelOffId;
-  getValueFromData(m_pageBuffer, "turnChannelOff=", turnChannelOffIdBuffer, 4);
+  getValueFromData(m_requestBuffer, "turnChannelOff=", turnChannelOffIdBuffer, 4);
   turnChannelOffId = atoi(turnChannelOffIdBuffer);
   m_ledController->applyAndPropagateValue(turnChannelOffId, 0);
 }
@@ -199,7 +201,7 @@ void ServerController::turnChannelOff() {
 void ServerController::turnChannelOn() {
   char turnChannelOnIdBuffer[4];
   uint16_t turnChannelOnId;
-  getValueFromData(m_pageBuffer, "turnChannelOn=", turnChannelOnIdBuffer, 4);
+  getValueFromData(m_requestBuffer, "turnChannelOn=", turnChannelOnIdBuffer, 4);
   turnChannelOnId = atoi(turnChannelOnIdBuffer);
 
   uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
@@ -209,7 +211,7 @@ void ServerController::turnChannelOn() {
 }
 
 void ServerController::editChannel() {
-  getValueFromData(m_pageBuffer, "editChannel=", m_channelIdToEditBuffer, 4);
+  getValueFromData(m_requestBuffer, "editChannel=", m_channelIdToEditBuffer, 4);
 
   uint16_t channelIdToEdit = atoi(m_channelIdToEditBuffer);
   readChannelNameFromEepromBufferToChannelNameBuffer(channelIdToEdit);
@@ -219,7 +221,7 @@ void ServerController::editChannel() {
 
 void ServerController::toggleForceAllOff() {
   char toggleForceAllOffBuffer[2] = "0";
-  getValueFromData(m_pageBuffer, "toggleForceAllOff=", toggleForceAllOffBuffer,
+  getValueFromData(m_requestBuffer, "toggleForceAllOff=", toggleForceAllOffBuffer,
                    2);
   bool toggleForceAllOff = atoi(toggleForceAllOffBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_OFF, toggleForceAllOff);
@@ -232,7 +234,7 @@ void ServerController::toggleForceAllOff() {
 
 void ServerController::toggleForceAllOn() {
   char toggleForceAllOnBuffer[2] = "0";
-  getValueFromData(m_pageBuffer, "toggleForceAllOn=", toggleForceAllOnBuffer,
+  getValueFromData(m_requestBuffer, "toggleForceAllOn=", toggleForceAllOnBuffer,
                    2);
   bool toggleForceAllOn = atoi(toggleForceAllOnBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_FORCE_ALL_ON, toggleForceAllOn);
@@ -245,7 +247,7 @@ void ServerController::toggleForceAllOn() {
 
 void ServerController::toggleRandomChaos() {
   char toggleRandomChaosBuffer[2] = "0";
-  getValueFromData(m_pageBuffer, "toggleRandomChaos=", toggleRandomChaosBuffer,
+  getValueFromData(m_requestBuffer, "toggleRandomChaos=", toggleRandomChaosBuffer,
                    2);
   bool toggleRandomChaos = atoi(toggleRandomChaosBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_RANDOM_CHAOS, toggleRandomChaos);
@@ -257,7 +259,7 @@ void ServerController::toggleRandomChaos() {
 
 void ServerController::toggleRunningLights() {
   char toggleRunningLightsBuffer[2] = "0";
-  getValueFromData(m_pageBuffer,
+  getValueFromData(m_requestBuffer,
                    "toggleRunningLights=", toggleRunningLightsBuffer, 2);
   bool toggleRunningLights = atoi(toggleRunningLightsBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_RUNNING_LIGHTS, toggleRunningLights);
@@ -269,7 +271,7 @@ void ServerController::toggleRunningLights() {
 
 void ServerController::toggleRandomEvents() {
   char toggleRandomEventsBuffer[2] = "0";
-  getValueFromData(m_pageBuffer,
+  getValueFromData(m_requestBuffer,
                    "toggleRandomEvents=", toggleRandomEventsBuffer, 2);
   bool toggleRandomEvents = atoi(toggleRandomEventsBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_RANDOM_EVENTS, toggleRandomEvents);
@@ -281,7 +283,7 @@ void ServerController::toggleRandomEvents() {
 
 void ServerController::togglePropagateEvents() {
   char togglePropagateEventsBuffer[2] = "0";
-  getValueFromData(m_pageBuffer,
+  getValueFromData(m_requestBuffer,
                    "togglePropagateEvents=", togglePropagateEventsBuffer, 2);
   bool togglePropagateEvents = atoi(togglePropagateEventsBuffer);
   writeBoolToEepromBuffer(MEM_SLOT_PROPAGATE_EVENTS, togglePropagateEvents);
@@ -293,7 +295,7 @@ void ServerController::togglePropagateEvents() {
 
 void ServerController::updateNumberOfChannels() {
   char clearEepromBuffer[10] = "";
-  getValueFromData(m_pageBuffer, "clearEeprom=", clearEepromBuffer, 10);
+  getValueFromData(m_requestBuffer, "clearEeprom=", clearEepromBuffer, 10);
 
   // TODO: move reset2024 to secrets file
   if (strcmp(clearEepromBuffer, "reset2024") == 0) {
@@ -304,7 +306,7 @@ void ServerController::updateNumberOfChannels() {
   uint16_t oldNumChannels = m_stateManager->getNumChannels();
 
   char numChannelsBuffer[4] = "0";
-  getValueFromData(m_pageBuffer, "numChannels=", numChannelsBuffer, 4);
+  getValueFromData(m_requestBuffer, "numChannels=", numChannelsBuffer, 4);
   uint16_t numChannels = atoi(numChannelsBuffer);
   writeUInt16ToEepromBuffer(MEM_SLOT_CHANNELS, numChannels);
   m_stateManager->setNumChannels(numChannels);
@@ -325,7 +327,7 @@ void ServerController::updateNumberOfChannels() {
 
 void ServerController::toggleShowOptions() {
   char toggleShowOptionsBuffer[2] = "0";
-  getValueFromData(m_pageBuffer, "toggleShowOptions=", toggleShowOptionsBuffer,
+  getValueFromData(m_requestBuffer, "toggleShowOptions=", toggleShowOptionsBuffer,
                    2);
   uint8_t toggleShowOptionsInt = atoi(toggleShowOptionsBuffer);
   bool toggleShowOptions = false;
@@ -343,7 +345,7 @@ void ServerController::toggleShowOptions() {
 
 void ServerController::toggleShowActions() {
   char toggleShowActionsBuffer[2] = "0";
-  getValueFromData(m_pageBuffer, "toggleShowActions=", toggleShowActionsBuffer,
+  getValueFromData(m_requestBuffer, "toggleShowActions=", toggleShowActionsBuffer,
                    2);
   uint8_t toggleShowActionsInt = atoi(toggleShowActionsBuffer);
   bool toggleShowActions = false;
@@ -361,7 +363,7 @@ void ServerController::toggleShowActions() {
 
 void ServerController::setAllChannels() {
   char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_pageBuffer, "setAllChannels=", channelBrightnessBuffer, 5);
+  getValueFromData(m_requestBuffer, "setAllChannels=", channelBrightnessBuffer, 5);
   uint16_t channelBrightness = atoi(channelBrightnessBuffer);
   m_ledController->setAllChannels(channelBrightness);
 }
@@ -371,97 +373,97 @@ void ServerController::processRequest(WiFiClient client) {
   m_stateManager->setRenderAnchor(false);
   m_stateManager->setRenderEditChannel(false);
 
-  if (strstr(m_pageBuffer, "POST") != NULL) {
+  if (strstr(m_requestBuffer, "POST") != NULL) {
 
-    if (isKeyInData(m_pageBuffer, "cancelChannelUpdate")) {
+    if (isKeyInData(m_requestBuffer, "cancelChannelUpdate")) {
       cancelChannelUpdate();
       shouldRerender = true;
     }
 
-    if (isKeyInData(m_pageBuffer, "testBrightness")) {
+    if (isKeyInData(m_requestBuffer, "testBrightness")) {
       testBrightness();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleOneBasedAddresses")) {
+    if (isKeyInData(m_requestBuffer, "toggleOneBasedAddresses")) {
       toggleOneBasedAddresses();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleCompactDisplay")) {
+    if (isKeyInData(m_requestBuffer, "toggleCompactDisplay")) {
       toggleCompactDisplay();
     }
 
-    if (isKeyInData(m_pageBuffer, "turnChannelOff")) {
+    if (isKeyInData(m_requestBuffer, "turnChannelOff")) {
       turnChannelOff();
     }
 
-    if (isKeyInData(m_pageBuffer, "turnChannelOn")) {
+    if (isKeyInData(m_requestBuffer, "turnChannelOn")) {
       turnChannelOn();
     }
 
-    if (isKeyInData(m_pageBuffer, "editChannel")) {
+    if (isKeyInData(m_requestBuffer, "editChannel")) {
       editChannel();
       shouldRerender = true;
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleForceAllOff")) {
+    if (isKeyInData(m_requestBuffer, "toggleForceAllOff")) {
       toggleForceAllOff();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleForceAllOn")) {
+    if (isKeyInData(m_requestBuffer, "toggleForceAllOn")) {
       toggleForceAllOn();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleRandomChaos")) {
+    if (isKeyInData(m_requestBuffer, "toggleRandomChaos")) {
       toggleRandomChaos();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleRunningLights")) {
+    if (isKeyInData(m_requestBuffer, "toggleRunningLights")) {
       toggleRunningLights();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleRandomEvents")) {
+    if (isKeyInData(m_requestBuffer, "toggleRandomEvents")) {
       toggleRandomEvents();
     }
 
-    if (isKeyInData(m_pageBuffer, "togglePropagateEvents")) {
+    if (isKeyInData(m_requestBuffer, "togglePropagateEvents")) {
       togglePropagateEvents();
     }
 
-    if (isKeyInData(m_pageBuffer, "updateNumberOfChannels")) {
+    if (isKeyInData(m_requestBuffer, "updateNumberOfChannels")) {
       updateNumberOfChannels();
       shouldRerender = true;
     }
 
-    if (isKeyInData(m_pageBuffer, "updateChannel")) {
+    if (isKeyInData(m_requestBuffer, "updateChannel")) {
       updateChannel();
       shouldRerender = true;
     }
 
-    if (isKeyInData(m_pageBuffer, "resetAllChannels")) {
+    if (isKeyInData(m_requestBuffer, "resetAllChannels")) {
       m_ledController->applyInitialState();
     }
 
-    if (isKeyInData(m_pageBuffer, "setAllChannels")) {
+    if (isKeyInData(m_requestBuffer, "setAllChannels")) {
       setAllChannels();
     }
 
-    if (isKeyInData(m_pageBuffer, "turnEvenChannelsOn")) {
+    if (isKeyInData(m_requestBuffer, "turnEvenChannelsOn")) {
       m_ledController->turnEvenChannelsOn();
     }
 
-    if (isKeyInData(m_pageBuffer, "turnOddChannelsOn")) {
+    if (isKeyInData(m_requestBuffer, "turnOddChannelsOn")) {
       m_ledController->turnOddChannelsOn();
     }
 
-    if (isKeyInData(m_pageBuffer, "countBinary")) {
+    if (isKeyInData(m_requestBuffer, "countBinary")) {
       m_ledController->countBinary();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleShowOptions")) {
+    if (isKeyInData(m_requestBuffer, "toggleShowOptions")) {
       toggleShowOptions();
     }
 
-    if (isKeyInData(m_pageBuffer, "toggleShowActions")) {
+    if (isKeyInData(m_requestBuffer, "toggleShowActions")) {
       toggleShowActions();
     }
 
@@ -487,26 +489,15 @@ void ServerController::loopEvent() {
   WiFiClient client = m_wifiServer.available();
 
   if (client) {
-    boolean currentLineIsBlank = true;
 
     this->clearPageBuffer();
     int pageIndex = 0;
 
-    if (client.connected()) {
-      while (client.available()) {
-        char c = client.read();
-        // Serial.write(c);
-
-        m_pageBuffer[pageIndex] = c;
-        pageIndex++;
-
-        if (pageIndex >= PAGE_BUFFER_SIZE) {
-          Serial.println("WARNING: PAGE EXCEEDED BUFFER SIZE! DANGER!!!");
-        }
-      }
+    if (client.connected() && client.available() > 0) {
+      char c = client.read((uint8_t *)m_requestBuffer, REQUEST_BUFFER_SIZE);
 
       processRequest(client);
-
+      client.flush();
       client.stop();
     }
   }
@@ -569,8 +560,8 @@ bool ServerController::isKeyInData(const char *formData, const char *key) {
 }
 
 void ServerController::clearPageBuffer() {
-  for (int i = 0; i < PAGE_BUFFER_SIZE; i++) {
-    m_pageBuffer[i] = '\0';
+  for (int i = 0; i < REQUEST_BUFFER_SIZE; i++) {
+    m_requestBuffer[i] = '\0';
   }
 }
 

@@ -38,7 +38,6 @@
 // store general settings
 #define EEPROM_PAGE_SIZE 64
 #define MAX_EEPROM_RANGE EEPROM_PAGE_SIZE *(MAX_TOTAL_CHANNELS + 1)
-#define PAGE_BUFFER_SIZE 8192
 
 extern uint8_t m_eepromBuffer[MAX_EEPROM_RANGE];
 extern char m_channelNameBuffer[MAX_CHANNEL_NAME_LENGTH];
