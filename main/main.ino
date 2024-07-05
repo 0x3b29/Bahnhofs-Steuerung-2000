@@ -30,6 +30,24 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
   Serial.println("Starting");
+
+  Serial.print("Using ");
+  Serial.print(MAX_EEPROM_RANGE);
+  Serial.println(" bytes for eeprom mirror.");
+
+  // check for the WiFi module:
+  if (WiFi.status() == WL_NO_MODULE) {
+    Serial.println("Communication with WiFi module failed!");
+    // don't continue
+    while (true)
+      ;
+  }
+
+  String fv = WiFi.firmwareVersion();
+  if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
+    Serial.println("Please upgrade the firmware");
+  }
+
   Wire.begin();
 
   // Comment in for HARD RESET
