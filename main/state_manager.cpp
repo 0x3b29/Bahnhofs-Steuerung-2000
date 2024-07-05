@@ -2,6 +2,12 @@
 
 void StateManager::loadStateFromEepromBuffer() {
   this->m_numChannels = readUInt16FromEepromBuffer(MEM_SLOT_CHANNELS);
+
+  if (m_numChannels > MAX_TOTAL_CHANNELS) {
+    Serial.println("WARNING: READ CHANNEL COUNT BIGGER THAN MAX_TOTAL_CHANNELS. RESET TO MAX_TOTAL_CHANNELS");
+    m_numChannels = MAX_TOTAL_CHANNELS;
+  }
+
   m_toggleForceAllOff = readBoolFromEepromBuffer(MEM_SLOT_FORCE_ALL_OFF);
   m_toggleForceAllOn = readBoolFromEepromBuffer(MEM_SLOT_FORCE_ALL_ON);
   m_toggleRandomChaos = readBoolFromEepromBuffer(MEM_SLOT_RANDOM_CHAOS);
