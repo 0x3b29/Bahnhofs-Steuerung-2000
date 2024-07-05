@@ -5,7 +5,6 @@
 #include "render.h"
 #include "server_controller.h"
 #include "state_manager.h"
-#include <ArduinoOTA.h>
 #include <WiFiNINA.h>
 
 // If you check out this project, this file does not exist.
@@ -80,13 +79,6 @@ void setup() {
 
   // Start the m_wifiServer
   m_serverController.begin();
-
-  ArduinoOTA.onStart([]() { Serial.println("Start OTA"); });
-
-  // start the WiFi OTA library with internal (flash) based storage
-  ArduinoOTA.begin(WiFi.localIP(), "Arduino_MKR_WiFi_1010", SECRET_OTA,
-                   InternalStorage);
-
   Serial.println("Server started");
 
   float analogValue = analogRead(0);
@@ -99,9 +91,6 @@ void setup() {
 }
 
 void loop() {
-  // check for WiFi OTA updates
-  ArduinoOTA.poll();
-
   if ((m_stateManager.getToggleRandomChaos() == 1) &&
       (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
     m_lastRandom = millis();
