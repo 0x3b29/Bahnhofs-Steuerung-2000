@@ -53,6 +53,9 @@ void setup() {
   // Comment in for HARD RESET
   // clearEeprom();
 
+  // Comment in to dump the eeprom to serial
+  // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
+
   clearEepromBuffer();
 
   // Load first page which contains information such as channel count etc...
@@ -63,8 +66,6 @@ void setup() {
     // Page for channel is always channelId + 1 since page 0 = general config;
     loadPageFromEepromToEepromBufferAndCheckIntegrity(i + 1);
   }
-
-  // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
 
   m_ledController.initializePwmBoards();
 
