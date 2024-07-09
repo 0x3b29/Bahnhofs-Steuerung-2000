@@ -4,7 +4,8 @@ void StateManager::loadStateFromEepromBuffer() {
   this->m_numChannels = readUInt16FromEepromBuffer(MEM_SLOT_CHANNELS);
 
   if (m_numChannels > MAX_TOTAL_CHANNELS) {
-    Serial.println("WARNING: READ CHANNEL COUNT BIGGER THAN MAX_TOTAL_CHANNELS. RESET TO MAX_TOTAL_CHANNELS");
+    Serial.println("WARNING: READ CHANNEL COUNT BIGGER THAN "
+                   "MAX_TOTAL_CHANNELS. RESET TO MAX_TOTAL_CHANNELS");
     m_numChannels = MAX_TOTAL_CHANNELS;
   }
 
@@ -103,15 +104,3 @@ void StateManager::setChannelIdToEdit(uint16_t channelIdToEdit) {
 }
 
 uint16_t StateManager::getChannelIdToEdit() { return m_channelIdToEdit; }
-
-void StateManager::setRenderAnchor(bool renderAnchor) {
-  m_renderAnchor = renderAnchor;
-}
-
-bool StateManager::getRenderAnchor() { return m_renderAnchor; }
-
-void StateManager::setAnchorChannelId(uint16_t anchorChannelId) {
-  m_anchorChannelId = anchorChannelId;
-}
-
-uint16_t StateManager::getAnchorChannelId() { return m_anchorChannelId; }

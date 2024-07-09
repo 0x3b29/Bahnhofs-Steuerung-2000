@@ -28,7 +28,6 @@ private:
   void toggleCompactDisplay();
   void turnChannelOff();
   void turnChannelOn();
-  void editChannel();
   void toggleForceAllOff();
   void toggleForceAllOn();
   void toggleRandomChaos();
@@ -40,14 +39,22 @@ private:
   void toggleShowActions();
   void setAllChannels();
 
-  void processRequest(WiFiClient client);
-  void sendHttp413Response(WiFiClient client);
+  void prepareRenderChannels(WiFiClient client);
+  void prepareRenderEditChannel(WiFiClient client, uint16_t channelId);
 
-  void getValueFromData(const char *formData, const char *key, char *value,
+  void processPostRequest(WiFiClient client);
+  void processGetRequest(WiFiClient client);
+  void processRequest(WiFiClient client);
+
+  void getValueFromData(const char *data, const char *key, char *value,
                         int valueLen);
-  bool isKeyInData(const char *formData, const char *key);
+
+  bool isKeyInData(const char *data, const char *key);
   void clearRequestBuffer();
   void urlDecode(const char *urlEncoded, char *decoded, int maxLen);
+
+  bool isArgInRequest(char *request, char *arg);
+  uint16_t getUint16tFromRequest(char *request, char *arg);
 
 public:
   ServerController(StateManager *stateManager, LedController *ledController,

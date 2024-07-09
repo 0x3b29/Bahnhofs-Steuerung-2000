@@ -1,2 +1,6 @@
 .DS_Store
 main/arduino_secrets.h
+.ArduinoOutput
+.vs
+.vscode
+main/.theia/launch.json

@@ -19,7 +19,9 @@ void LedController ::initializePwmBoards() {
     m_pwmBoards[i].setOscillatorFrequency(27000000);
     m_pwmBoards[i].setPWMFreq(PWM_REFRESH_RATE);
 
-    Serial.print("Board added: ");
+    Serial.print("PWM Board ");
+    Serial.print(i);
+    Serial.print(" initialized with address ");
     Serial.println(pwmAddress);
   }
 }

@@ -43,9 +43,6 @@ void ServerController::cancelChannelUpdate() {
       channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
 
   m_ledController->setChannelBrightness(channelIdAsNumber, originalBrightness);
-
-  m_stateManager->setRenderAnchor(true);
-  m_stateManager->setAnchorChannelId(channelIdAsNumber);
 }
 
 void ServerController::toggleOneBasedAddresses() {
@@ -133,13 +130,7 @@ void ServerController::updateChannel() {
     linkedChannelId--;
   }
 
-  Serial.print("Channel ");
-  Serial.print(channelIdAsNumber);
-
   uint16_t startAddress = 64 + channelIdAsNumber * 64;
-  Serial.print(" got startAddress ");
-  Serial.println(startAddress);
-
   uint16_t channelBrightness = atoi(channelBrightnessBuffer);
 
   writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
@@ -173,8 +164,6 @@ void ServerController::updateChannel() {
   writePageIntegrity(channelIdAsNumber + 1);
   writePageFromBufferToEeprom(channelIdAsNumber + 1);
 
-  m_stateManager->setRenderAnchor(true);
-  m_stateManager->setAnchorChannelId(channelIdAsNumber);
   m_ledController->resetRecursionFlag();
 }
 
@@ -209,15 +198,6 @@ void ServerController::turnChannelOn() {
       turnChannelOnId, MEM_SLOT_BRIGHTNESS);
 
   m_ledController->applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
-}
-
-void ServerController::editChannel() {
-  getValueFromData(m_requestBuffer, "editChannel=", m_channelIdToEditBuffer, 4);
-
-  uint16_t channelIdToEdit = atoi(m_channelIdToEditBuffer);
-  readChannelNameFromEepromBufferToChannelNameBuffer(channelIdToEdit);
-  m_stateManager->setChannelIdToEdit(channelIdToEdit);
-  m_stateManager->setRenderEditChannel(true);
 }
 
 void ServerController::toggleForceAllOff() {
@@ -370,120 +350,151 @@ void ServerController::setAllChannels() {
   m_ledController->setAllChannels(channelBrightness);
 }
 
+void ServerController::processPostRequest(WiFiClient client) {
+  if (isKeyInData(m_requestBuffer, "cancelChannelUpdate")) {
+    cancelChannelUpdate();
+  }
+
+  if (isKeyInData(m_requestBuffer, "testBrightness")) {
+    testBrightness();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleOneBasedAddresses")) {
+    toggleOneBasedAddresses();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleCompactDisplay")) {
+    toggleCompactDisplay();
+  }
+
+  if (isKeyInData(m_requestBuffer, "turnChannelOff")) {
+    turnChannelOff();
+  }
+
+  if (isKeyInData(m_requestBuffer, "turnChannelOn")) {
+    turnChannelOn();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleForceAllOff")) {
+    toggleForceAllOff();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleForceAllOn")) {
+    toggleForceAllOn();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleRandomChaos")) {
+    toggleRandomChaos();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleRunningLights")) {
+    toggleRunningLights();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleRandomEvents")) {
+    toggleRandomEvents();
+  }
+
+  if (isKeyInData(m_requestBuffer, "togglePropagateEvents")) {
+    togglePropagateEvents();
+  }
+
+  if (isKeyInData(m_requestBuffer, "updateNumberOfChannels")) {
+    updateNumberOfChannels();
+  }
+
+  if (isKeyInData(m_requestBuffer, "updateChannel")) {
+    updateChannel();
+  }
+
+  if (isKeyInData(m_requestBuffer, "resetAllChannels")) {
+    m_ledController->applyInitialState();
+  }
+
+  if (isKeyInData(m_requestBuffer, "setAllChannels")) {
+    setAllChannels();
+  }
+
+  if (isKeyInData(m_requestBuffer, "turnEvenChannelsOn")) {
+    m_ledController->turnEvenChannelsOn();
+  }
+
+  if (isKeyInData(m_requestBuffer, "turnOddChannelsOn")) {
+    m_ledController->turnOddChannelsOn();
+  }
+
+  if (isKeyInData(m_requestBuffer, "countBinary")) {
+    m_ledController->countBinary();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleShowOptions")) {
+    toggleShowOptions();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleShowActions")) {
+    toggleShowActions();
+  }
+
+  if (m_ledController->getFoundRecursion()) {
+    replyToClientWithFail(client);
+  } else {
+    replyToClientWithSuccess(client);
+  }
+}
+
+void ServerController::prepareRenderEditChannel(WiFiClient client,
+                                                uint16_t channelId) {
+  m_stateManager->setRenderEditChannel(true);
+  m_stateManager->setChannelIdToEdit(channelId);
+  readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
+  m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
+}
+
+void ServerController::prepareRenderChannels(WiFiClient client) {
+  m_stateManager->setRenderEditChannel(false);
+  m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
+}
+
+void ServerController::processGetRequest(WiFiClient client) {
+
+  if (isArgInRequest(m_requestBuffer, " / ")) {
+    // A get request for the main page
+    prepareRenderChannels(client);
+    return;
+  } else if (isArgInRequest(m_requestBuffer, "/update")) {
+    // A get request for the update page
+    if (!isArgInRequest(m_requestBuffer, "channel")) {
+      m_renderer->renderHttp400ErrorPage(client);
+      return;
+    }
+
+    uint16_t channelId = getUint16tFromRequest(m_requestBuffer, "channel");
+
+    if (channelId >= MAX_TOTAL_CHANNELS) {
+      m_renderer->renderHttp400ErrorPage(client);
+      return;
+    }
+
+    prepareRenderEditChannel(client, channelId);
+    return;
+  }
+
+  // An unknown get request
+  m_renderer->renderHttp404ErrorPage(client);
+  return;
+}
+
 void ServerController::processRequest(WiFiClient client) {
-  bool shouldRerender = false;
-  m_stateManager->setRenderAnchor(false);
   m_stateManager->setRenderEditChannel(false);
 
-  if (strstr(m_requestBuffer, "POST") != NULL) {
+  if (isArgInRequest(m_requestBuffer, "POST /")) {
+    processPostRequest(client);
+    return;
+  }
 
-    if (isKeyInData(m_requestBuffer, "cancelChannelUpdate")) {
-      cancelChannelUpdate();
-      shouldRerender = true;
-    }
-
-    if (isKeyInData(m_requestBuffer, "testBrightness")) {
-      testBrightness();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleOneBasedAddresses")) {
-      toggleOneBasedAddresses();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleCompactDisplay")) {
-      toggleCompactDisplay();
-    }
-
-    if (isKeyInData(m_requestBuffer, "turnChannelOff")) {
-      turnChannelOff();
-    }
-
-    if (isKeyInData(m_requestBuffer, "turnChannelOn")) {
-      turnChannelOn();
-    }
-
-    if (isKeyInData(m_requestBuffer, "editChannel")) {
-      editChannel();
-      shouldRerender = true;
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleForceAllOff")) {
-      toggleForceAllOff();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleForceAllOn")) {
-      toggleForceAllOn();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleRandomChaos")) {
-      toggleRandomChaos();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleRunningLights")) {
-      toggleRunningLights();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleRandomEvents")) {
-      toggleRandomEvents();
-    }
-
-    if (isKeyInData(m_requestBuffer, "togglePropagateEvents")) {
-      togglePropagateEvents();
-    }
-
-    if (isKeyInData(m_requestBuffer, "updateNumberOfChannels")) {
-      updateNumberOfChannels();
-      shouldRerender = true;
-    }
-
-    if (isKeyInData(m_requestBuffer, "updateChannel")) {
-      updateChannel();
-      shouldRerender = true;
-    }
-
-    if (isKeyInData(m_requestBuffer, "resetAllChannels")) {
-      m_ledController->applyInitialState();
-    }
-
-    if (isKeyInData(m_requestBuffer, "setAllChannels")) {
-      setAllChannels();
-    }
-
-    if (isKeyInData(m_requestBuffer, "turnEvenChannelsOn")) {
-      m_ledController->turnEvenChannelsOn();
-    }
-
-    if (isKeyInData(m_requestBuffer, "turnOddChannelsOn")) {
-      m_ledController->turnOddChannelsOn();
-    }
-
-    if (isKeyInData(m_requestBuffer, "countBinary")) {
-      m_ledController->countBinary();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleShowOptions")) {
-      toggleShowOptions();
-    }
-
-    if (isKeyInData(m_requestBuffer, "toggleShowActions")) {
-      toggleShowActions();
-    }
-
-    if (shouldRerender) {
-      m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
-    } else {
-      if (m_ledController->getFoundRecursion()) {
-        replyToClientWithFail(client);
-      } else {
-        replyToClientWithSuccess(client);
-      }
-    }
-
-    // Include line to see whats going on in memory
-    // dumpEepromData(0, MAX_EEPROM_RANGE - 1);
-  } else {
-    // For get requests, we always want to render the page to the client
-    m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
+  if (isArgInRequest(m_requestBuffer, "GET /")) {
+    processGetRequest(client);
+    return;
   }
 }
 
@@ -510,7 +521,7 @@ void ServerController::loopEvent() {
 
     if (requestBufferIndex >= REQUEST_BUFFER_SIZE) {
       Serial.println("WARNING: REQUEST EXCEEDED BUFFER SIZE -> IGNORE!");
-      sendHttp413Response(client);
+      m_renderer->renderHttp413ErrorPage(client);
       client.stop();
       return;
     }
@@ -522,22 +533,14 @@ void ServerController::loopEvent() {
   client.stop();
 }
 
-void ServerController::sendHttp413Response(WiFiClient client) {
-    client.println("HTTP/1.1 413 Payload Too Large");
-    client.println("Content-Type: text/html");
-    client.println("Connection: close");
-    client.println();
-    client.println("<html><body><h1>413 Payload Too Large</h1><p>Your request is too large for this server.</p></body></html>");
-}
-
 // Function to extract value from form data using char arrays
-// formData: The form data as a char array
+// data: The form data as a char array
 // key: The key as a char array
 // value: A char array buffer where the extracted value will be stored
 // valueLen: The length of the value buffer
-void ServerController::getValueFromData(const char *formData, const char *key,
+void ServerController::getValueFromData(const char *data, const char *key,
                                         char *value, int valueLen) {
-  const char *startPtr = strstr(formData, key);
+  const char *startPtr = strstr(data, key);
   if (startPtr == NULL) {
     Serial.print("Unable to find key: ");
     Serial.println(key);
@@ -549,8 +552,7 @@ void ServerController::getValueFromData(const char *formData, const char *key,
   const char *endPtr = strchr(startPtr, '&');
   if (endPtr == NULL) {
     endPtr =
-        formData +
-        strlen(formData); // Set endPtr to the end of formData if '&' not found
+        data + strlen(data); // Set endPtr to the end of data if '&' not found
   }
 
   int numCharsToCopy = endPtr - startPtr;
@@ -564,14 +566,14 @@ void ServerController::getValueFromData(const char *formData, const char *key,
   return;
 }
 
-bool ServerController::isKeyInData(const char *formData, const char *key) {
-  const char *startPtr = formData;
+bool ServerController::isKeyInData(const char *data, const char *key) {
+  const char *startPtr = data;
   while ((startPtr = strstr(startPtr, key)) != NULL) {
-    // Check if the key is at the start of formData or preceded by '&' or '\n'
-    bool atStart = startPtr == formData || *(startPtr - 1) == '&' ||
-                   *(startPtr - 1) == '\n';
+    // Check if the key is at the start of data or preceded by '&' or '\n'
+    bool atStart =
+        startPtr == data || *(startPtr - 1) == '&' || *(startPtr - 1) == '\n';
 
-    // Check if the key is followed by '=', '&' or is at the end of formData
+    // Check if the key is followed by '=', '&' or is at the end of data
     const char *endPtr = startPtr + strlen(key);
     bool atEnd = *endPtr == '\0' || *endPtr == '&' || *endPtr == '=';
 
@@ -583,7 +585,8 @@ bool ServerController::isKeyInData(const char *formData, const char *key) {
     startPtr = endPtr;
   }
 
-  return false; // Key not found with proper boundaries
+  // Key not found with proper boundaries
+  return false;
 }
 
 void ServerController::clearRequestBuffer() {
@@ -616,4 +619,28 @@ void ServerController::urlDecode(const char *urlEncoded, char *decoded,
 
   // Null-terminate the decoded string
   decoded[decodedIndex] = '\0';
+}
+
+bool ServerController::isArgInRequest(char *request, char *arg) {
+  char *pointerInRequest = strstr(request, arg);
+
+  // We need to check if the parameter was on the first line to avoid triggers
+  // from the referer header argument etc
+  char *positionOfFirstNewline = strstr(request, "\r");
+  if (positionOfFirstNewline == NULL || pointerInRequest == NULL ||
+      positionOfFirstNewline < pointerInRequest) {
+    return false;
+  }
+
+  return true;
+}
+
+uint16_t ServerController::getUint16tFromRequest(char *request, char *arg) {
+  char *pointerInRequest = strstr(request, arg);
+
+  // Move pointer to the start of the value
+  pointerInRequest += strlen(arg) + 1;
+
+  // Convert the value to an integer
+  return atoi(pointerInRequest);
 }

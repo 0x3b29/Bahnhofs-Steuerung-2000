@@ -21,8 +21,6 @@ private:
 
   bool m_renderEditChannel = false;
   uint16_t m_channelIdToEdit = 0;
-  bool m_renderAnchor = false;
-  uint16_t m_anchorChannelId = 0;
 
 public:
   void loadStateFromEepromBuffer();
@@ -65,12 +63,6 @@ public:
 
   void setChannelIdToEdit(uint16_t channelIdToEdit);
   uint16_t getChannelIdToEdit();
-
-  void setRenderAnchor(bool renderAnchor);
-  bool getRenderAnchor();
-
-  void setAnchorChannelId(uint16_t anchorChannelId);
-  uint16_t getAnchorChannelId();
 };
 
 #endif // STATE_MANAGER_H
