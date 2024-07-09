@@ -9,6 +9,7 @@ void Renderer::renderEditChannelJavascript(WiFiClient client) {
   <script>
   function sendEditChannelUpdates() {
     const channelId = document.querySelector('input[name="channelId"]').value;
+    const channelIdToDisplay = document.querySelector('input[name="channelIdToDisplay"]').value;
     const channelName = document.querySelector('input[name="channelName"]').value;
     const initialState = document.querySelector('input[name="initialState"]').checked ? 1 : 0;
     const channelBrightness = document.querySelector('input[name="channelBrightness"]').value;
@@ -39,13 +40,14 @@ void Renderer::renderEditChannelJavascript(WiFiClient client) {
       body: dataString,
     }).then((response) => {
       if (response.ok && response.status === 200) {
-        window.location.href = `/#channel-${channelId}`;
+        window.location.href = `/#channel-${channelIdToDisplay}`;
       }
     });
   }
 
   function cancelEditChannelUpdates() {
     const channelId = document.querySelector('input[name="channelId"]').value;
+    const channelIdToDisplay = document.querySelector('input[name="channelIdToDisplay"]').value;
 
     var dataString = `cancelChannelUpdate=true`+
     `&channelId=${channelId}`;
@@ -56,7 +58,7 @@ void Renderer::renderEditChannelJavascript(WiFiClient client) {
       body: dataString,
     }).then((response) => {
       if (response.ok && response.status === 200) {
-        window.location.href = `/#channel-${channelId}`;
+        window.location.href = `/#channel-${channelIdToDisplay}`;
       }
     });
   }
@@ -160,11 +162,11 @@ void Renderer::renderEditChannel(WiFiClient client) {
       isChannelHiddenInCompactView ? m_checkedBuffer : m_emptyBuffer;
 
   char outputBuffer[4096] = {0};
-  snprintf(
-      outputBuffer, sizeof(outputBuffer), R"html(
+  snprintf(outputBuffer, sizeof(outputBuffer), R"html(
 <h3>%s %d %s</h3>
 
 <input type="hidden" name="channelId" value="%d" />
+<input type="hidden" name="channelIdToDisplay" value="%d" />
 
 <div class="row">
   <div class="col">%s</div>
@@ -315,18 +317,20 @@ void Renderer::renderEditChannel(WiFiClient client) {
   <label class="form-check-label" for="channelHiddenInCompactView">%s</label>
 </div>
 )html",
-      I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT, channelIdToEdit,
-      I18N_EDIT_DESCRIPTION, maxChannelNameLength, maxChannelNameLength,
-      m_channelNameBuffer, toggleInitialStateCheckedBuffer,
-      I18N_EDIT_START_STATE, I18N_EDIT_BRIGHTNESS, brightnessAsPercentage,
-      channelBrightness, channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
-      I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
-      toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
-      I18N_EDIT_RANDOM_FREQ, randomOffFreq, toggleIsChannelLinkedCheckedBuffer,
-      I18N_EDIT_LINKED, I18N_EDIT_CONTROLLED_BY_CHANNEL,
-      smallesPossibleLinkedAddress, largestPossibleLinkedAddress,
-      displayedLinkedChannelId, toggleIsHiddenInCompactViewCheckedBuffer,
-      I18N_IS_HIDDEN_IN_COMPACT_VIEW);
+           I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT,
+           channelIdToEdit, channelIdToDisplay, I18N_EDIT_DESCRIPTION,
+           maxChannelNameLength, maxChannelNameLength, m_channelNameBuffer,
+           toggleInitialStateCheckedBuffer, I18N_EDIT_START_STATE,
+           I18N_EDIT_BRIGHTNESS, brightnessAsPercentage, channelBrightness,
+           channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
+           I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
+           toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
+           I18N_EDIT_RANDOM_FREQ, randomOffFreq,
+           toggleIsChannelLinkedCheckedBuffer, I18N_EDIT_LINKED,
+           I18N_EDIT_CONTROLLED_BY_CHANNEL, smallesPossibleLinkedAddress,
+           largestPossibleLinkedAddress, displayedLinkedChannelId,
+           toggleIsHiddenInCompactViewCheckedBuffer,
+           I18N_IS_HIDDEN_IN_COMPACT_VIEW);
 
   pn(client, outputBuffer);
 

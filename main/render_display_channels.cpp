@@ -257,9 +257,9 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 <!-- Newline -->
 %s
 )html",
-           channelId, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
+           channelIdToDisplay, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
            I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
-           boardSubAddressToDisplay, channelId, channelId, channelId,
+           boardSubAddressToDisplay, channelId, channelId, channelIdToDisplay,
            I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer,
            I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer,
            I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage,
@@ -321,7 +321,7 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
 <div id="channel-%d" class="pl-1 pr-1">
   <div class="d-flex g-0 align-items-center">
                       )html",
-                      channelId);
+                      channelIdToDisplay);
 
   written += snprintf(outputBuffer + written, bufferSize - written,
                       R"html(
@@ -336,8 +336,8 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
       <div class="text-muted">%d&nbsp;%%</div>
     </div>
                       )html",
-                      channelIdToDisplay, channelId, channelNameToDisplay,
-                      brightnessAsPercentage);
+                      channelIdToDisplay, channelIdToDisplay,
+                      channelNameToDisplay, brightnessAsPercentage);
 
   written += snprintf(outputBuffer + written, bufferSize - written,
                       R"html(

@@ -470,6 +470,10 @@ void ServerController::processGetRequest(WiFiClient client) {
 
     uint16_t channelId = getUint16tFromRequest(m_requestBuffer, "channel");
 
+    if (m_stateManager->getToggleOneBasedAddresses()) {
+      channelId--;
+    }
+
     if (channelId >= MAX_TOTAL_CHANNELS) {
       m_renderer->renderHttp400ErrorPage(client);
       return;
