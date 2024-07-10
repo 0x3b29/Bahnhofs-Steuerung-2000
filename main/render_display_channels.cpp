@@ -178,24 +178,24 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 
     <div class="col-3">
       <div class="d-flex justify-content-end">
+        <button class="btn" name="editChannel" onclick="openEditChannelPage('%d')">
+          🖊
+        </button>
+        <button class="btn" onclick="sendValue('turnChannelOff', '%d')">
+          ⛭
+        </button>
         <button
           class="btn text-warning"
           onclick="sendValue('turnChannelOn', '%d')"
         >
           ⛭
         </button>
-        <button class="btn" onclick="sendValue('turnChannelOff', '%d')">
-          ⛭
-        </button>
-        <button class="btn" name="editChannel" onclick="openEditChannelPage('%d')">
-          🖊
-        </button>
       </div>
     </div>
   </div>)html",
       channelIdToDisplay, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
       I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
-      boardSubAddressToDisplay, channelId, channelId, channelIdToDisplay);
+      boardSubAddressToDisplay, channelIdToDisplay, channelId, channelId);
 
   bool toggleShowSlider =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_SHOW_SLIDER);
@@ -355,14 +355,14 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
                       R"html(
     <div class="d-flex">
       <button
-        class="btn text-warning px-1 px-sm-2 px-md-3"
-        onclick="sendValue('turnChannelOn','%d')"
+        class="btn px-1 px-sm-2 px-md-3"
+        onclick="sendValue('turnChannelOff','%d')"
       >
         ⛭
       </button>
       <button
-        class="btn px-1 px-sm-2 px-md-3"
-        onclick="sendValue('turnChannelOff','%d')"
+        class="btn text-warning px-1 px-sm-2 px-md-3"
+        onclick="sendValue('turnChannelOn','%d')"
       >
         ⛭
       </button>
