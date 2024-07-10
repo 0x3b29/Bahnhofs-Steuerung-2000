@@ -527,7 +527,7 @@ void ServerController::loopEvent() {
 
   while (client.available()) {
     char c = client.read();
-    Serial.write(c);
+    // Serial.write(c);
 
     m_requestBuffer[requestBufferIndex] = c;
     requestBufferIndex++;
