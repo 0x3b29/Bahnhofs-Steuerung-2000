@@ -28,6 +28,9 @@ private:
   void renderChannelDetail(WiFiClient client, uint16_t channelId,
                            bool renderHorizontalRule);
 
+  uint16_t renderSlider(char *outputBuffer, uint16_t bufferSize,
+                        uint16_t channelId);
+
   void renderEditChannelJavascript(WiFiClient client);
   void renderEditChannel(WiFiClient client);
 

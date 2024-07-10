@@ -25,6 +25,7 @@
 #define I18N_EDIT_RANDOM_OFF "Randomly Turn Off"
 #define I18N_EDIT_LINKED "Linked"
 #define I18N_EDIT_CONTROLLED_BY_CHANNEL "Controlled by Channel"
+#define I18N_EDIT_SHOW_SLIDER "Show Slider Control"
 #define I18N_EDIT_DISCARD "Discard"
 #define I18N_EDIT_SAVE "Save"
 

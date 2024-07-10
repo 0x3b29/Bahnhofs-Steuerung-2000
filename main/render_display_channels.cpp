@@ -164,8 +164,11 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
   // --- /Prepare horizontal seperator
 
   char outputBuffer[4096] = {0};
+  uint16_t bufferSize = sizeof(outputBuffer);
+  uint16_t written = 0;
 
-  snprintf(outputBuffer, sizeof(outputBuffer), R"html(
+  written += snprintf(
+      outputBuffer + written, bufferSize - written, R"html(
 <div id="channel-%d" class="pl-1 pr-1">
   <div class="row">
     <div class="col-9">
@@ -189,8 +192,21 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
         </button>
       </div>
     </div>
-  </div>
+  </div>)html",
+      channelIdToDisplay, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
+      I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
+      boardSubAddressToDisplay, channelId, channelId, channelIdToDisplay);
 
+  bool toggleShowSlider =
+      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_SHOW_SLIDER);
+
+  if (toggleShowSlider) {
+    written +=
+        renderSlider(outputBuffer + written, bufferSize - written, channelId);
+  }
+
+  written += snprintf(
+      outputBuffer + written, bufferSize - written, R"html(
   <!-- Description -->
   <div class="row">
     <div class="col">
@@ -257,19 +273,15 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
 <!-- Newline -->
 %s
 )html",
-           channelIdToDisplay, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
-           I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
-           boardSubAddressToDisplay, channelId, channelId, channelIdToDisplay,
-           I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer,
-           I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer,
-           I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage,
-           I18N_CHANNEL_RANDOMLY_ON, randomOnEventsEnabledBuffer,
-           randomOnEventsFrequencyHtmlToDisplayBuffer,
-           I18N_CHANNEL_RANDOMLY_OFF, randomOffEventsEnabledBuffer,
-           randomOffEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_LINKED,
-           isChannelLinkedBuffer, linkedChannelHtmlToDisplayBuffer,
-           isChannelHiddenInCompactViewHtmlToDisplayBuffer,
-           horizontalRuleHtmlToDisplayBuffer);
+      I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer, I18N_CHANNEL_START_STATE,
+      toggleInitialStateCheckedBuffer, I18N_CHANNEL_BRIGHTNESS,
+      brightnessAsPercentage, I18N_CHANNEL_RANDOMLY_ON,
+      randomOnEventsEnabledBuffer, randomOnEventsFrequencyHtmlToDisplayBuffer,
+      I18N_CHANNEL_RANDOMLY_OFF, randomOffEventsEnabledBuffer,
+      randomOffEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_LINKED,
+      isChannelLinkedBuffer, linkedChannelHtmlToDisplayBuffer,
+      isChannelHiddenInCompactViewHtmlToDisplayBuffer,
+      horizontalRuleHtmlToDisplayBuffer);
 
   pn(client, outputBuffer);
 }
@@ -312,9 +324,9 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
              "Board %d, Pin %d", boardIndexToDisplay, boardSubAddressToDisplay);
   }
 
-  char outputBuffer[1024];
+  char outputBuffer[2048];
   uint16_t bufferSize = sizeof(outputBuffer);
-  uint16_t written;
+  uint16_t written = 0;
 
   written += snprintf(outputBuffer + written, bufferSize - written,
                       R"html(
@@ -361,8 +373,44 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
   written += snprintf(outputBuffer + written, bufferSize - written,
                       R"html(
   </div>
+                      )html");
+
+  bool toggleShowSlider =
+      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_SHOW_SLIDER);
+
+  if (toggleShowSlider) {
+    written +=
+        renderSlider(outputBuffer + written, bufferSize - written, channelId);
+  }
+
+  written += snprintf(outputBuffer + written, bufferSize - written,
+                      R"html(
 </div>
-)html");
+                      )html");
 
   pn(client, outputBuffer);
+}
+
+uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
+                                uint16_t channelId) {
+  uint16_t channelBrightness =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+
+  return snprintf(outputBuffer, bufferSize,
+                  R"html(
+  <div class="row pt-1">
+    <div class="col-12">
+      <input
+        class="form-range"
+        type="range"
+        min="0"
+        max="%d"
+        name="channelBrightness"
+        value="%d"
+        onchange="onBrightnessValueChanged(this.value, %d)"
+      />
+    </div>
+  </div> 
+                  )html",
+                  channelBrightness, channelBrightness, channelId);
 }

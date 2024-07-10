@@ -29,7 +29,9 @@
 #define MEM_SLOT_LINKED_CHANNEL 37
 #define MEM_SLOT_INITIAL_STATE 39
 #define MEM_SLOT_HIDE_IN_COMPACT_VIEW 40
+#define MEM_SLOT_SHOW_SLIDER 41
 
+// Memory Slot for general settings and each channel
 #define MEM_SLOT_CRC 62
 
 #define MAX_CHANNEL_NAME_LENGTH 30

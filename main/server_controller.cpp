@@ -103,6 +103,8 @@ void ServerController::updateChannel() {
 
   char isChannelHiddenInCompactViewBuffer[2] = "0";
 
+  char showSliderBuffer[2] = "0";
+
   getValueFromData(m_requestBuffer, "randomOn=", randomOnBuffer, 2);
   getValueFromData(m_requestBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
   getValueFromData(m_requestBuffer, "randomOff=", randomOffBuffer, 2);
@@ -112,6 +114,8 @@ void ServerController::updateChannel() {
                    4);
   getValueFromData(m_requestBuffer, "channelHiddenInCompactView=",
                    isChannelHiddenInCompactViewBuffer, 2);
+
+  getValueFromData(m_requestBuffer, "showSlider=", showSliderBuffer, 2);
 
   // Todo convert to bool
   uint8_t randomOn = atoi(randomOnBuffer);
@@ -158,6 +162,11 @@ void ServerController::updateChannel() {
 
   writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_HIDE_IN_COMPACT_VIEW,
                             isChannelHiddenInCompactView);
+
+  uint8_t showSlider = atoi(showSliderBuffer);
+
+  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_SHOW_SLIDER,
+                            showSlider);
 
   m_ledController->applyAndPropagateValue(channelIdAsNumber, channelBrightness);
 
@@ -518,7 +527,7 @@ void ServerController::loopEvent() {
 
   while (client.available()) {
     char c = client.read();
-    // Serial.write(c);
+    Serial.write(c);
 
     m_requestBuffer[requestBufferIndex] = c;
     requestBufferIndex++;

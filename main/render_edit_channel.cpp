@@ -20,6 +20,7 @@ void Renderer::renderEditChannelJavascript(WiFiClient client) {
     const channelLinked = document.querySelector('input[name="channelLinked"]').checked ? 1 : 0;
     const linkedChannelId = document.querySelector('input[name="linkedChannelId"]').value;
     const channelHiddenInCompactView = document.querySelector('input[name="channelHiddenInCompactView"]').checked ? 1 : 0;
+    const showSlider = document.querySelector('input[name="showSlider"]').checked ? 1 : 0;
 
     var dataString = `updateChannel=true` + 
     `&channelId=${channelId}` + 
@@ -32,7 +33,8 @@ void Renderer::renderEditChannelJavascript(WiFiClient client) {
     `&frequencyOff=${frequencyOff}` +
     `&channelLinked=${channelLinked}` +
     `&linkedChannelId=${linkedChannelId}` +
-    `&channelHiddenInCompactView=${channelHiddenInCompactView}`;
+    `&channelHiddenInCompactView=${channelHiddenInCompactView}` +
+    `&showSlider=${showSlider}`;
 
     fetch("/", {
       method: "POST",
@@ -146,9 +148,6 @@ void Renderer::renderEditChannel(WiFiClient client) {
   uint16_t largestPossibleLinkedAddress =
       toggleOneBasedAddresses ? numChannels : numChannels - 1;
 
-  Serial.println(smallesPossibleLinkedAddress);
-  Serial.println(largestPossibleLinkedAddress);
-
   uint16_t linkedChannelId = readUint16tForChannelFromEepromBuffer(
       channelIdToEdit, MEM_SLOT_LINKED_CHANNEL);
 
@@ -162,7 +161,11 @@ void Renderer::renderEditChannel(WiFiClient client) {
       isChannelHiddenInCompactView ? m_checkedBuffer : m_emptyBuffer;
 
   char outputBuffer[4096] = {0};
-  snprintf(outputBuffer, sizeof(outputBuffer), R"html(
+  uint16_t bufferSize = sizeof(outputBuffer);
+  uint16_t written = 0;
+
+  written += snprintf(
+      outputBuffer + written, bufferSize - written, R"html(
 <h3>%s %d %s</h3>
 
 <input type="hidden" name="channelId" value="%d" />
@@ -317,20 +320,42 @@ void Renderer::renderEditChannel(WiFiClient client) {
   <label class="form-check-label" for="channelHiddenInCompactView">%s</label>
 </div>
 )html",
-           I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT,
-           channelIdToEdit, channelIdToDisplay, I18N_EDIT_DESCRIPTION,
-           maxChannelNameLength, maxChannelNameLength, m_channelNameBuffer,
-           toggleInitialStateCheckedBuffer, I18N_EDIT_START_STATE,
-           I18N_EDIT_BRIGHTNESS, brightnessAsPercentage, channelBrightness,
-           channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
-           I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
-           toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
-           I18N_EDIT_RANDOM_FREQ, randomOffFreq,
-           toggleIsChannelLinkedCheckedBuffer, I18N_EDIT_LINKED,
-           I18N_EDIT_CONTROLLED_BY_CHANNEL, smallesPossibleLinkedAddress,
-           largestPossibleLinkedAddress, displayedLinkedChannelId,
-           toggleIsHiddenInCompactViewCheckedBuffer,
-           I18N_IS_HIDDEN_IN_COMPACT_VIEW);
+      I18N_EDIT_CHANNEL, channelIdToDisplay, I18N_EDIT_EDIT, channelIdToEdit,
+      channelIdToDisplay, I18N_EDIT_DESCRIPTION, maxChannelNameLength,
+      maxChannelNameLength, m_channelNameBuffer,
+      toggleInitialStateCheckedBuffer, I18N_EDIT_START_STATE,
+      I18N_EDIT_BRIGHTNESS, brightnessAsPercentage, channelBrightness,
+      channelIdToEdit, toggleHasRandomOnEventsCheckedBuffer,
+      I18N_EDIT_RANDOM_ON, I18N_EDIT_RANDOM_FREQ, randomOnFreq,
+      toggleHasRandomOffEventsCheckedBuffer, I18N_EDIT_RANDOM_OFF,
+      I18N_EDIT_RANDOM_FREQ, randomOffFreq, toggleIsChannelLinkedCheckedBuffer,
+      I18N_EDIT_LINKED, I18N_EDIT_CONTROLLED_BY_CHANNEL,
+      smallesPossibleLinkedAddress, largestPossibleLinkedAddress,
+      displayedLinkedChannelId, toggleIsHiddenInCompactViewCheckedBuffer,
+      I18N_IS_HIDDEN_IN_COMPACT_VIEW);
+
+  bool toggleShowSlider =
+      readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_SHOW_SLIDER);
+
+  char *toggleShowSliderCheckedBuffer =
+      toggleShowSlider ? m_checkedBuffer : m_emptyBuffer;
+
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+  <div class="form-check form-switch pt-3">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="showSlider"
+      value="1"
+      role="switch"
+      id="showSlider"
+      value="1"
+      %s
+    />
+    <label class="form-check-label" for="showSlider">%s</label>
+  </div>
+      )html",
+                      toggleShowSliderCheckedBuffer, I18N_EDIT_SHOW_SLIDER);
 
   pn(client, outputBuffer);
 

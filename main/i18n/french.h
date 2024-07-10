@@ -25,6 +25,7 @@
 #define I18N_EDIT_RANDOM_OFF "Extinction Aléatoire"
 #define I18N_EDIT_LINKED "Lié"
 #define I18N_EDIT_CONTROLLED_BY_CHANNEL "Contrôlé par Canal"
+#define I18N_EDIT_SHOW_SLIDER "Afficher contrôle du curseur"
 #define I18N_EDIT_DISCARD "Annuler"
 #define I18N_EDIT_SAVE "Sauvegarder"
 

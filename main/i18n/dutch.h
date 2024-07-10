@@ -25,6 +25,7 @@
 #define I18N_EDIT_RANDOM_OFF "Willekeurig Uitzetten"
 #define I18N_EDIT_LINKED "Gekoppeld"
 #define I18N_EDIT_CONTROLLED_BY_CHANNEL "Gecontroleerd door Kanaal"
+#define I18N_EDIT_SHOW_SLIDER "Toon schuifregelaar"
 #define I18N_EDIT_DISCARD "Verwerpen"
 #define I18N_EDIT_SAVE "Opslaan"
 
