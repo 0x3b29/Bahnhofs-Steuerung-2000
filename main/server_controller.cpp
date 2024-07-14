@@ -1,6 +1,6 @@
 #include "server_controller.h"
+#include "channel_controller.h"
 #include "eeprom.h"
-#include "led_controller.h"
 #include "render.h"
 #include <WiFiServer.h>
 
@@ -10,11 +10,11 @@ char m_requestBuffer[REQUEST_BUFFER_SIZE];
 WiFiServer m_wifiServer(80);
 
 ServerController::ServerController(StateManager *stateManager,
-                                   LedController *ledController,
+                                   ChannelController *channelController,
                                    Renderer *renderer) {
   this->clearRequestBuffer();
   this->m_stateManager = stateManager;
-  this->m_ledController = ledController;
+  this->m_channelController = channelController;
   this->m_renderer = renderer;
 }
 
@@ -42,7 +42,8 @@ void ServerController::cancelChannelUpdate() {
   uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
       channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE1);
 
-  m_ledController->setChannelBrightness(channelIdAsNumber, originalBrightness);
+  m_channelController->setChannelPwmValue(channelIdAsNumber,
+                                          originalBrightness);
 }
 
 void ServerController::toggleOneBasedAddresses() {
@@ -69,7 +70,7 @@ void ServerController::testBrightness() {
                    5);
   uint16_t outputValue1 = atoi(channelOutputValue1Buffer);
 
-  m_ledController->setChannelBrightness(channelIdAsNumber, outputValue1);
+  m_channelController->setChannelPwmValue(channelIdAsNumber, outputValue1);
 }
 
 void ServerController::updateBoolIfFound(uint16_t channelId, const char *buffer,
@@ -179,13 +180,14 @@ void ServerController::updateChannel() {
 
   if (foundKey) {
     uint16_t outputValue1 = atoi(outputValue1Buffer);
-    m_ledController->applyAndPropagateValue(channelIdAsNumber, outputValue1);
+    m_channelController->applyAndPropagateValue(channelIdAsNumber, outputValue1,
+                                                true);
   }
 
   writePageIntegrity(channelIdAsNumber + 1);
   writePageFromBufferToEeprom(channelIdAsNumber + 1);
 
-  m_ledController->resetRecursionFlag();
+  m_channelController->resetRecursionFlag();
 }
 
 void ServerController::toggleCompactDisplay() {
@@ -200,25 +202,41 @@ void ServerController::toggleCompactDisplay() {
   writePageFromBufferToEeprom(0);
 }
 
-void ServerController::turnChannelOff() {
-  char turnChannelOffIdBuffer[4];
-  uint16_t turnChannelOffId;
-  getValueFromData(m_requestBuffer, "turnChannelOff=", turnChannelOffIdBuffer,
-                   4);
-  turnChannelOffId = atoi(turnChannelOffIdBuffer);
-  m_ledController->applyAndPropagateValue(turnChannelOffId, 0);
+void ServerController::setChannelToValue2() {
+  char setChannelToValue2IdBuffer[4];
+  uint16_t setChannelToValue2Id;
+
+  getValueFromData(m_requestBuffer,
+                   "setChannelToValue2=", setChannelToValue2IdBuffer, 4);
+
+  setChannelToValue2Id = atoi(setChannelToValue2IdBuffer);
+
+  bool useOutputValue2 = readBoolForChannelFromEepromBuffer(
+      setChannelToValue2Id, MEM_SLOT_USES_OUTPUT_VALUE2);
+
+  uint16_t value2;
+
+  if (useOutputValue2) {
+    value2 = readUint16tForChannelFromEepromBuffer(setChannelToValue2Id,
+                                                   MEM_SLOT_OUTPUT_VALUE2);
+  }
+
+  m_channelController->applyAndPropagateValue(setChannelToValue2Id, value2,
+                                              false);
 }
 
-void ServerController::turnChannelOn() {
-  char turnChannelOnIdBuffer[4];
-  uint16_t turnChannelOnId;
-  getValueFromData(m_requestBuffer, "turnChannelOn=", turnChannelOnIdBuffer, 4);
-  turnChannelOnId = atoi(turnChannelOnIdBuffer);
+void ServerController::setChannelToValue1() {
+  char setChannelToValue1IdBuffer[4];
+  uint16_t setChannelToValue1Id;
+  getValueFromData(m_requestBuffer,
+                   "setChannelToValue1=", setChannelToValue1IdBuffer, 4);
+  setChannelToValue1Id = atoi(setChannelToValue1IdBuffer);
 
-  uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
-      turnChannelOnId, MEM_SLOT_OUTPUT_VALUE1);
+  uint16_t pwmValue = readUint16tForChannelFromEepromBuffer(
+      setChannelToValue1Id, MEM_SLOT_OUTPUT_VALUE1);
 
-  m_ledController->applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
+  m_channelController->applyAndPropagateValue(setChannelToValue1Id, pwmValue,
+                                              true);
 }
 
 void ServerController::toggleForceAllOff() {
@@ -231,7 +249,7 @@ void ServerController::toggleForceAllOff() {
 
   writePageIntegrity(0);
   writePageFromBufferToEeprom(0);
-  m_ledController->applyInitialState();
+  m_channelController->applyInitialState();
 }
 
 void ServerController::toggleForceAllOn() {
@@ -244,7 +262,7 @@ void ServerController::toggleForceAllOn() {
 
   writePageIntegrity(0);
   writePageFromBufferToEeprom(0);
-  m_ledController->applyInitialState();
+  m_channelController->applyInitialState();
 }
 
 void ServerController::toggleRandomChaos() {
@@ -368,7 +386,7 @@ void ServerController::setAllChannels() {
   getValueFromData(m_requestBuffer,
                    "setAllChannels=", channelOutputValue1Buffer, 5);
   uint16_t outputValue1 = atoi(channelOutputValue1Buffer);
-  m_ledController->setAllChannels(outputValue1);
+  m_channelController->setAllChannels(outputValue1);
 }
 
 void ServerController::processPostRequest(WiFiClient client) {
@@ -388,12 +406,12 @@ void ServerController::processPostRequest(WiFiClient client) {
     toggleCompactDisplay();
   }
 
-  if (isKeyInData(m_requestBuffer, "turnChannelOff")) {
-    turnChannelOff();
+  if (isKeyInData(m_requestBuffer, "setChannelToValue2")) {
+    setChannelToValue2();
   }
 
-  if (isKeyInData(m_requestBuffer, "turnChannelOn")) {
-    turnChannelOn();
+  if (isKeyInData(m_requestBuffer, "setChannelToValue1")) {
+    setChannelToValue1();
   }
 
   if (isKeyInData(m_requestBuffer, "toggleForceAllOff")) {
@@ -429,7 +447,7 @@ void ServerController::processPostRequest(WiFiClient client) {
   }
 
   if (isKeyInData(m_requestBuffer, "resetAllChannels")) {
-    m_ledController->applyInitialState();
+    m_channelController->applyInitialState();
   }
 
   if (isKeyInData(m_requestBuffer, "setAllChannels")) {
@@ -437,15 +455,15 @@ void ServerController::processPostRequest(WiFiClient client) {
   }
 
   if (isKeyInData(m_requestBuffer, "turnEvenChannelsOn")) {
-    m_ledController->turnEvenChannelsOn();
+    m_channelController->turnEvenChannelsOn();
   }
 
   if (isKeyInData(m_requestBuffer, "turnOddChannelsOn")) {
-    m_ledController->turnOddChannelsOn();
+    m_channelController->turnOddChannelsOn();
   }
 
   if (isKeyInData(m_requestBuffer, "countBinary")) {
-    m_ledController->countBinary();
+    m_channelController->countBinary();
   }
 
   if (isKeyInData(m_requestBuffer, "toggleShowOptions")) {
@@ -456,7 +474,7 @@ void ServerController::processPostRequest(WiFiClient client) {
     toggleShowActions();
   }
 
-  if (m_ledController->getFoundRecursion()) {
+  if (m_channelController->getFoundRecursion()) {
     replyToClientWithFail(client);
   } else {
     replyToClientWithSuccess(client);
@@ -468,12 +486,12 @@ void ServerController::prepareRenderEditChannel(WiFiClient client,
   m_stateManager->setRenderEditChannel(true);
   m_stateManager->setChannelIdToEdit(channelId);
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
-  m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
+  m_renderer->renderWebPage(client, m_channelController->getFoundRecursion());
 }
 
 void ServerController::prepareRenderChannels(WiFiClient client) {
   m_stateManager->setRenderEditChannel(false);
-  m_renderer->renderWebPage(client, m_ledController->getFoundRecursion());
+  m_renderer->renderWebPage(client, m_channelController->getFoundRecursion());
 }
 
 void ServerController::processGetRequest(WiFiClient client) {

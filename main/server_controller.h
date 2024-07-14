@@ -1,7 +1,7 @@
 #ifndef server_controller_h
 #define server_controller_h
 
-#include "led_controller.h"
+#include "channel_controller.h"
 #include "render.h"
 #include "state_manager.h"
 #include <Arduino.h>
@@ -11,7 +11,7 @@
 class ServerController {
 
 private:
-  LedController *m_ledController;
+  ChannelController *m_channelController;
   StateManager *m_stateManager;
   Renderer *m_renderer;
 
@@ -26,8 +26,8 @@ private:
   void testBrightness();
   void updateChannel();
   void toggleCompactDisplay();
-  void turnChannelOff();
-  void turnChannelOn();
+  void setChannelToValue2();
+  void setChannelToValue1();
   void toggleForceAllOff();
   void toggleForceAllOn();
   void toggleRandomChaos();
@@ -64,8 +64,8 @@ private:
   uint16_t getUint16tFromRequest(char *request, char *arg);
 
 public:
-  ServerController(StateManager *stateManager, LedController *ledController,
-                   Renderer *renderer);
+  ServerController(StateManager *stateManager,
+                   ChannelController *channelController, Renderer *renderer);
   void begin();
   void loopEvent();
 };

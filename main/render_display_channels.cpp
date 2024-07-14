@@ -181,12 +181,12 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
         <button class="btn" name="editChannel" onclick="openEditChannelPage('%d')">
           🖊
         </button>
-        <button class="btn" onclick="sendValue('turnChannelOff', '%d')">
+        <button class="btn" onclick="sendValue('setChannelToValue2', '%d')">
           ⛭
         </button>
         <button
           class="btn text-warning"
-          onclick="sendValue('turnChannelOn', '%d')"
+          onclick="sendValue('setChannelToValue1', '%d')"
         >
           ⛭
         </button>
@@ -308,9 +308,20 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
   int boardSubAddressToDisplay =
       toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
-  uint16_t brightness =
+  bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_USES_OUTPUT_VALUE2);
+
+  uint16_t value1 =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
-  uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
+  uint8_t value1AsPercentage = (int)(((float)value1 / 4095) * 100);
+
+  uint16_t value2 =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE2);
+  uint8_t value2AsPercentage = (int)(((float)value2 / 4095) * 100);
+
+  if (!toggleUseCustomRange) {
+    value2 = 0;
+  }
 
   uint16_t channelIdToDisplay =
       toggleOneBasedAddresses ? channelId + 1 : channelId;
@@ -335,8 +346,9 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
                       )html",
                       channelIdToDisplay);
 
-  written += snprintf(outputBuffer + written, bufferSize - written,
-                      R"html(
+  written +=
+      snprintf(outputBuffer + written, bufferSize - written,
+               R"html(
     <div class="d-flex flex-fill align-items-center">
       <div class="text-muted">%d.</div>
       <button
@@ -345,30 +357,64 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
       >
         <p class="text-start m-0">%s</p>
       </button>
-      <div class="text-muted">%d&nbsp;%%</div>
-    </div>
+      )html",
+               channelIdToDisplay, channelIdToDisplay, channelNameToDisplay);
+
+  if (toggleUseCustomRange) {
+    written += snprintf(outputBuffer + written, bufferSize - written,
+                        R"html(
+      <div class="text-muted">%d&nbsp;%% .. %d&nbsp;%%</div>
                       )html",
-                      channelIdToDisplay, channelIdToDisplay,
-                      channelNameToDisplay, brightnessAsPercentage);
+                        value1AsPercentage, value2AsPercentage);
+  } else {
+    written += snprintf(outputBuffer + written, bufferSize - written,
+                        R"html(
+      <div class="text-muted">%d&nbsp;%%</div>
+                      )html",
+                        value1AsPercentage);
+  }
+
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+    </div>
+                      )html");
+
+  char *leftSymbol;
+  char *rightSymbol;
+  char *leftClass;
+  char *rightClass;
+
+  if (toggleUseCustomRange) {
+    leftSymbol = "⮘";
+    rightSymbol = "⮚";
+    leftClass = "text-primary";
+    rightClass = "text-primary";
+
+  } else {
+    leftSymbol = "⛭";
+    rightSymbol = "⛭";
+    leftClass = "";
+    rightClass = "text-warning";
+  }
 
   written += snprintf(outputBuffer + written, bufferSize - written,
                       R"html(
     <div class="d-flex">
       <button
-        class="btn px-1 px-sm-2 px-md-3"
-        onclick="sendValue('turnChannelOff','%d')"
+        class="btn %s px-1 px-sm-2 px-md-3"
+        onclick="sendValue('setChannelToValue2','%d')"
       >
-        ⛭
+        %s
       </button>
       <button
-        class="btn text-warning px-1 px-sm-2 px-md-3"
-        onclick="sendValue('turnChannelOn','%d')"
+        class="btn %s px-1 px-sm-2 px-md-3"
+        onclick="sendValue('setChannelToValue1','%d')"
       >
-        ⛭
+        %s
       </button>
     </div>
                     )html",
-                      channelId, channelId);
+                      leftClass, channelId, leftSymbol, rightClass, channelId,
+                      rightSymbol);
 
   written += snprintf(outputBuffer + written, bufferSize - written,
                       R"html(
@@ -393,8 +439,41 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
 
 uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
                                 uint16_t channelId) {
+
+  bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_USES_OUTPUT_VALUE2);
+
   uint16_t outputValue1 =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
+
+  uint16_t outputValue2 =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE2);
+
+  if (!toggleUseCustomRange) {
+    outputValue2 = 0;
+  }
+
+  bool initialStateIsValue1 = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_START_OUTPUT_VALUE1);
+
+  uint16_t startValue;
+
+  if (initialStateIsValue1) {
+    startValue = outputValue1;
+  } else {
+    startValue = outputValue2;
+  }
+
+  int sliderMin;
+  int sliderMax;
+
+  if (outputValue1 > outputValue2) {
+    sliderMin = outputValue2;
+    sliderMax = outputValue1;
+  } else {
+    sliderMin = -outputValue2;
+    sliderMax = -outputValue1;
+  }
 
   return snprintf(outputBuffer, bufferSize,
                   R"html(
@@ -403,14 +482,14 @@ uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
       <input
         class="form-range"
         type="range"
-        min="0"
+        min="%d"
         max="%d"
         name="outputValue1"
         value="%d"
-        onchange="onBrightnessValueChanged(this.value, %d)"
+        onchange="onBrightnessValueChanged(Math.abs(this.value), %d)"
       />
     </div>
   </div> 
                   )html",
-                  outputValue1, outputValue1, channelId);
+                  sliderMin, sliderMax, startValue, channelId);
 }

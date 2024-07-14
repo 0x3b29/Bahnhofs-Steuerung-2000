@@ -1,6 +1,6 @@
+#include "channel_controller.h"
 #include "eeprom.h"
 #include "helpers.h"
-#include "led_controller.h"
 #include "main.h"
 #include "render.h"
 #include "server_controller.h"
@@ -17,9 +17,9 @@
 #define RANDOM_EVENT_INTERVAL 100
 
 StateManager m_stateManager;
-LedController m_ledController(&m_stateManager);
+ChannelController m_channelController(&m_stateManager);
 Renderer m_renderer(&m_stateManager);
-ServerController m_serverController(&m_stateManager, &m_ledController,
+ServerController m_serverController(&m_stateManager, &m_channelController,
                                     &m_renderer);
 
 long m_lastRandom = 0;
@@ -67,7 +67,7 @@ void setup() {
     loadPageFromEepromToEepromBufferAndCheckIntegrity(i + 1);
   }
 
-  m_ledController.initializePwmBoards();
+  m_channelController.initializePwmBoards();
 
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   Serial.println("Attempting to connect to WiFi network...");
@@ -106,26 +106,26 @@ void setup() {
   sn(analogValue);
   randomSeed(analogValue);
 
-  m_ledController.applyInitialState();
+  m_channelController.applyInitialState();
 }
 
 void loop() {
   if ((m_stateManager.getToggleRandomChaos() == 1) &&
       (millis() > (m_lastRandom + RANDOM_INTERVAL))) {
     m_lastRandom = millis();
-    m_ledController.setEveryChannelToRandomValue();
+    m_channelController.setEveryChannelToRandomValue();
   }
 
   if ((m_stateManager.getToggleRandomEvents() == 1) &&
       millis() > (m_lastRandomEvent + RANDOM_EVENT_INTERVAL)) {
     m_lastRandomEvent = millis();
-    m_ledController.calculateRandomEvents();
+    m_channelController.calculateRandomEvents();
   }
 
   if ((m_stateManager.getToggleRunningLights() == 1) &&
       millis() > (m_lastRunningLightEvent + RUNNING_LIGHT_INTERVAL)) {
     m_lastRunningLightEvent = millis();
-    m_ledController.setNextRunningLight();
+    m_channelController.setNextRunningLight();
   }
 
   m_serverController.loopEvent();

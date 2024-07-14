@@ -323,35 +323,35 @@ void Renderer::renderActions(WiFiClient client) {
 
   <button
     class="btn btn-primary text-white me-2 mb-2"
-    onclick="sendValue('setAllChannels','204')"
+    onclick="sendValue('setAllChannels','5')"
   >
     5 %%
   </button>
 
   <button
     class="btn btn-primary text-white me-2 mb-2"
-    onclick="sendValue('setAllChannels','409')"
+    onclick="sendValue('setAllChannels','10')"
   >
     10 %%
   </button>
 
   <button
     class="btn btn-primary text-white me-2 mb-2"
-    onclick="sendValue('setAllChannels','1023')"
+    onclick="sendValue('setAllChannels','25')"
   >
     25 %%
   </button>
 
   <button
     class="btn btn-primary text-white me-2 mb-2"
-    onclick="sendValue('setAllChannels','2047')"
+    onclick="sendValue('setAllChannels','50')"
   >
     50 %%
   </button>
 
   <button
     class="btn btn-primary text-white me-2 mb-2"
-    onclick="sendValue('setAllChannels','4095')"
+    onclick="sendValue('setAllChannels','100')"
   >
     100 %%
   </button>

@@ -6,7 +6,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <Arduino.h>
 
-class LedController {
+class ChannelController {
 private:
   StateManager *m_stateManager;
 
@@ -17,18 +17,18 @@ private:
   Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
 public:
-  LedController(StateManager *stateManager);
+  ChannelController(StateManager *stateManager);
   void initializePwmBoards();
 
   bool getFoundRecursion();
   void resetRecursionFlag();
 
-  void setChannelBrightness(int channel, uint16_t brightness);
-  void commandLinkedChannel(uint16_t commandingChannelId, bool turnOn,
+  void setChannelPwmValue(int channel, uint16_t pwmValue);
+  void commandLinkedChannel(uint16_t commandingChannelId, bool wasValue1,
                             int depth, int maxDepth);
-  void applyAndPropagateValue(int channel, uint16_t brightness);
+  void applyAndPropagateValue(int channel, uint16_t pwmValue, bool wasValue1);
   void applyInitialState();
-  void setAllChannels(uint16_t brightness);
+  void setAllChannels(uint8_t percentage);
   void turnEvenChannelsOn();
   void turnOddChannelsOn();
   void countBinary();
