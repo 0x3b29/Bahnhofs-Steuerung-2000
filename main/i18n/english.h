@@ -29,6 +29,16 @@
 #define I18N_EDIT_DISCARD "Discard"
 #define I18N_EDIT_SAVE "Save"
 
+#define I18N_EDIT_MODE_NORMAL "(Normal Range)"
+#define I18N_EDIT_MODE_CUSTOM "(Custom Range)"
+#define I18N_EDIT_USE_CUSTOM_RANGE "Custom Range"
+#define I18N_EDIT_CUSTOM_INITIAL_STATE_ON "Initial State is Value 1"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_1 "Value 1"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_2 "Value 2"
+#define I18N_EDIT_CUSTOM_PWM_OUTPUT_TEST "Output Range Test"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Randomly Set Value 1"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Randomly Set Value 2"
+
 #define I18N_CHANNEL_CHANNEL "Channel"
 #define I18N_CHANNEL_BOARD "Board"
 #define I18N_CHANNEL_PIN "Pin"

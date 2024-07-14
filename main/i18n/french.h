@@ -29,6 +29,16 @@
 #define I18N_EDIT_DISCARD "Annuler"
 #define I18N_EDIT_SAVE "Sauvegarder"
 
+#define I18N_EDIT_MODE_NORMAL "(Plage Normale)"
+#define I18N_EDIT_MODE_CUSTOM "(Plage Personnalisée)"
+#define I18N_EDIT_USE_CUSTOM_RANGE "Plage Personnalisée"
+#define I18N_EDIT_CUSTOM_INITIAL_STATE_ON "État Initial est Valeur 1"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_1 "Valeur 1"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_2 "Valeur 2"
+#define I18N_EDIT_CUSTOM_PWM_OUTPUT_TEST "Test de Plage de Sortie"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Valeur 1 Définie Aléatoirement"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Valeur 2 Définie Aléatoirement"
+
 #define I18N_CHANNEL_CHANNEL "Canal"
 #define I18N_CHANNEL_BOARD "Carte"
 #define I18N_CHANNEL_PIN "Pin"

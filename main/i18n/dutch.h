@@ -29,6 +29,16 @@
 #define I18N_EDIT_DISCARD "Verwerpen"
 #define I18N_EDIT_SAVE "Opslaan"
 
+#define I18N_EDIT_MODE_NORMAL "(Normaal Bereik)"
+#define I18N_EDIT_MODE_CUSTOM "(Aangepast Bereik)"
+#define I18N_EDIT_USE_CUSTOM_RANGE "Aangepast Bereik"
+#define I18N_EDIT_CUSTOM_INITIAL_STATE_ON "Initiële Staat is Waarde 1"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_1 "Waarde 1"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_2 "Waarde 2"
+#define I18N_EDIT_CUSTOM_PWM_OUTPUT_TEST "Uitvoer Bereik Test"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Waarde 1 Willekeurig Instellen"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Waarde 2 Willekeurig Instellen"
+
 #define I18N_CHANNEL_CHANNEL "Kanaal"
 #define I18N_CHANNEL_BOARD "Bord"
 #define I18N_CHANNEL_PIN "Pin"
