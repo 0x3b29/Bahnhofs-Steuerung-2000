@@ -31,8 +31,24 @@ private:
   uint16_t renderSlider(char *outputBuffer, uint16_t bufferSize,
                         uint16_t channelId);
 
-  void renderEditChannelJavascript(WiFiClient client);
-  void renderEditChannel(WiFiClient client);
+  void renderSaveAndDiscardJavascript(WiFiClient client);
+  void renderEditNormalChannelJavascript(WiFiClient client);
+  void renderEditCustomChannelJavascript(WiFiClient client);
+
+  void renderEditChannelName(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditInitialState(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditRandomOn(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditRandomOff(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditChannelLinked(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditChannelHiddenInCompactView(WiFiClient client,
+                                            uint16_t channelIdToEdit);
+  void renderEditShowSlider(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditCustomChannelToggle(WiFiClient client,
+                                     uint16_t channelIdToEdit);
+
+  void renderEditNormalChannel(WiFiClient client);
+  void renderEditCustomChannel(WiFiClient client);
+  void renderEditSaveAndDiscardButtons(WiFiClient client);
 
   void renderActions(WiFiClient client);
   void renderOptions(WiFiClient client);

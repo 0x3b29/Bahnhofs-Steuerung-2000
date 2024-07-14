@@ -40,7 +40,7 @@ void ServerController::cancelChannelUpdate() {
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
   uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
-      channelIdAsNumber, MEM_SLOT_BRIGHTNESS);
+      channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE1);
 
   m_ledController->setChannelBrightness(channelIdAsNumber, originalBrightness);
 }
@@ -64,16 +64,59 @@ void ServerController::testBrightness() {
   getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
-  char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_requestBuffer,
-                   "channelBrightness=", channelBrightnessBuffer, 5);
-  uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+  char channelOutputValue1Buffer[5] = "0";
+  getValueFromData(m_requestBuffer, "outputValue1=", channelOutputValue1Buffer,
+                   5);
+  uint16_t outputValue1 = atoi(channelOutputValue1Buffer);
 
-  m_ledController->setChannelBrightness(channelIdAsNumber, channelBrightness);
+  m_ledController->setChannelBrightness(channelIdAsNumber, outputValue1);
+}
+
+void ServerController::updateBoolIfFound(uint16_t channelId, const char *buffer,
+                                         const char *key, int memorySlot) {
+  char boolBuffer[2] = "0";
+  bool foundKey = getValueFromData(buffer, key, boolBuffer, 2);
+
+  if (foundKey) {
+    uint8_t boolAsUint8t = atoi(boolBuffer);
+    writeUint8tToEepromBuffer(channelId, memorySlot, boolAsUint8t);
+  }
+}
+
+void ServerController::updateUint8tIfFound(uint16_t channelId,
+                                           const char *buffer, const char *key,
+                                           int memorySlot) {
+  char uint8tBuffer[4] = "0";
+  bool foundKey = getValueFromData(buffer, key, uint8tBuffer, 4);
+
+  if (foundKey) {
+    uint8_t uint8tValue = atoi(uint8tBuffer);
+    writeUint8tToEepromBuffer(channelId, memorySlot, uint8tValue);
+  }
+}
+
+void ServerController::updateUint16tIfFound(uint16_t channelId,
+                                            const char *buffer, const char *key,
+                                            int memorySlot) {
+  char uint16tBuffer[7] = "0";
+  bool foundKey = getValueFromData(buffer, key, uint16tBuffer, 7);
+
+  if (foundKey) {
+    uint16_t uint16tValue = atoi(uint16tBuffer);
+    writeUint16tForChannelToEepromBuffer(channelId, memorySlot, uint16tValue);
+  }
 }
 
 void ServerController::updateChannel() {
-  getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
+  bool foundChannelId =
+      getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
+
+  if (!foundChannelId) {
+    Serial.println(
+        "Error: unable to find channelId, aborting updateChannel();");
+    return;
+  }
+
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
   // Worst case, each UTF8 character is 4 bytes long as url encoded
@@ -81,94 +124,63 @@ void ServerController::updateChannel() {
   getValueFromData(m_requestBuffer, "channelName=", urlEncodedNameBuffer,
                    MAX_CHANNEL_NAME_LENGTH * 4);
   urlDecode(urlEncodedNameBuffer, m_channelNameBuffer, MAX_CHANNEL_NAME_LENGTH);
+  writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
 
-  char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_requestBuffer,
-                   "channelBrightness=", channelBrightnessBuffer, 5);
+  updateUint16tIfFound(channelIdAsNumber, m_requestBuffer,
+                       "outputValue1=", MEM_SLOT_OUTPUT_VALUE1);
 
-  char initialStateBuffer[2] = "0";
-  getValueFromData(m_requestBuffer, "initialState=", initialStateBuffer, 2);
-  uint8_t initialState = atoi(initialStateBuffer);
-  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_INITIAL_STATE,
-                            initialState);
+  updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
+                    "initialState=", MEM_SLOT_START_OUTPUT_VALUE1);
 
-  char randomOnBuffer[2] = "0";
-  char randomOnFreqBuffer[4] = "0";
+  updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
+                    "randomOn=", MEM_SLOT_RANDOM_ON);
 
-  char randomOffBuffer[2] = "0";
-  char randomOffFreqBuffer[4] = "0";
+  updateUint8tIfFound(channelIdAsNumber, m_requestBuffer,
+                      "frequencyOn=", MEM_SLOT_RANDOM_ON_FREQ);
 
-  char isLinkedBuffer[2] = "0";
+  updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
+                    "randomOff=", MEM_SLOT_RANDOM_OFF);
+
+  updateUint8tIfFound(channelIdAsNumber, m_requestBuffer,
+                      "frequencyOff=", MEM_SLOT_RANDOM_OFF_FREQ);
+
+  updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
+                    "channelLinked=", MEM_SLOT_IS_LINKED);
+
+  updateBoolIfFound(
+      channelIdAsNumber, m_requestBuffer,
+      "channelHiddenInCompactView=", MEM_SLOT_HIDE_IN_COMPACT_VIEW);
+
+  updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
+                    "showSlider=", MEM_SLOT_SHOW_SLIDER);
+
+  updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
+                    "useOutputValue2=", MEM_SLOT_USES_OUTPUT_VALUE2);
+
+  updateUint16tIfFound(channelIdAsNumber, m_requestBuffer,
+                       "outputValue2=", MEM_SLOT_OUTPUT_VALUE2);
+
   char linkedChannelIdBuffer[4] = "0";
-
-  char isChannelHiddenInCompactViewBuffer[2] = "0";
-
-  char showSliderBuffer[2] = "0";
-
-  getValueFromData(m_requestBuffer, "randomOn=", randomOnBuffer, 2);
-  getValueFromData(m_requestBuffer, "frequencyOn=", randomOnFreqBuffer, 4);
-  getValueFromData(m_requestBuffer, "randomOff=", randomOffBuffer, 2);
-  getValueFromData(m_requestBuffer, "frequencyOff=", randomOffFreqBuffer, 4);
-  getValueFromData(m_requestBuffer, "channelLinked=", isLinkedBuffer, 2);
   getValueFromData(m_requestBuffer, "linkedChannelId=", linkedChannelIdBuffer,
                    4);
-  getValueFromData(m_requestBuffer, "channelHiddenInCompactView=",
-                   isChannelHiddenInCompactViewBuffer, 2);
 
-  getValueFromData(m_requestBuffer, "showSlider=", showSliderBuffer, 2);
-
-  // Todo convert to bool
-  uint8_t randomOn = atoi(randomOnBuffer);
-  uint8_t randomOnFreq = atoi(randomOnFreqBuffer);
-
-  uint8_t randomOff = atoi(randomOffBuffer);
-  uint8_t randomOffFreq = atoi(randomOffFreqBuffer);
-
-  uint8_t isLinked = atoi(isLinkedBuffer);
   uint16_t linkedChannelId = atoi(linkedChannelIdBuffer);
-
-  uint8_t isChannelHiddenInCompactView =
-      atoi(isChannelHiddenInCompactViewBuffer);
 
   if (m_stateManager->getToggleOneBasedAddresses()) {
     linkedChannelId--;
   }
 
-  uint16_t startAddress = 64 + channelIdAsNumber * 64;
-  uint16_t channelBrightness = atoi(channelBrightnessBuffer);
+  writeUint16tForChannelToEepromBuffer(
+      channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
 
-  writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
+  char outputValue1Buffer[7] = "0";
+  bool foundKey =
+      getValueFromData(m_requestBuffer, "outputValue1=", outputValue1Buffer, 7);
 
-  writeUint16tForChannelToEepromBuffer(channelIdAsNumber, MEM_SLOT_BRIGHTNESS,
-                                       channelBrightness);
-
-  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON, randomOn);
-  if (randomOn == 1) {
-    writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_ON_FREQ,
-                              randomOnFreq);
+  if (foundKey) {
+    uint16_t outputValue1 = atoi(outputValue1Buffer);
+    m_ledController->applyAndPropagateValue(channelIdAsNumber, outputValue1);
   }
-
-  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF, randomOff);
-  if (randomOff == 1) {
-    writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_RANDOM_OFF_FREQ,
-                              randomOffFreq);
-  }
-
-  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_IS_LINKED, isLinked);
-  if (isLinked == 1) {
-    writeUint16tForChannelToEepromBuffer(
-        channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
-  }
-
-  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_HIDE_IN_COMPACT_VIEW,
-                            isChannelHiddenInCompactView);
-
-  uint8_t showSlider = atoi(showSliderBuffer);
-
-  writeUint8tToEepromBuffer(channelIdAsNumber, MEM_SLOT_SHOW_SLIDER,
-                            showSlider);
-
-  m_ledController->applyAndPropagateValue(channelIdAsNumber, channelBrightness);
 
   writePageIntegrity(channelIdAsNumber + 1);
   writePageFromBufferToEeprom(channelIdAsNumber + 1);
@@ -204,7 +216,7 @@ void ServerController::turnChannelOn() {
   turnChannelOnId = atoi(turnChannelOnIdBuffer);
 
   uint16_t turnOnBrightness = readUint16tForChannelFromEepromBuffer(
-      turnChannelOnId, MEM_SLOT_BRIGHTNESS);
+      turnChannelOnId, MEM_SLOT_OUTPUT_VALUE1);
 
   m_ledController->applyAndPropagateValue(turnChannelOnId, turnOnBrightness);
 }
@@ -352,11 +364,11 @@ void ServerController::toggleShowActions() {
 }
 
 void ServerController::setAllChannels() {
-  char channelBrightnessBuffer[5] = "0";
-  getValueFromData(m_requestBuffer, "setAllChannels=", channelBrightnessBuffer,
-                   5);
-  uint16_t channelBrightness = atoi(channelBrightnessBuffer);
-  m_ledController->setAllChannels(channelBrightness);
+  char channelOutputValue1Buffer[5] = "0";
+  getValueFromData(m_requestBuffer,
+                   "setAllChannels=", channelOutputValue1Buffer, 5);
+  uint16_t outputValue1 = atoi(channelOutputValue1Buffer);
+  m_ledController->setAllChannels(outputValue1);
 }
 
 void ServerController::processPostRequest(WiFiClient client) {
@@ -551,13 +563,13 @@ void ServerController::loopEvent() {
 // key: The key as a char array
 // value: A char array buffer where the extracted value will be stored
 // valueLen: The length of the value buffer
-void ServerController::getValueFromData(const char *data, const char *key,
+bool ServerController::getValueFromData(const char *data, const char *key,
                                         char *value, int valueLen) {
   const char *startPtr = strstr(data, key);
   if (startPtr == NULL) {
     Serial.print("Unable to find key: ");
     Serial.println(key);
-    return;
+    return false;
   }
 
   startPtr += strlen(key); // Move pointer past the key
@@ -576,7 +588,7 @@ void ServerController::getValueFromData(const char *data, const char *key,
   strncpy(value, startPtr, numCharsToCopy);
   value[numCharsToCopy] = '\0'; // Null-terminate the string
 
-  return;
+  return true;
 }
 
 bool ServerController::isKeyInData(const char *data, const char *key) {

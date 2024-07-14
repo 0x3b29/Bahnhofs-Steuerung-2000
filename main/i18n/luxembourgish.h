@@ -18,7 +18,7 @@
 #define I18N_EDIT_CHANNEL "Kanal"
 #define I18N_EDIT_EDIT "Änneren"
 #define I18N_EDIT_DESCRIPTION "Beschreiwung"
-#define I18N_EDIT_START_STATE "Ufankszoustand"
+#define I18N_EDIT_INITIAL_STATE_ON "Ufankszoustand Un"
 #define I18N_EDIT_BRIGHTNESS "Hellegkeet"
 #define I18N_EDIT_RANDOM_ON "Zoufälleg Un"
 #define I18N_EDIT_RANDOM_FREQ "~ Un/Aus pro Stonn"

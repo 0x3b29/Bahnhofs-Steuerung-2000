@@ -11,11 +11,11 @@ void Renderer::renderChannelDetail(WiFiClient client, uint16_t channelId,
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   uint16_t brightness =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
-  bool initialState =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_INITIAL_STATE);
+  bool initialState = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_START_OUTPUT_VALUE1);
 
   bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
 
@@ -309,7 +309,7 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
       toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
   uint16_t brightness =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
   uint16_t channelIdToDisplay =
@@ -393,8 +393,8 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
 
 uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
                                 uint16_t channelId) {
-  uint16_t channelBrightness =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_BRIGHTNESS);
+  uint16_t outputValue1 =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
 
   return snprintf(outputBuffer, bufferSize,
                   R"html(
@@ -405,12 +405,12 @@ uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
         type="range"
         min="0"
         max="%d"
-        name="channelBrightness"
+        name="outputValue1"
         value="%d"
         onchange="onBrightnessValueChanged(this.value, %d)"
       />
     </div>
   </div> 
                   )html",
-                  channelBrightness, channelBrightness, channelId);
+                  outputValue1, outputValue1, channelId);
 }

@@ -18,7 +18,7 @@
 #define I18N_EDIT_CHANNEL "Kanal"
 #define I18N_EDIT_EDIT "Bearbeiten"
 #define I18N_EDIT_DESCRIPTION "Beschreibung"
-#define I18N_EDIT_START_STATE "Startzustand"
+#define I18N_EDIT_INITIAL_STATE_ON "Startzustand An"
 #define I18N_EDIT_BRIGHTNESS "Helligkeit"
 #define I18N_EDIT_RANDOM_ON "Zufällig Einschalten"
 #define I18N_EDIT_RANDOM_FREQ "~ Zufälle/h"

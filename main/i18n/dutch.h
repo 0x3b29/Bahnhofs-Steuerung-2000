@@ -18,7 +18,7 @@
 #define I18N_EDIT_CHANNEL "Kanaal"
 #define I18N_EDIT_EDIT "Bewerken"
 #define I18N_EDIT_DESCRIPTION "Beschrijving"
-#define I18N_EDIT_START_STATE "Initiële Staat"
+#define I18N_EDIT_INITIAL_STATE_ON "Initiële Staat Aan"
 #define I18N_EDIT_BRIGHTNESS "Helderheid"
 #define I18N_EDIT_RANDOM_ON "Willekeurig Aanzetten"
 #define I18N_EDIT_RANDOM_FREQ "~ Gebeurtenissen/uur"

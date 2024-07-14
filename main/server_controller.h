@@ -46,7 +46,14 @@ private:
   void processGetRequest(WiFiClient client);
   void processRequest(WiFiClient client);
 
-  void getValueFromData(const char *data, const char *key, char *value,
+  void updateBoolIfFound(uint16_t channelId, const char *buffer,
+                         const char *key, int memorySlot);
+  void updateUint8tIfFound(uint16_t channelId, const char *buffer,
+                           const char *key, int memorySlot);
+  void updateUint16tIfFound(uint16_t channelId, const char *buffer,
+                            const char *key, int memorySlot);
+
+  bool getValueFromData(const char *data, const char *key, char *value,
                         int valueLen);
 
   bool isKeyInData(const char *data, const char *key);

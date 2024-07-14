@@ -385,8 +385,6 @@ void Renderer::renderActions(WiFiClient client) {
 
 void Renderer::renderOptionsJavascript(WiFiClient client) {
   pn(client, R"html(
-  
-  <script>
     function onUpdateChannelCountButtonClicked() {
     const numChannels = document.querySelector('input[name="numChannels"]').value;
     
@@ -401,7 +399,5 @@ void Renderer::renderOptionsJavascript(WiFiClient client) {
       window.location.href = `/`;
     });
   }
-  </script>
-  
   )html");
 }

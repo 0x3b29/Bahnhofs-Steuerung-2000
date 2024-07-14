@@ -20,7 +20,6 @@ void Renderer::pn(WiFiClient client, char *buffer) {
 
 void Renderer::renderHeadJavascript(WiFiClient client) {
   pn(client, R"html(
-<script>
 function openEditChannelPage(channel) {
   const data = {
     channel
@@ -102,7 +101,7 @@ function onBrightnessValueChanged(value, channelId) {
 
   var dataString =
     "testBrightness=1&" +
-    encodeURIComponent("channelBrightness") +
+    encodeURIComponent("outputValue1") +
     "=" +
     encodeURIComponent(value) +
     "&" +
@@ -119,7 +118,6 @@ function onBrightnessValueChanged(value, channelId) {
     }
   });
 }
-</script>
 )html");
 }
 
@@ -165,13 +163,27 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
     <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
   )html");
 
+  pn(client, "<script>");
+
   renderHeadJavascript(client);
 
   if (m_stateManager->getRenderEditChannel() == true) {
-    renderEditChannelJavascript(client);
+    uint16_t channelIdToEdit = m_stateManager->getChannelIdToEdit();
+    bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
+        channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE2);
+
+    renderSaveAndDiscardJavascript(client);
+
+    if (toggleUseCustomRange) {
+      renderEditCustomChannelJavascript(client);
+    } else {
+      renderEditNormalChannelJavascript(client);
+    }
   } else {
     renderOptionsJavascript(client);
   }
+
+  pn(client, "</script>");
 
   renderHeadCss(client);
 
@@ -204,7 +216,17 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
   }
 
   if (m_stateManager->getRenderEditChannel() == true) {
-    renderEditChannel(client);
+    uint16_t channelIdToEdit = m_stateManager->getChannelIdToEdit();
+    bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
+        channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE2);
+
+    if (toggleUseCustomRange) {
+      renderEditCustomChannel(client);
+    } else {
+      renderEditNormalChannel(client);
+    }
+
+    renderEditSaveAndDiscardButtons(client);
   } else {
     renderOptionsHeading(client);
     renderOptions(client);

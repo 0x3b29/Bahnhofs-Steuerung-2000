@@ -20,16 +20,18 @@
 #define MEM_SLOT_RUNNING_LIGHTS 11
 
 // Memory Slots for each channel
-#define MEM_SLOT_BRIGHTNESS 30
+#define MEM_SLOT_OUTPUT_VALUE1 30
 #define MEM_SLOT_RANDOM_ON 32
 #define MEM_SLOT_RANDOM_ON_FREQ 33
 #define MEM_SLOT_RANDOM_OFF 34
 #define MEM_SLOT_RANDOM_OFF_FREQ 35
 #define MEM_SLOT_IS_LINKED 36
 #define MEM_SLOT_LINKED_CHANNEL 37
-#define MEM_SLOT_INITIAL_STATE 39
+#define MEM_SLOT_START_OUTPUT_VALUE1 39
 #define MEM_SLOT_HIDE_IN_COMPACT_VIEW 40
 #define MEM_SLOT_SHOW_SLIDER 41
+#define MEM_SLOT_USES_OUTPUT_VALUE2 42
+#define MEM_SLOT_OUTPUT_VALUE2 43
 
 // Memory Slot for general settings and each channel
 #define MEM_SLOT_CRC 62
@@ -61,7 +63,7 @@ void readChannelNameFromEepromBufferToChannelNameBuffer(int channel);
 void writeChannelNameFromChannelNameBufferToEepromBuffer(int channel);
 void writeUint8tToEepromBuffer(int channel, int memorySlot, uint8_t value);
 void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
-                                          uint16_t channelBrightness);
+                                          uint16_t outputValue1);
 
 uint16_t readUint16tForChannelFromEepromBuffer(int channel, int memorySlot);
 bool readBoolForChannelFromEepromBuffer(int channel, int memorySlot);

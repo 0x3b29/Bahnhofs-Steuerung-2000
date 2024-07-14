@@ -93,7 +93,7 @@ void LedController::commandLinkedChannel(uint16_t commandingChannelId,
 
         if (turnOn) {
           brightness =
-              readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+              readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
         }
 
         setChannelBrightness(i, brightness);
@@ -109,13 +109,13 @@ void LedController::applyInitialState() {
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
     bool initialState =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_INITIAL_STATE);
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_START_OUTPUT_VALUE1);
 
     uint16_t brightness = 0;
 
     if (initialState == true) {
       brightness =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
     }
 
     applyAndPropagateValue(i, brightness);
@@ -213,13 +213,13 @@ void LedController::calculateRandomEvents() {
       sn(i);
 
       uint16_t brightness =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_BRIGHTNESS);
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
 
       applyAndPropagateValue(i, brightness);
 
       if (isLinked) {
         uint16_t linkedBrightness = readUint16tForChannelFromEepromBuffer(
-            linkedChannel, MEM_SLOT_BRIGHTNESS);
+            linkedChannel, MEM_SLOT_OUTPUT_VALUE1);
 
         applyAndPropagateValue(linkedChannel, linkedBrightness);
       }
