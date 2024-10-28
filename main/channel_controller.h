@@ -19,6 +19,7 @@ private:
 public:
   ChannelController(StateManager *stateManager);
   void initializePwmBoards();
+  void updatePwmBoard(int boardIndex);
 
   bool getFoundRecursion();
   void resetRecursionFlag();

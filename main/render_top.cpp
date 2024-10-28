@@ -69,6 +69,7 @@ void Renderer::renderOptionsHeading(WiFiClient client) {
 void Renderer::renderOptions(WiFiClient client) {
 
   uint16_t numChannels = m_stateManager->getNumChannels();
+  uint8_t getHighPwmBoards = m_stateManager->getHighPwmBoards();
 
   char *toggleOneBasedAddressesCheckedBuffer =
       m_stateManager->getToggleOneBasedAddresses() ? m_checkedBuffer
@@ -265,7 +266,6 @@ void Renderer::renderOptions(WiFiClient client) {
 
   pn(client, optionsOutputBuffer);
 
-  char optionsOutputBufferPt2[1024];
   snprintf(optionsOutputBuffer, sizeof(optionsOutputBuffer), R"html(
   <!-- Enable running lights -->
   <div class="form-check form-switch">
@@ -288,9 +288,72 @@ void Renderer::renderOptions(WiFiClient client) {
   <!-- This hidden field is meant to provide an 'easy' access to reset the // eeprom
   from the web interface -->
   <input type="hidden" name="clearEeprom" value="0" />
-</div>
+
 )html",
            toggleRunningLightsCheckedBuffer, I18N_OPTIONS_RUNNING_LIGHTS);
+
+  pn(client, optionsOutputBuffer);
+
+  uint8_t numberOfPwmBoards = (numChannels + 15) / 16;
+
+  optionsOutputBuffer[0] = 0;
+  uint16_t bufferSize = sizeof(optionsOutputBuffer);
+  uint16_t written = 0;
+
+  written +=
+      snprintf(optionsOutputBuffer + written, bufferSize - written, R"html(
+
+<div class="pt-3">
+  %s
+</div>
+
+<div class="pb-3">
+  
+  )html",
+               I18N_OPTIONS_SELECT_BOARDS_WITH_HIGH_PWM_FREQ);
+
+  for (int i = 0; i < numberOfPwmBoards; i++) {
+
+    bool isHigh = m_stateManager->getHighPwmBoard(i);
+
+    uint8_t userFacingId = i;
+
+    if (m_stateManager->getToggleOneBasedAddresses() == true) {
+      userFacingId++;
+    }
+
+    written += snprintf(
+        optionsOutputBuffer + written, bufferSize - written, R"html(
+  <div class="form-check form-check-inline form-switch me-3">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="toggleHighPwmBoard"
+      value="1"
+      role="switch"
+      id="toggleHighPwmBoard%d"
+      onchange="sendCheckbox(this, false, %d)"
+      %s
+    />
+    <label class="form-check-label" for="toggleHighPwmBoard%d">
+      %s %d
+    </label>
+  </div>
+  )html",
+        i, i, isHigh ? "checked" : "", i, I18N_CHANNEL_BOARD, userFacingId);
+
+    if (i % 8 == 0) {
+      pn(client, optionsOutputBuffer);
+      optionsOutputBuffer[0] = 0;
+      written = 0;
+    }
+  }
+
+  written +=
+      snprintf(optionsOutputBuffer + written, bufferSize - written, R"html(
+  </div>
+</div>
+  )html");
 
   pn(client, optionsOutputBuffer);
 }

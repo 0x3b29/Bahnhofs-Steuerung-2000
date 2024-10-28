@@ -22,6 +22,8 @@ private:
   bool m_renderEditChannel = false;
   uint16_t m_channelIdToEdit = 0;
 
+  uint16_t m_highPwmBoards = 0;
+
 public:
   void loadStateFromEepromBuffer();
 
@@ -63,6 +65,12 @@ public:
 
   void setChannelIdToEdit(uint16_t channelIdToEdit);
   uint16_t getChannelIdToEdit();
+
+  void setHighPwmBoards(uint16_t highPwmBoards);
+  uint16_t getHighPwmBoards();
+
+  void setHighPwmBoard(uint8_t boardIndex, bool isHigh);
+  bool getHighPwmBoard(uint8_t boardIndex);
 };
 
 #endif // STATE_MANAGER_H

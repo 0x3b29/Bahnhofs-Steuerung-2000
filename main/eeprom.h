@@ -18,6 +18,7 @@
 #define MEM_SLOT_ONE_BASED_ADDRESSES 9
 #define MEM_SLOT_COMPACT_DISPLAY 10
 #define MEM_SLOT_RUNNING_LIGHTS 11
+#define MEM_SLOT_HIGH_PWM 12
 
 // Memory Slots for each channel
 #define MEM_SLOT_OUTPUT_VALUE1 30
@@ -53,15 +54,18 @@ void readFromEeprom(uint16_t readAddress, uint8_t *data, uint8_t length);
 void writeToEeprom(uint16_t writeAddress, uint8_t *data, uint8_t length);
 void writeToEepromBuffer(uint16_t writeAddress, uint8_t *data, uint8_t length);
 void writeBoolToEepromBuffer(uint16_t writeAddress, bool value);
+void writeUInt8ToEepromBuffer(uint16_t writeAddress, uint8_t value);
 void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value);
 
 bool readBoolFromEepromBuffer(uint16_t readAddress);
 void readFromEepromBuffer(uint16_t readAddress, uint8_t *data, uint8_t length);
 uint16_t readUInt16FromEepromBuffer(uint16_t readAddress);
+uint8_t readUInt8FromEepromBuffer(uint16_t readAddress);
 void readChannelNameFromEepromBufferToChannelNameBuffer(int channel);
 
 void writeChannelNameFromChannelNameBufferToEepromBuffer(int channel);
-void writeUint8tToEepromBuffer(int channel, int memorySlot, uint8_t value);
+void writeUint8tForChannelToEepromBuffer(int channel, int memorySlot,
+                                         uint8_t value);
 void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
                                           uint16_t outputValue1);
 

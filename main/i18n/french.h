@@ -11,6 +11,8 @@
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Liaisons Actives"
 #define I18N_OPTIONS_CRAZY_BLINK "Clignotement Fou"
 #define I18N_OPTIONS_RUNNING_LIGHTS "Lumières en Mouvement"
+#define I18N_OPTIONS_SELECT_BOARDS_WITH_HIGH_PWM_FREQ                          \
+  "Sélectionne quelles cartes utilisent une fréquence PWM élevée"
 
 #define I18N_ACTIONS_EVEN "Pair"
 #define I18N_ACTIONS_ODD "Impair"

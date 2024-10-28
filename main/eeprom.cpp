@@ -44,6 +44,10 @@ void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value) {
   writeToEepromBuffer(writeAddress, data, 2);
 }
 
+void writeUInt8ToEepromBuffer(uint16_t writeAddress, uint8_t value) {
+  writeToEepromBuffer(writeAddress, &value, 1);
+}
+
 void writeBoolToEepromBuffer(uint16_t writeAddress, bool value) {
   uint8_t uint8tValue = 0;
 
@@ -80,6 +84,10 @@ uint16_t readUInt16FromEepromBuffer(uint16_t readAddress) {
   return value;
 }
 
+uint8_t readUInt8FromEepromBuffer(uint16_t readAddress) {
+  return m_eepromBuffer[readAddress];
+}
+
 void readChannelNameFromEepromBufferToChannelNameBuffer(int channel) {
   uint16_t startAddress = (channel + 1) * 64;
   readFromEepromBuffer(startAddress, (uint8_t *)m_channelNameBuffer,
@@ -93,7 +101,8 @@ void writeChannelNameFromChannelNameBufferToEepromBuffer(int channel) {
                       MAX_CHANNEL_NAME_LENGTH);
 }
 
-void writeUint8tToEepromBuffer(int channel, int memorySlot, uint8_t value) {
+void writeUint8tForChannelToEepromBuffer(int channel, int memorySlot,
+                                         uint8_t value) {
   uint16_t startAddress = (channel + 1) * 64 + memorySlot;
   writeToEepromBuffer(startAddress, &value, 1);
 }

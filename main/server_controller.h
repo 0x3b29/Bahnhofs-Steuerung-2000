@@ -37,6 +37,7 @@ private:
   void updateNumberOfChannels();
   void toggleShowOptions();
   void toggleShowActions();
+  void toggleHighPwmBoard();
   void setAllChannels();
 
   void prepareRenderChannels(WiFiClient client);

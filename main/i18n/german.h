@@ -11,6 +11,8 @@
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Verknüpfungen aktiv"
 #define I18N_OPTIONS_CRAZY_BLINK "Verrücktes Blinken"
 #define I18N_OPTIONS_RUNNING_LIGHTS "Lauf Licht"
+#define I18N_OPTIONS_SELECT_BOARDS_WITH_HIGH_PWM_FREQ                          \
+  "Wähle aus welche Platinen die hohe PWM Frequenz nutzen"
 
 #define I18N_ACTIONS_EVEN "Gerade"
 #define I18N_ACTIONS_ODD "Ungerade"
@@ -42,7 +44,7 @@
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Wert 2 zufällig setzen"
 
 #define I18N_CHANNEL_CHANNEL "Kanal"
-#define I18N_CHANNEL_BOARD "Board"
+#define I18N_CHANNEL_BOARD "Platine"
 #define I18N_CHANNEL_PIN "Pin"
 #define I18N_CHANNEL_DESCRIPTION "Beschreibung"
 #define I18N_CHANNEL_START_STATE "Startzustand"

@@ -45,11 +45,18 @@ function sendValue(key, value, reloadAfterRequest) {
 )html");
 
   pn(client, R"html(
-function sendCheckbox(checkbox, reloadAfterRequest) {
+function sendCheckbox(checkbox, reloadAfterRequest, additionalData) {
   var dataString =
     encodeURIComponent(checkbox.name) +
     "=" +
     encodeURIComponent(checkbox.checked ? 1 : 0);
+
+  if (additionalData !== undefined && additionalData !== null && additionalData !== "") {
+    dataString += "&" + 
+    encodeURIComponent("additionalData") +
+    "=" +
+    encodeURIComponent(additionalData);
+  }
 
   if (checkbox.id === "toggleShowOptions") {
     var optionsDiv = document.getElementById("options");

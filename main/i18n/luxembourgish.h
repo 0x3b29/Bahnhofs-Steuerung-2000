@@ -11,6 +11,8 @@
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Verbindungen aktiv"
 #define I18N_OPTIONS_CRAZY_BLINK "Verréckt Blénken"
 #define I18N_OPTIONS_RUNNING_LIGHTS "Laaf-Liichter"
+#define I18N_OPTIONS_SELECT_BOARDS_WITH_HIGH_PWM_FREQ                          \
+  "Wiel aus weieng Platinnen eng héich PWM Frequenz benotzen"
 
 #define I18N_ACTIONS_EVEN "Gerued"
 #define I18N_ACTIONS_ODD "Ongerued"

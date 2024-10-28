@@ -10,20 +10,61 @@ ChannelController::ChannelController(StateManager *stateManager)
 
 Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
-void ChannelController ::initializePwmBoards() {
+void ChannelController::initializePwmBoards() {
   for (int i = 0; i < PWM_BOARDS; i++) {
     int pwmAddress = 0x40 + i;
 
     m_pwmBoards[i] = Adafruit_PWMServoDriver(pwmAddress);
     m_pwmBoards[i].begin();
     m_pwmBoards[i].setOscillatorFrequency(27000000);
-    m_pwmBoards[i].setPWMFreq(PWM_REFRESH_RATE);
+
+    bool isBoardHighPwm = m_stateManager->getHighPwmBoard(i);
+
+    if (isBoardHighPwm) {
+      m_pwmBoards[i].setPWMFreq(PWM_HIGH_REFRESH_RATE);
+    } else {
+      m_pwmBoards[i].setPWMFreq(PWM_LOW_REFRESH_RATE);
+    }
 
     Serial.print("PWM Board ");
     Serial.print(i);
     Serial.print(" initialized with address ");
-    Serial.println(pwmAddress);
+    Serial.print(pwmAddress);
+    Serial.print(" and ");
+
+    if (isBoardHighPwm) {
+      Serial.print("high ");
+    } else {
+      Serial.print("low ");
+    }
+
+    Serial.println("pwm frequency");
   }
+}
+
+void ChannelController::updatePwmBoard(int boardIndex) {
+  int pwmAddress = 0x40 + boardIndex;
+  bool isBoardHighPwm = m_stateManager->getHighPwmBoard(boardIndex);
+
+  if (isBoardHighPwm) {
+    m_pwmBoards[boardIndex].setPWMFreq(PWM_HIGH_REFRESH_RATE);
+  } else {
+    m_pwmBoards[boardIndex].setPWMFreq(PWM_LOW_REFRESH_RATE);
+  }
+
+  Serial.print("PWM Board ");
+  Serial.print(boardIndex);
+  Serial.print(" with address ");
+  Serial.print(pwmAddress);
+  Serial.print(" updated using ");
+
+  if (isBoardHighPwm) {
+    Serial.print("high ");
+  } else {
+    Serial.print("low ");
+  }
+
+  Serial.println("pwm frequency");
 }
 
 bool ChannelController::getFoundRecursion() { return this->m_foundRecursion; }

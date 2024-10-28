@@ -20,6 +20,8 @@ void StateManager::loadStateFromEepromBuffer() {
   m_toggleShowOptions = readBoolFromEepromBuffer(MEM_SLOT_SHOW_OPTIONS);
   m_toggleShowActions = readBoolFromEepromBuffer(MEM_SLOT_SHOW_ACTIONS);
   m_toggleRunningLights = readBoolFromEepromBuffer(MEM_SLOT_RUNNING_LIGHTS);
+
+  m_highPwmBoards = readUInt16FromEepromBuffer(MEM_SLOT_HIGH_PWM);
 }
 
 void StateManager::setNumChannels(uint16_t numChannels) {
@@ -104,3 +106,36 @@ void StateManager::setChannelIdToEdit(uint16_t channelIdToEdit) {
 }
 
 uint16_t StateManager::getChannelIdToEdit() { return m_channelIdToEdit; }
+
+void StateManager::setHighPwmBoards(uint16_t highPwmBoards) {
+  m_highPwmBoards = highPwmBoards;
+}
+
+uint16_t StateManager::getHighPwmBoards() { return m_highPwmBoards; }
+
+void StateManager::setHighPwmBoard(uint8_t boardIndex, bool isHigh) {
+  if (boardIndex > 15) {
+    Serial.println("Bad board index, must be smaller than 8");
+    return;
+  }
+
+  // Calculate the value to change only the specific bit we want
+  uint16_t mask = 1 << boardIndex;
+
+  // If we want to set the bit (make it 1)
+  if (isHigh) {
+    m_highPwmBoards = m_highPwmBoards | mask;
+  }
+  // If we want to clear the bit (make it 0)
+  else {
+    m_highPwmBoards = m_highPwmBoards & ~mask;
+  }
+}
+
+bool StateManager::getHighPwmBoard(uint8_t boardIndex) {
+  // Calculate the value to check only the specific bit we want
+  uint16_t mask = 1 << boardIndex;
+
+  // Return true if the bit is set (1), or false if it is clear (0)
+  return (m_highPwmBoards & mask) != 0;
+}

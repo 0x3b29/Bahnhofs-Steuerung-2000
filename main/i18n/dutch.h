@@ -11,6 +11,8 @@
 #define I18N_OPTIONS_PROPAGATE_EVENTS "Koppelingen Actief"
 #define I18N_OPTIONS_CRAZY_BLINK "Geknipper"
 #define I18N_OPTIONS_RUNNING_LIGHTS "Lopende Lichtjes"
+#define I18N_OPTIONS_SELECT_BOARDS_WITH_HIGH_PWM_FREQ                          \
+  "Selecteer welke borden een hoge PWM-frequentie gebruiken"
 
 #define I18N_ACTIONS_EVEN "Even"
 #define I18N_ACTIONS_ODD "Oneven"

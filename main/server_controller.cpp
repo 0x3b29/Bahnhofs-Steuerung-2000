@@ -80,7 +80,7 @@ void ServerController::updateBoolIfFound(uint16_t channelId, const char *buffer,
 
   if (foundKey) {
     uint8_t boolAsUint8t = atoi(boolBuffer);
-    writeUint8tToEepromBuffer(channelId, memorySlot, boolAsUint8t);
+    writeUint8tForChannelToEepromBuffer(channelId, memorySlot, boolAsUint8t);
   }
 }
 
@@ -92,7 +92,7 @@ void ServerController::updateUint8tIfFound(uint16_t channelId,
 
   if (foundKey) {
     uint8_t uint8tValue = atoi(uint8tBuffer);
-    writeUint8tToEepromBuffer(channelId, memorySlot, uint8tValue);
+    writeUint8tForChannelToEepromBuffer(channelId, memorySlot, uint8tValue);
   }
 }
 
@@ -381,6 +381,23 @@ void ServerController::toggleShowActions() {
   writePageFromBufferToEeprom(0);
 }
 
+void ServerController::toggleHighPwmBoard() {
+  char toggleHighPwmBoardIdCharArray[3] = "0";
+  getValueFromData(m_requestBuffer,
+                   "additionalData=", toggleHighPwmBoardIdCharArray, 3);
+  uint8_t toggleHighPwmBoardId = atoi(toggleHighPwmBoardIdCharArray);
+  bool isBoardHigh = m_stateManager->getHighPwmBoard(toggleHighPwmBoardId);
+  m_stateManager->setHighPwmBoard(toggleHighPwmBoardId, !isBoardHigh);
+
+  uint16_t allHighPwmBoards = m_stateManager->getHighPwmBoards();
+  writeUInt16ToEepromBuffer(MEM_SLOT_HIGH_PWM, allHighPwmBoards);
+
+  writePageIntegrity(0);
+  writePageFromBufferToEeprom(0);
+
+  m_channelController->updatePwmBoard(toggleHighPwmBoardId);
+}
+
 void ServerController::setAllChannels() {
   char channelOutputValue1Buffer[5] = "0";
   getValueFromData(m_requestBuffer,
@@ -472,6 +489,10 @@ void ServerController::processPostRequest(WiFiClient client) {
 
   if (isKeyInData(m_requestBuffer, "toggleShowActions")) {
     toggleShowActions();
+  }
+
+  if (isKeyInData(m_requestBuffer, "toggleHighPwmBoard")) {
+    toggleHighPwmBoard();
   }
 
   if (m_channelController->getFoundRecursion()) {
