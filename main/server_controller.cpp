@@ -314,15 +314,6 @@ void ServerController::togglePropagateEvents() {
 }
 
 void ServerController::updateNumberOfChannels() {
-  char clearEepromBuffer[10] = "";
-  getValueFromData(m_requestBuffer, "clearEeprom=", clearEepromBuffer, 10);
-
-  // TODO: move reset2024 to secrets file
-  if (strcmp(clearEepromBuffer, "reset2024") == 0) {
-    Serial.println("Clearing Eeprom!!!");
-    clearEeprom();
-  }
-
   uint16_t oldNumChannels = m_stateManager->getNumChannels();
 
   char numChannelsBuffer[4] = "0";

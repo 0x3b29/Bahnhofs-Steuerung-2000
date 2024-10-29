@@ -284,11 +284,6 @@ void Renderer::renderOptions(WiFiClient client) {
     </label>
   </div>
   <!-- /Enable running lights -->
-
-  <!-- This hidden field is meant to provide an 'easy' access to reset the // eeprom
-  from the web interface -->
-  <input type="hidden" name="clearEeprom" value="0" />
-
 )html",
            toggleRunningLightsCheckedBuffer, I18N_OPTIONS_RUNNING_LIGHTS);
 
