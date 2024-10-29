@@ -48,7 +48,7 @@
 #define I18N_CHANNEL_START_STATE "Ufankszoustand"
 #define I18N_CHANNEL_BRIGHTNESS "Hellegkeet"
 #define I18N_CHANNEL_RANDOMLY_ON "Zoufälleg Un"
-#define I18N_CHANNEL_RANDOM_FREQ "~ Un/Aus pro Stonn"
+#define I18N_CHANNEL_RANDOM_ON_FREQ "~ Un/Aus pro Stonn"
 #define I18N_CHANNEL_RANDOMLY_OFF "Zoufälleg Aus"
 #define I18N_CHANNEL_LINKED "Verbonnen"
 #define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Gesteiert vu Kanal"
@@ -57,6 +57,8 @@
 #define I18N_CHANNEL_OFF "Aus"
 #define I18N_CHANNEL_YES "Jo"
 #define I18N_CHANNEL_NO "Nee"
+
+#define I18N_CHANNEL_RANGE "Beräich (Wäert 1 - Wäert 2)"
 
 #define I18N_HEADING_OPTIONS "Optiounen"
 #define I18N_HEADING_ACTIONS "Aktiounen"

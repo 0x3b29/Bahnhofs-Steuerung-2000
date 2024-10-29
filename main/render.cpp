@@ -278,7 +278,16 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
           renderHorizontalRule = false;
         }
 
-        renderChannelDetail(client, channelId, renderHorizontalRule);
+        bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
+            channelId, MEM_SLOT_USES_OUTPUT_VALUE2);
+
+        if (toggleUseCustomRange) {
+          renderChannelDetailWithCustomRange(client, channelId,
+                                             renderHorizontalRule);
+        } else {
+          renderChannelDetailWithSimpleRange(client, channelId,
+                                             renderHorizontalRule);
+        }
       }
     }
     pn(client, "</div>");

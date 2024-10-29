@@ -48,7 +48,7 @@
 #define I18N_CHANNEL_START_STATE "Initiële Staat"
 #define I18N_CHANNEL_BRIGHTNESS "Helderheid"
 #define I18N_CHANNEL_RANDOMLY_ON "Willekeurig Aanzetten"
-#define I18N_CHANNEL_RANDOM_FREQ "~ Gebeurtenissen/uur"
+#define I18N_CHANNEL_RANDOM_ON_FREQ "~ Gebeurtenissen/uur"
 #define I18N_CHANNEL_RANDOMLY_OFF "Willekeurig Uitzetten"
 #define I18N_CHANNEL_LINKED "Gekoppeld"
 #define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Gecontroleerd door Kanaal"
@@ -57,6 +57,8 @@
 #define I18N_CHANNEL_OFF "Uit"
 #define I18N_CHANNEL_YES "Ja"
 #define I18N_CHANNEL_NO "Nee"
+
+#define I18N_CHANNEL_RANGE "Bereik (Waarde 1 - Waarde 2)"
 
 #define I18N_HEADING_OPTIONS "Opties"
 #define I18N_HEADING_ACTIONS "Acties"

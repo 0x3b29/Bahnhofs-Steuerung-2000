@@ -48,7 +48,7 @@
 #define I18N_CHANNEL_START_STATE "Initial State"
 #define I18N_CHANNEL_BRIGHTNESS "Brightness"
 #define I18N_CHANNEL_RANDOMLY_ON "Randomly Turn On"
-#define I18N_CHANNEL_RANDOM_FREQ "~ Events/h"
+#define I18N_CHANNEL_RANDOM_ON_FREQ "~ Events/h"
 #define I18N_CHANNEL_RANDOMLY_OFF "Randomly Turn Off"
 #define I18N_CHANNEL_LINKED "Linked"
 #define I18N_CHANNEL_COMMANDED_BY_CHANNEL "Controlled by Channel"
@@ -57,6 +57,8 @@
 #define I18N_CHANNEL_OFF "Off"
 #define I18N_CHANNEL_YES "Yes"
 #define I18N_CHANNEL_NO "No"
+
+#define I18N_CHANNEL_RANGE "Range (Value 1 - Value 2)"
 
 #define I18N_HEADING_OPTIONS "Options"
 #define I18N_HEADING_ACTIONS "Actions"
