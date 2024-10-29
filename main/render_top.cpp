@@ -21,7 +21,7 @@ void Renderer::renderActionsHeading(WiFiClient client) {
       name="toggleShowActions"
       value="1"
       id="toggleShowActions"
-      onchange="sendCheckbox(this, false)"
+      onchange="sendCheckbox(this, false); alignActionsAndOptionsHeadings();"
       %s
     />
   </div>
@@ -45,7 +45,7 @@ void Renderer::renderOptionsHeading(WiFiClient client) {
 
   snprintf(outputBuffer, sizeof(outputBuffer),
            R"html(
-<div class="d-flex align-items-center %s">
+<div class="d-flex align-items-center %s me-3">
   <div id="options-heading" class="h3">%s</div>
   <div class="form-check form-switch ms-2 ">
     <input
@@ -54,7 +54,7 @@ void Renderer::renderOptionsHeading(WiFiClient client) {
       name="toggleShowOptions"
       value="1"
       id="toggleShowOptions"
-      onchange="sendCheckbox(this, false)"
+      onchange="sendCheckbox(this, false); alignActionsAndOptionsHeadings();"
       %s
     />
   </div>
@@ -307,7 +307,7 @@ void Renderer::renderOptions(WiFiClient client) {
   %s
 </div>
 
-<div class="pb-3">
+<div>
   
   )html",
                I18N_OPTIONS_SELECT_BOARDS_WITH_HIGH_PWM_FREQ);

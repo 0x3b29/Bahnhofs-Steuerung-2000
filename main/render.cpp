@@ -42,6 +42,19 @@ function sendValue(key, value, reloadAfterRequest) {
     }
   });
 }
+
+function alignActionsAndOptionsHeadings() {
+  const optionsCheckbox = document.getElementById('toggleShowOptions');
+  const actionsCheckbox = document.getElementById('toggleShowActions');
+  const optionsAndActionsDiv = document.getElementById('optionsAndActions');
+
+  if (optionsCheckbox.checked || actionsCheckbox.checked) {
+    optionsAndActionsDiv.classList.remove('d-flex');
+  } else {
+    optionsAndActionsDiv.classList.add('d-flex');
+  }
+}
+
 )html");
 
   pn(client, R"html(
@@ -235,10 +248,22 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
 
     renderEditSaveAndDiscardButtons(client);
   } else {
+    // In case actions or options is open, we render the outer divs classes
+    // accordingly Afterwords, these classes are then adjusted through the
+    // javascript function 'alignActionsAndOptionsHeadings();'
+    if (m_stateManager->getToggleShowActions() ||
+        m_stateManager->getToggleShowOptions()) {
+      pn(client, "<div id='optionsAndActions' class='mb-3'>");
+    } else {
+      pn(client, "<div id='optionsAndActions' class='d-flex mb-3'>");
+    }
+
     renderOptionsHeading(client);
     renderOptions(client);
     renderActionsHeading(client);
     renderActions(client);
+
+    pn(client, "</div>");
 
     pn(client, "<div>");
     if (toggleCompactDisplay) {
