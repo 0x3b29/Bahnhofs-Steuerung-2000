@@ -16,7 +16,7 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
   bool initialState = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_START_OUTPUT_VALUE1);
+      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
 
   bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
 
@@ -301,7 +301,7 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
   uint8_t value2AsPercentage = (int)(((float)value2 / 4095) * 100);
 
   bool isInitialStateValue1 = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_START_OUTPUT_VALUE1);
+      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
 
   bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
 
@@ -761,7 +761,7 @@ uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
   }
 
   bool isInitialStateValue1IsValue1 = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_START_OUTPUT_VALUE1);
+      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
 
   uint16_t startValue;
 

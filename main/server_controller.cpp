@@ -61,7 +61,7 @@ void ServerController::toggleOneBasedAddresses() {
 }
 
 void ServerController::setCustomValue() {
-  // User changed brightness on edit channel form
+  // User changed value via a slider
   getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
@@ -70,7 +70,31 @@ void ServerController::setCustomValue() {
                    "customValue=", channelOutputCustomValueBuffer, 5);
   uint16_t customValue = atoi(channelOutputCustomValueBuffer);
 
-  m_channelController->setChannelPwmValue(channelIdAsNumber, customValue);
+  char propagateValueBuffer[2] = "0";
+  getValueFromData(m_requestBuffer, "propagateValue=", propagateValueBuffer, 2);
+  bool propagateValue = atoi(propagateValueBuffer);
+
+  if (propagateValue) {
+    uint16_t value1 = readUint16tForChannelFromEepromBuffer(
+        channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE1);
+
+    uint16_t value2 = readUint16tForChannelFromEepromBuffer(
+        channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE2);
+
+    // Avoid division by zero by checking if value1 and value2 are the same
+    if (value1 == value2) {
+      sn("Warning: Value1 should never be value2");
+      return;
+    }
+
+    // Calculate percentage of customValue in reference to value1 and value2
+    float percentage = mapf(customValue, value1, value2, 100, 0);
+
+    m_channelController->applyAndPropagateValue(channelIdAsNumber, customValue,
+                                                percentage);
+  } else {
+    m_channelController->setChannelPwmValue(channelIdAsNumber, customValue);
+  }
 }
 
 void ServerController::updateBoolIfFound(uint16_t channelId, const char *buffer,
@@ -131,7 +155,7 @@ void ServerController::updateChannel() {
                        "outputValue1=", MEM_SLOT_OUTPUT_VALUE1);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
-                    "initialState=", MEM_SLOT_START_OUTPUT_VALUE1);
+                    "initialState=", MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
                     "randomOn=", MEM_SLOT_RANDOM_ON);
@@ -174,14 +198,29 @@ void ServerController::updateChannel() {
   writeUint16tForChannelToEepromBuffer(
       channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
 
-  char outputValue1Buffer[7] = "0";
-  bool foundKey =
-      getValueFromData(m_requestBuffer, "outputValue1=", outputValue1Buffer, 7);
+  char isInitialStateOutputValue1Buffer[2] = {0};
+  bool isInitialStateOutputValue1 = getValueFromData(
+      m_requestBuffer, "outputValue1=", isInitialStateOutputValue1Buffer, 2);
 
-  if (foundKey) {
+  if (isInitialStateOutputValue1) {
+    char outputValue1Buffer[7] = {0};
+    getValueFromData(m_requestBuffer, "outputValue1=", outputValue1Buffer, 7);
     uint16_t outputValue1 = atoi(outputValue1Buffer);
+
     m_channelController->applyAndPropagateValue(channelIdAsNumber, outputValue1,
-                                                true);
+                                                100);
+  } else {
+    char outputValue2Buffer[7] = {0};
+    bool foundOutputValue2 = getValueFromData(
+        m_requestBuffer, "outputValue1=", outputValue2Buffer, 7);
+    uint16_t outputValue2 = 0;
+
+    if (foundOutputValue2) {
+      outputValue2 = atoi(outputValue2Buffer);
+    }
+
+    m_channelController->applyAndPropagateValue(channelIdAsNumber, outputValue2,
+                                                100);
   }
 
   writePageIntegrity(channelIdAsNumber + 1);
@@ -221,8 +260,7 @@ void ServerController::setChannelToValue2() {
                                                    MEM_SLOT_OUTPUT_VALUE2);
   }
 
-  m_channelController->applyAndPropagateValue(setChannelToValue2Id, value2,
-                                              false);
+  m_channelController->applyAndPropagateValue(setChannelToValue2Id, value2, 0);
 }
 
 void ServerController::setChannelToValue1() {
@@ -236,7 +274,7 @@ void ServerController::setChannelToValue1() {
       setChannelToValue1Id, MEM_SLOT_OUTPUT_VALUE1);
 
   m_channelController->applyAndPropagateValue(setChannelToValue1Id, pwmValue,
-                                              true);
+                                              100);
 }
 
 void ServerController::toggleForceAllOff() {

@@ -121,6 +121,7 @@ function onBrightnessValueChanged(value, channelId) {
 
   var dataString =
     "setCustomValue=1" +
+    "&propagateValue=1" +
     "&customValue=" +
     encodeURIComponent(value) +
     "&channelId=" +

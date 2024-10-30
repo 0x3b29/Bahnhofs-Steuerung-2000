@@ -19,3 +19,7 @@ uint8_t getBoardAddressForChannel(uint16_t channel) {
 }
 
 uint8_t getBoardSubAddressForChannel(uint16_t channel) { return channel % 16; }
+
+float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}

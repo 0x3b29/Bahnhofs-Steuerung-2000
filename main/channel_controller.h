@@ -25,9 +25,9 @@ public:
   void resetRecursionFlag();
 
   void setChannelPwmValue(int channel, uint16_t pwmValue);
-  void commandLinkedChannel(uint16_t commandingChannelId, bool wasValue1,
+  void commandLinkedChannel(uint16_t commandingChannelId, float percentage,
                             int depth, int maxDepth);
-  void applyAndPropagateValue(int channel, uint16_t pwmValue, bool wasValue1);
+  void applyAndPropagateValue(int channel, uint16_t pwmValue, float percentage);
   void applyInitialState();
   void setAllChannels(uint8_t percentage);
   void turnEvenChannelsOn();

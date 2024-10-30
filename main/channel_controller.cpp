@@ -110,7 +110,7 @@ void ChannelController::setChannelPwmValue(int channel, uint16_t pwmValue) {
 }
 
 void ChannelController::applyAndPropagateValue(int channel, uint16_t pwmValue,
-                                               bool wasValue1) {
+                                               float percentage) {
   setChannelPwmValue(channel, pwmValue);
 
   if (m_stateManager->getTogglePropagateEvents() &&
@@ -118,12 +118,12 @@ void ChannelController::applyAndPropagateValue(int channel, uint16_t pwmValue,
       !m_stateManager->getToggleForceAllOn() &&
       !m_stateManager->getToggleRandomChaos()) {
 
-    commandLinkedChannel(channel, wasValue1, 0, 5);
+    commandLinkedChannel(channel, percentage, 0, 5);
   }
 }
 
 void ChannelController::commandLinkedChannel(uint16_t commandingChannelId,
-                                             bool wasValue1, int depth,
+                                             float percentage, int depth,
                                              int maxDepth) {
 
   if (depth > maxDepth) {
@@ -142,30 +142,33 @@ void ChannelController::commandLinkedChannel(uint16_t commandingChannelId,
     bool isChannelLinked =
         readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
 
-    if (isChannelLinked == true) {
-      uint16_t linkedChannelId =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
-
-      if (linkedChannelId == commandingChannelId) {
-        uint16_t pwmValue = 0;
-
-        if (wasValue1) {
-          pwmValue =
-              readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
-        } else {
-          bool useOutputValue2 = readBoolForChannelFromEepromBuffer(
-              i, MEM_SLOT_USES_OUTPUT_VALUE2);
-
-          if (useOutputValue2) {
-            pwmValue = readUint16tForChannelFromEepromBuffer(
-                i, MEM_SLOT_OUTPUT_VALUE2);
-          }
-        }
-
-        setChannelPwmValue(i, pwmValue);
-        commandLinkedChannel(i, wasValue1, depth + 1, maxDepth);
-      }
+    if (isChannelLinked == false) {
+      continue;
     }
+
+    uint16_t linkedChannelId =
+        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
+
+    if (linkedChannelId != commandingChannelId) {
+      continue;
+    }
+
+    uint16_t value1 =
+        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+
+    uint16_t value2 = 0;
+
+    bool useOutputValue2 =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
+
+    if (useOutputValue2) {
+      value2 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+    }
+
+    uint16_t pwmValue = (int)mapf(percentage, 0, 100, value2, value1);
+
+    setChannelPwmValue(i, pwmValue);
+    commandLinkedChannel(i, percentage, depth + 1, maxDepth);
   }
 }
 
@@ -174,8 +177,8 @@ void ChannelController::applyInitialState() {
 
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
-    bool isInitialStateValue1 =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_START_OUTPUT_VALUE1);
+    bool isInitialStateValue1 = readBoolForChannelFromEepromBuffer(
+        i, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
 
     uint16_t pwmValue = 0;
 
@@ -187,7 +190,7 @@ void ChannelController::applyInitialState() {
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
     }
 
-    applyAndPropagateValue(i, pwmValue, isInitialStateValue1);
+    applyAndPropagateValue(i, pwmValue, isInitialStateValue1 ? 100 : 0);
   }
 }
 
@@ -319,7 +322,7 @@ void ChannelController::calculateRandomEvents() {
       uint16_t outputValue1 =
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
 
-      applyAndPropagateValue(i, outputValue1, true);
+      applyAndPropagateValue(i, outputValue1, 100);
     } else if (randomOff & turnOff) {
       st("Got random off/value2 event for channel ");
       st(i);
@@ -336,7 +339,7 @@ void ChannelController::calculateRandomEvents() {
             readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
       }
 
-      applyAndPropagateValue(i, outputValue2, false);
+      applyAndPropagateValue(i, outputValue2, 0);
     }
   }
 }

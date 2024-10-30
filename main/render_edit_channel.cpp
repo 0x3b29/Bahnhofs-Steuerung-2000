@@ -19,6 +19,7 @@ void Renderer::renderEditNormalChannelJavascript(WiFiClient client) {
 
     var dataString =
       "setCustomValue=1" +
+      "&propagateValue=0" +
       "&customValue=" +
       encodeURIComponent(value) +
       "&channelId=" +
@@ -80,6 +81,7 @@ void Renderer::renderEditCustomChannelJavascript(WiFiClient client) {
 
     var dataString =
       "setCustomValue=1" +
+      "&propagateValue=0" +
       "&customValue=" +
       encodeURIComponent(value) +
       "&channelId=" +
@@ -223,7 +225,7 @@ void Renderer::renderEditInitialState(WiFiClient client,
                                       uint16_t channelIdToEdit,
                                       bool useCustomRange) {
   bool initialState = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_START_OUTPUT_VALUE1);
+      channelIdToEdit, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
 
   char *toggleInitialStateCheckedBuffer =
       initialState ? m_checkedBuffer : m_emptyBuffer;
@@ -570,7 +572,7 @@ void Renderer::renderEditNormalChannel(WiFiClient client) {
       max="4095"
       name="outputValue1"
       value="%d"
-      onchange="onBrightnessValueChanged(this.value, %d)"
+      onchange="onBrightnessValueChanged(Math.abs(this.value), %d)"
     />
   </div>
 </div>
@@ -599,7 +601,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       channelIdToEdit, MEM_SLOT_OUTPUT_VALUE2);
 
   bool initialState = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_START_OUTPUT_VALUE1);
+      channelIdToEdit, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
 
   char *toggleInitialStateCheckedBuffer =
       initialState ? m_checkedBuffer : m_emptyBuffer;
@@ -658,7 +660,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       max="4095"
       name="outputValue1"
       value="%d"
-      onchange="onBrightnessValueChanged(this.value, %d, rangeAsPercentageValue1, 'value1')"
+      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValue1, 'value1')"
     />
   </div>
 </div>
@@ -682,7 +684,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       max="4095"
       name="outputValue2"
       value="%d"
-      onchange="onBrightnessValueChanged(this.value, %d, rangeAsPercentageValue2, 'value2')"
+      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValue2, 'value2')"
     />
   </div>
 </div>
@@ -707,7 +709,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       max="%d"
       name="rangeTestSlider"
       value="%d"
-      onchange="onBrightnessValueChanged(this.value, %d, rangeAsPercentageValue3, 'test')"
+      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValue3, 'test')"
     />
   </div>
 </div>
