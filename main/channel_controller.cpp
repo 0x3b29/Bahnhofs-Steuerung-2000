@@ -296,13 +296,6 @@ void ChannelController::calculateRandomEvents() {
     bool randomOn = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_ON);
     bool randomOff = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_RANDOM_OFF);
 
-    /*
-    bool isLinked = readBoolForChannelFromEepromBuffer(i, MEM_SLOT_IS_LINKED);
-
-    uint16_t linkedChannel =
-        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_LINKED_CHANNEL);
-    */
-
     // No need for further checks if channel has no random events
     if (!randomOn && !randomOff) {
       continue;
@@ -318,42 +311,32 @@ void ChannelController::calculateRandomEvents() {
     bool turnOff = shouldInvokeEvent(randomOffFreq);
 
     if (randomOn & turnOn) {
-      st("Got random on event for channel ");
-      sn(i);
+      st("Got random on/value1 event for channel ");
+      st(i);
+      st(" at ");
+      sn(millis());
 
-      uint16_t brightness =
+      uint16_t outputValue1 =
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
 
-      applyAndPropagateValue(i, brightness, true);
-
-      /*
-      if (isLinked) {
-        uint16_t pwmValue = readUint16tForChannelFromEepromBuffer(
-            linkedChannel, MEM_SLOT_OUTPUT_VALUE1);
-
-        applyAndPropagateValue(linkedChannel, pwmValue, true);
-      }*/
+      applyAndPropagateValue(i, outputValue1, true);
     } else if (randomOff & turnOff) {
-      st("Got random off event for channel ");
-      sn(i);
+      st("Got random off/value2 event for channel ");
+      st(i);
+      st(" at ");
+      sn(millis());
 
-      uint16_t brightness = 0;
+      uint16_t outputValue2 = 0;
 
       bool useOutputValue2 =
           readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
 
       if (useOutputValue2) {
-        brightness =
-            readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+        outputValue2 =
+            readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
       }
 
-      applyAndPropagateValue(i, useOutputValue2, false);
-
-      /*
-      if (isLinked) {
-        applyAndPropagateValue(linkedChannel, 0);
-      }
-      */
+      applyAndPropagateValue(i, outputValue2, false);
     }
   }
 }
