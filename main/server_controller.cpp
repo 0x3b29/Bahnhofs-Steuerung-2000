@@ -60,17 +60,17 @@ void ServerController::toggleOneBasedAddresses() {
   writePageFromBufferToEeprom(0);
 }
 
-void ServerController::testBrightness() {
+void ServerController::setCustomValue() {
   // User changed brightness on edit channel form
   getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
-  char channelOutputValue1Buffer[5] = "0";
-  getValueFromData(m_requestBuffer, "outputValue1=", channelOutputValue1Buffer,
-                   5);
-  uint16_t outputValue1 = atoi(channelOutputValue1Buffer);
+  char channelOutputCustomValueBuffer[5] = "0";
+  getValueFromData(m_requestBuffer,
+                   "customValue=", channelOutputCustomValueBuffer, 5);
+  uint16_t customValue = atoi(channelOutputCustomValueBuffer);
 
-  m_channelController->setChannelPwmValue(channelIdAsNumber, outputValue1);
+  m_channelController->setChannelPwmValue(channelIdAsNumber, customValue);
 }
 
 void ServerController::updateBoolIfFound(uint16_t channelId, const char *buffer,
@@ -402,8 +402,8 @@ void ServerController::processPostRequest(WiFiClient client) {
     cancelChannelUpdate();
   }
 
-  if (isKeyInData(m_requestBuffer, "testBrightness")) {
-    testBrightness();
+  if (isKeyInData(m_requestBuffer, "setCustomValue")) {
+    setCustomValue();
   }
 
   if (isKeyInData(m_requestBuffer, "toggleOneBasedAddresses")) {

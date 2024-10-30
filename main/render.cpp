@@ -120,13 +120,10 @@ function onBrightnessValueChanged(value, channelId) {
   }
 
   var dataString =
-    "testBrightness=1&" +
-    encodeURIComponent("outputValue1") +
-    "=" +
+    "setCustomValue=1" +
+    "&customValue=" +
     encodeURIComponent(value) +
-    "&" +
-    encodeURIComponent("channelId") +
-    "=" +
+    "&channelId=" +
     encodeURIComponent(channelId);
   fetch("/", {
     method: "POST",

@@ -23,7 +23,7 @@ private:
 
   void cancelChannelUpdate();
   void toggleOneBasedAddresses();
-  void testBrightness();
+  void setCustomValue();
   void updateChannel();
   void toggleCompactDisplay();
   void setChannelToValue2();

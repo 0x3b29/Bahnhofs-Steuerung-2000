@@ -18,13 +18,10 @@ void Renderer::renderEditNormalChannelJavascript(WiFiClient client) {
     }
 
     var dataString =
-      "testBrightness=1&" +
-      encodeURIComponent("outputValue1") +
-      "=" +
+      "setCustomValue=1" +
+      "&customValue=" +
       encodeURIComponent(value) +
-      "&" +
-      encodeURIComponent("channelId") +
-      "=" +
+      "&channelId=" +
       encodeURIComponent(channelId);
     fetch("/", {
       method: "POST",
@@ -82,13 +79,10 @@ void Renderer::renderEditCustomChannelJavascript(WiFiClient client) {
     }
 
     var dataString =
-      "testBrightness=1&" +
-      encodeURIComponent("outputValue1") +
-      "=" +
-      encodeURIComponent(Math.abs(value)) +
-      "&" +
-      encodeURIComponent("channelId") +
-      "=" +
+      "setCustomValue=1" +
+      "&customValue=" +
+      encodeURIComponent(value) +
+      "&channelId=" +
       encodeURIComponent(channelId);
     fetch("/", {
       method: "POST",
