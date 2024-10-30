@@ -57,8 +57,6 @@ void Renderer::renderEditCustomChannelJavascript(WiFiClient client) {
   function onBrightnessValueChanged(value, channelId, display, usage) {
     var brightnessAsPercentage = Math.floor((Math.abs(value) / 4095) * 100);
 
-    // var percentDisplay = document.getElementById(display);
-
     if (usage === 'value2' || usage === 'value1') {
         const rangeTestSlider = document.querySelector('input[name="rangeTestSlider"]');
         const outputValue2 = parseInt(document.querySelector('input[name="outputValue2"]').value);
@@ -71,6 +69,10 @@ void Renderer::renderEditCustomChannelJavascript(WiFiClient client) {
           rangeTestSlider.min = -outputValue1;
           rangeTestSlider.max = -outputValue2;
         }
+
+        var percentDisplay = document.getElementById("rangeAsPercentageValueTest");
+        var testSliderAsPercentage = Math.floor((Math.abs(rangeTestSlider.value) / 4095) * 100);
+        percentDisplay.textContent = "(" + testSliderAsPercentage + "%)";
     }
 
     if (display) 
