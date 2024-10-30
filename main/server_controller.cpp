@@ -90,14 +90,6 @@ void ServerController::setCustomValue() {
     // Calculate percentage of customValue in reference to value2 and value1
     float percentage = mapf(customValue, value2, value1, 100, 0);
 
-    sn(value1);
-    sn(" ");
-    sn(value2);
-    sn(" ");
-    sn(customValue);
-    sn(" ");
-    sn(percentage);
-
     m_channelController->applyAndPropagateValue(channelIdAsNumber, customValue,
                                                 percentage);
   } else {
