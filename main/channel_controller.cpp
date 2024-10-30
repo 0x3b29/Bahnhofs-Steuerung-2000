@@ -206,17 +206,17 @@ void ChannelController::setAllChannels(uint8_t percentage) {
       uint16_t value2 =
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
 
-      // Ensure correct interpolation regardless of whether value2 is greater or
-      // smaller than value1
-      if (value1 < value2) {
-        pwmValue =
-            value1 + (uint16_t)((value2 - value1) * (percentage / 100.0));
-      } else {
-        pwmValue =
-            value1 - (uint16_t)((value1 - value2) * (percentage / 100.0));
-      }
+      // Here we map across the defined range. This is done to avoid damaging
+      // the servos or the driven object, which is usually not an issue for an
+      // LED
+      pwmValue = (int)mapf(percentage, 0, 100, value2, value1);
     } else {
+      // In case we use only one value, we do not map over the selected range
+      // (e.g. 0 to 60%) but over the full range (e.g. 0% to 100%)
+      // If this is not whats needed, the following lines can be exchanged
+
       pwmValue = (uint16_t)(((float)4095 / 100) * percentage);
+      // pwmValue = (int)mapf(percentage, 0, 100, 0, value1);
     }
 
     setChannelPwmValue(i, pwmValue);
