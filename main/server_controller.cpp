@@ -40,7 +40,7 @@ void ServerController::cancelChannelUpdate() {
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
   uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
-      channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE1);
+      channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE2);
 
   m_channelController->setChannelPwmValue(channelIdAsNumber,
                                           originalBrightness);
@@ -75,20 +75,28 @@ void ServerController::setCustomValue() {
   bool propagateValue = atoi(propagateValueBuffer);
 
   if (propagateValue) {
-    uint16_t value1 = readUint16tForChannelFromEepromBuffer(
-        channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE1);
-
     uint16_t value2 = readUint16tForChannelFromEepromBuffer(
         channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE2);
 
-    // Avoid division by zero by checking if value1 and value2 are the same
-    if (value1 == value2) {
-      sn("Warning: Value1 should never be value2");
+    uint16_t value1 = readUint16tForChannelFromEepromBuffer(
+        channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE1);
+
+    // Avoid division by zero by checking if value2 and value1 are the same
+    if (value2 == value1) {
+      sn("Warning: Value2 should never be value1");
       return;
     }
 
-    // Calculate percentage of customValue in reference to value1 and value2
-    float percentage = mapf(customValue, value1, value2, 100, 0);
+    // Calculate percentage of customValue in reference to value2 and value1
+    float percentage = mapf(customValue, value2, value1, 100, 0);
+
+    sn(value1);
+    sn(" ");
+    sn(value2);
+    sn(" ");
+    sn(customValue);
+    sn(" ");
+    sn(percentage);
 
     m_channelController->applyAndPropagateValue(channelIdAsNumber, customValue,
                                                 percentage);
@@ -152,10 +160,10 @@ void ServerController::updateChannel() {
   writeChannelNameFromChannelNameBufferToEepromBuffer(channelIdAsNumber);
 
   updateUint16tIfFound(channelIdAsNumber, m_requestBuffer,
-                       "outputValue1=", MEM_SLOT_OUTPUT_VALUE1);
+                       "outputValue2=", MEM_SLOT_OUTPUT_VALUE2);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
-                    "initialState=", MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
+                    "initialState=", MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
                     "randomOn=", MEM_SLOT_RANDOM_ON);
@@ -180,10 +188,10 @@ void ServerController::updateChannel() {
                     "showSlider=", MEM_SLOT_SHOW_SLIDER);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
-                    "useOutputValue2=", MEM_SLOT_USES_OUTPUT_VALUE2);
+                    "useOutputValue1=", MEM_SLOT_USES_OUTPUT_VALUE1);
 
   updateUint16tIfFound(channelIdAsNumber, m_requestBuffer,
-                       "outputValue2=", MEM_SLOT_OUTPUT_VALUE2);
+                       "outputValue1=", MEM_SLOT_OUTPUT_VALUE1);
 
   char linkedChannelIdBuffer[4] = "0";
   getValueFromData(m_requestBuffer, "linkedChannelId=", linkedChannelIdBuffer,
@@ -198,28 +206,28 @@ void ServerController::updateChannel() {
   writeUint16tForChannelToEepromBuffer(
       channelIdAsNumber, MEM_SLOT_LINKED_CHANNEL, linkedChannelId);
 
-  char isInitialStateOutputValue1Buffer[2] = {0};
-  bool isInitialStateOutputValue1 = getValueFromData(
-      m_requestBuffer, "outputValue1=", isInitialStateOutputValue1Buffer, 2);
+  char isInitialStateOutputValue2Buffer[2] = {0};
+  bool isInitialStateOutputValue2 = getValueFromData(
+      m_requestBuffer, "outputValue2=", isInitialStateOutputValue2Buffer, 2);
 
-  if (isInitialStateOutputValue1) {
-    char outputValue1Buffer[7] = {0};
-    getValueFromData(m_requestBuffer, "outputValue1=", outputValue1Buffer, 7);
-    uint16_t outputValue1 = atoi(outputValue1Buffer);
-
-    m_channelController->applyAndPropagateValue(channelIdAsNumber, outputValue1,
-                                                100);
-  } else {
+  if (isInitialStateOutputValue2) {
     char outputValue2Buffer[7] = {0};
-    bool foundOutputValue2 = getValueFromData(
-        m_requestBuffer, "outputValue1=", outputValue2Buffer, 7);
-    uint16_t outputValue2 = 0;
-
-    if (foundOutputValue2) {
-      outputValue2 = atoi(outputValue2Buffer);
-    }
+    getValueFromData(m_requestBuffer, "outputValue2=", outputValue2Buffer, 7);
+    uint16_t outputValue2 = atoi(outputValue2Buffer);
 
     m_channelController->applyAndPropagateValue(channelIdAsNumber, outputValue2,
+                                                100);
+  } else {
+    char outputValue1Buffer[7] = {0};
+    bool foundOutputValue1 = getValueFromData(
+        m_requestBuffer, "outputValue2=", outputValue1Buffer, 7);
+    uint16_t outputValue1 = 0;
+
+    if (foundOutputValue1) {
+      outputValue1 = atoi(outputValue1Buffer);
+    }
+
+    m_channelController->applyAndPropagateValue(channelIdAsNumber, outputValue1,
                                                 100);
   }
 
@@ -241,39 +249,39 @@ void ServerController::toggleCompactDisplay() {
   writePageFromBufferToEeprom(0);
 }
 
-void ServerController::setChannelToValue2() {
-  char setChannelToValue2IdBuffer[4];
-  uint16_t setChannelToValue2Id;
-
-  getValueFromData(m_requestBuffer,
-                   "setChannelToValue2=", setChannelToValue2IdBuffer, 4);
-
-  setChannelToValue2Id = atoi(setChannelToValue2IdBuffer);
-
-  bool useOutputValue2 = readBoolForChannelFromEepromBuffer(
-      setChannelToValue2Id, MEM_SLOT_USES_OUTPUT_VALUE2);
-
-  uint16_t value2;
-
-  if (useOutputValue2) {
-    value2 = readUint16tForChannelFromEepromBuffer(setChannelToValue2Id,
-                                                   MEM_SLOT_OUTPUT_VALUE2);
-  }
-
-  m_channelController->applyAndPropagateValue(setChannelToValue2Id, value2, 0);
-}
-
 void ServerController::setChannelToValue1() {
   char setChannelToValue1IdBuffer[4];
   uint16_t setChannelToValue1Id;
+
   getValueFromData(m_requestBuffer,
                    "setChannelToValue1=", setChannelToValue1IdBuffer, 4);
+
   setChannelToValue1Id = atoi(setChannelToValue1IdBuffer);
 
-  uint16_t pwmValue = readUint16tForChannelFromEepromBuffer(
-      setChannelToValue1Id, MEM_SLOT_OUTPUT_VALUE1);
+  bool useOutputValue1 = readBoolForChannelFromEepromBuffer(
+      setChannelToValue1Id, MEM_SLOT_USES_OUTPUT_VALUE1);
 
-  m_channelController->applyAndPropagateValue(setChannelToValue1Id, pwmValue,
+  uint16_t value1;
+
+  if (useOutputValue1) {
+    value1 = readUint16tForChannelFromEepromBuffer(setChannelToValue1Id,
+                                                   MEM_SLOT_OUTPUT_VALUE1);
+  }
+
+  m_channelController->applyAndPropagateValue(setChannelToValue1Id, value1, 0);
+}
+
+void ServerController::setChannelToValue2() {
+  char setChannelToValue2IdBuffer[4];
+  uint16_t setChannelToValue2Id;
+  getValueFromData(m_requestBuffer,
+                   "setChannelToValue2=", setChannelToValue2IdBuffer, 4);
+  setChannelToValue2Id = atoi(setChannelToValue2IdBuffer);
+
+  uint16_t pwmValue = readUint16tForChannelFromEepromBuffer(
+      setChannelToValue2Id, MEM_SLOT_OUTPUT_VALUE2);
+
+  m_channelController->applyAndPropagateValue(setChannelToValue2Id, pwmValue,
                                               100);
 }
 
@@ -428,11 +436,11 @@ void ServerController::toggleHighPwmBoard() {
 }
 
 void ServerController::setAllChannels() {
-  char channelOutputValue1Buffer[5] = "0";
+  char channelOutputValue2Buffer[5] = "0";
   getValueFromData(m_requestBuffer,
-                   "setAllChannels=", channelOutputValue1Buffer, 5);
-  uint16_t outputValue1 = atoi(channelOutputValue1Buffer);
-  m_channelController->setAllChannels(outputValue1);
+                   "setAllChannels=", channelOutputValue2Buffer, 5);
+  uint16_t outputValue2 = atoi(channelOutputValue2Buffer);
+  m_channelController->setAllChannels(outputValue2);
 }
 
 void ServerController::processPostRequest(WiFiClient client) {
@@ -452,12 +460,12 @@ void ServerController::processPostRequest(WiFiClient client) {
     toggleCompactDisplay();
   }
 
-  if (isKeyInData(m_requestBuffer, "setChannelToValue2")) {
-    setChannelToValue2();
-  }
-
   if (isKeyInData(m_requestBuffer, "setChannelToValue1")) {
     setChannelToValue1();
+  }
+
+  if (isKeyInData(m_requestBuffer, "setChannelToValue2")) {
+    setChannelToValue2();
   }
 
   if (isKeyInData(m_requestBuffer, "toggleForceAllOff")) {

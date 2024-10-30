@@ -26,8 +26,8 @@ private:
   void setCustomValue();
   void updateChannel();
   void toggleCompactDisplay();
-  void setChannelToValue2();
   void setChannelToValue1();
+  void setChannelToValue2();
   void toggleForceAllOff();
   void toggleForceAllOn();
   void toggleRandomChaos();

@@ -108,9 +108,9 @@ void writeUint8tForChannelToEepromBuffer(int channel, int memorySlot,
 }
 
 void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
-                                          uint16_t outputValue1) {
+                                          uint16_t value) {
   int startAddress = (channel + 1) * 64 + memorySlot;
-  writeUInt16ToEepromBuffer(startAddress, outputValue1);
+  writeUInt16ToEepromBuffer(startAddress, value);
 }
 
 uint16_t readUint16tForChannelFromEepromBuffer(int channel, int memorySlot) {

@@ -36,12 +36,12 @@
 
 #define I18N_EDIT_USE_CUSTOM_RANGE "Benutzerdefinierter Bereich"
 #define I18N_EDIT_CUSTOM_INITIAL_STATE_ON "Anfangszustand ist Wert 1"
-#define I18N_EDIT_CUSTOM_PWM_VALUE_1 "Wert 1"
 #define I18N_EDIT_CUSTOM_PWM_VALUE_2 "Wert 2"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_1 "Wert 1"
 #define I18N_EDIT_CUSTOM_PWM_OUTPUT_TEST "Ausgabebereichstest"
 
-#define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Wert 1 zufällig setzen"
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Wert 2 zufällig setzen"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Wert 1 zufällig setzen"
 
 #define I18N_CHANNEL_CHANNEL "Kanal"
 #define I18N_CHANNEL_BOARD "Platine"

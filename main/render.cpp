@@ -188,7 +188,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
   if (m_stateManager->getRenderEditChannel() == true) {
     uint16_t channelIdToEdit = m_stateManager->getChannelIdToEdit();
     bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-        channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE2);
+        channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
     renderSaveAndDiscardJavascript(client);
 
@@ -236,7 +236,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
   if (m_stateManager->getRenderEditChannel() == true) {
     uint16_t channelIdToEdit = m_stateManager->getChannelIdToEdit();
     bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-        channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE2);
+        channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
     if (toggleUseCustomRange) {
       renderEditCustomChannel(client);
@@ -277,7 +277,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
         }
 
         bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-            channelId, MEM_SLOT_USES_OUTPUT_VALUE2);
+            channelId, MEM_SLOT_USES_OUTPUT_VALUE1);
 
         if (toggleUseCustomRange) {
           renderChannelDetailWithCustomRange(client, channelId,

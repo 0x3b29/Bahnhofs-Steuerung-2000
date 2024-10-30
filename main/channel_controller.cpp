@@ -75,34 +75,34 @@ void ChannelController::setChannelPwmValue(int channel, uint16_t pwmValue) {
   int boardIndex = getBoardIndexForChannel(channel);
   int subAddress = getBoardSubAddressForChannel(channel);
 
-  bool useOutputValue2 =
-      readBoolForChannelFromEepromBuffer(channel, MEM_SLOT_USES_OUTPUT_VALUE2);
+  bool useOutputValue1 =
+      readBoolForChannelFromEepromBuffer(channel, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   if (m_stateManager->getToggleForceAllOff() == true) {
-    uint16_t value2;
+    uint16_t value1;
 
-    if (useOutputValue2) {
-      value2 = readUint16tForChannelFromEepromBuffer(channel,
-                                                     MEM_SLOT_OUTPUT_VALUE2);
+    if (useOutputValue1) {
+      value1 = readUint16tForChannelFromEepromBuffer(channel,
+                                                     MEM_SLOT_OUTPUT_VALUE1);
     } else {
-      value2 = 0;
+      value1 = 0;
     }
 
-    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value2);
+    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value1);
     return;
   }
 
   if (m_stateManager->getToggleForceAllOn() == true) {
-    uint16_t value1;
+    uint16_t value2;
 
-    if (useOutputValue2) {
-      value1 = readUint16tForChannelFromEepromBuffer(channel,
-                                                     MEM_SLOT_OUTPUT_VALUE1);
+    if (useOutputValue1) {
+      value2 = readUint16tForChannelFromEepromBuffer(channel,
+                                                     MEM_SLOT_OUTPUT_VALUE2);
     } else {
-      value1 = 4095;
+      value2 = 4095;
     }
 
-    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value1);
+    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value2);
     return;
   }
 
@@ -153,19 +153,19 @@ void ChannelController::commandLinkedChannel(uint16_t commandingChannelId,
       continue;
     }
 
-    uint16_t value1 =
-        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+    uint16_t value2 =
+        readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
 
-    uint16_t value2 = 0;
+    uint16_t value1 = 0;
 
-    bool useOutputValue2 =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
+    bool useOutputValue1 =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE1);
 
-    if (useOutputValue2) {
-      value2 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+    if (useOutputValue1) {
+      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
     }
 
-    uint16_t pwmValue = (int)mapf(percentage, 0, 100, value2, value1);
+    uint16_t pwmValue = (int)mapf(percentage, 0, 100, value1, value2);
 
     setChannelPwmValue(i, pwmValue);
     commandLinkedChannel(i, percentage, depth + 1, maxDepth);
@@ -177,46 +177,46 @@ void ChannelController::applyInitialState() {
 
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
-    bool isInitialStateValue1 = readBoolForChannelFromEepromBuffer(
-        i, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
+    bool isInitialStateValue2 = readBoolForChannelFromEepromBuffer(
+        i, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
     uint16_t pwmValue = 0;
 
-    if (isInitialStateValue1 == true) {
-      pwmValue =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
-    } else {
+    if (isInitialStateValue2 == true) {
       pwmValue =
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+    } else {
+      pwmValue =
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
     }
 
-    applyAndPropagateValue(i, pwmValue, isInitialStateValue1 ? 100 : 0);
+    applyAndPropagateValue(i, pwmValue, isInitialStateValue2 ? 100 : 0);
   }
 }
 
 void ChannelController::setAllChannels(uint8_t percentage) {
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
-    bool usesValue2 =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
+    bool usesValue1 =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE1);
     uint16_t pwmValue = 0;
 
-    if (usesValue2) {
-      uint16_t value1 =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+    if (usesValue1) {
       uint16_t value2 =
           readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+      uint16_t value1 =
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
 
       // Here we map across the defined range. This is done to avoid damaging
       // the servos or the driven object, which is usually not an issue for an
       // LED
-      pwmValue = (int)mapf(percentage, 0, 100, value2, value1);
+      pwmValue = (int)mapf(percentage, 0, 100, value1, value2);
     } else {
       // In case we use only one value, we do not map over the selected range
       // (e.g. 0 to 60%) but over the full range (e.g. 0% to 100%)
       // If this is not whats needed, the following lines can be exchanged
 
       pwmValue = (uint16_t)(((float)4095 / 100) * percentage);
-      // pwmValue = (int)mapf(percentage, 0, 100, 0, value1);
+      // pwmValue = (int)mapf(percentage, 0, 100, 0, value2);
     }
 
     setChannelPwmValue(i, pwmValue);
@@ -232,23 +232,23 @@ void ChannelController::turnEvenChannelsOn() {
       userFacingAddress++;
     }
 
-    bool useOutputValue2 =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
-    uint16_t value1;
+    bool useOutputValue1 =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE1);
     uint16_t value2;
+    uint16_t value1;
 
-    if (useOutputValue2) {
-      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+    if (useOutputValue1) {
       value2 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
     } else {
-      value1 = 4095;
-      value2 = 0;
+      value2 = 4095;
+      value1 = 0;
     }
 
     if (userFacingAddress % 2 == 0) {
-      setChannelPwmValue(i, value1);
-    } else {
       setChannelPwmValue(i, value2);
+    } else {
+      setChannelPwmValue(i, value1);
     }
   }
 }
@@ -262,23 +262,23 @@ void ChannelController::turnOddChannelsOn() {
       userFacingAddress++;
     }
 
-    bool useOutputValue2 =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
-    uint16_t value1;
+    bool useOutputValue1 =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE1);
     uint16_t value2;
+    uint16_t value1;
 
-    if (useOutputValue2) {
-      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+    if (useOutputValue1) {
       value2 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
     } else {
-      value1 = 4095;
-      value2 = 0;
+      value2 = 4095;
+      value1 = 0;
     }
 
     if (userFacingAddress % 2 == 1) {
-      setChannelPwmValue(i, value1);
-    } else {
       setChannelPwmValue(i, value2);
+    } else {
+      setChannelPwmValue(i, value1);
     }
   }
 }
@@ -286,23 +286,23 @@ void ChannelController::turnOddChannelsOn() {
 void ChannelController::countBinary() {
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
-    bool useOutputValue2 =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
-    uint16_t value1;
+    bool useOutputValue1 =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE1);
     uint16_t value2;
+    uint16_t value1;
 
-    if (useOutputValue2) {
-      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+    if (useOutputValue1) {
       value2 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
     } else {
-      value1 = 4095;
-      value2 = 0;
+      value2 = 4095;
+      value1 = 0;
     }
 
     if ((this->m_binaryCount & (1 << i)) == 0) {
-      setChannelPwmValue(i, value2);
-    } else {
       setChannelPwmValue(i, value1);
+    } else {
+      setChannelPwmValue(i, value2);
     }
   }
 
@@ -341,32 +341,32 @@ void ChannelController::calculateRandomEvents() {
     bool turnOff = shouldInvokeEvent(randomOffFreq);
 
     if (randomOn & turnOn) {
-      st("Got random on/value1 event for channel ");
+      st("Got random on/value2 event for channel ");
       st(i);
       st(" at ");
       sn(millis());
 
-      uint16_t outputValue1 =
-          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+      uint16_t outputValue2 =
+          readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
 
-      applyAndPropagateValue(i, outputValue1, 100);
+      applyAndPropagateValue(i, outputValue2, 100);
     } else if (randomOff & turnOff) {
-      st("Got random off/value2 event for channel ");
+      st("Got random off/value1 event for channel ");
       st(i);
       st(" at ");
       sn(millis());
 
-      uint16_t outputValue2 = 0;
+      uint16_t outputValue1 = 0;
 
-      bool useOutputValue2 =
-          readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
+      bool useOutputValue1 =
+          readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE1);
 
-      if (useOutputValue2) {
-        outputValue2 =
-            readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+      if (useOutputValue1) {
+        outputValue1 =
+            readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
       }
 
-      applyAndPropagateValue(i, outputValue2, 0);
+      applyAndPropagateValue(i, outputValue1, 0);
     }
   }
 }
@@ -374,24 +374,24 @@ void ChannelController::calculateRandomEvents() {
 void ChannelController::setEveryChannelToRandomValue() {
   for (int i = 0; i < m_stateManager->getNumChannels(); i++) {
 
-    bool useOutputValue2 =
-        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE2);
-    uint16_t value1;
+    bool useOutputValue1 =
+        readBoolForChannelFromEepromBuffer(i, MEM_SLOT_USES_OUTPUT_VALUE1);
     uint16_t value2;
+    uint16_t value1;
 
-    if (useOutputValue2) {
-      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
+    if (useOutputValue1) {
       value2 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE2);
+      value1 = readUint16tForChannelFromEepromBuffer(i, MEM_SLOT_OUTPUT_VALUE1);
     } else {
-      value1 = 4095;
-      value2 = 0;
+      value2 = 4095;
+      value1 = 0;
     }
 
     uint16_t randomValue = 0;
-    if (value1 > value2) {
-      randomValue = random(value2, value1);
-    } else {
+    if (value2 > value1) {
       randomValue = random(value1, value2);
+    } else {
+      randomValue = random(value2, value1);
     }
 
     setChannelPwmValue(i, randomValue);
@@ -399,23 +399,23 @@ void ChannelController::setEveryChannelToRandomValue() {
 }
 
 void ChannelController::setNextRunningLight() {
-  // First we set previous output to value2
-  bool useOutputValue2 = readBoolForChannelFromEepromBuffer(
-      m_nextRunningLight, MEM_SLOT_USES_OUTPUT_VALUE2);
-  uint16_t value1;
+  // First we set previous output to value1
+  bool useOutputValue1 = readBoolForChannelFromEepromBuffer(
+      m_nextRunningLight, MEM_SLOT_USES_OUTPUT_VALUE1);
   uint16_t value2;
+  uint16_t value1;
 
-  if (useOutputValue2) {
-    value1 = readUint16tForChannelFromEepromBuffer(m_nextRunningLight,
-                                                   MEM_SLOT_OUTPUT_VALUE1);
+  if (useOutputValue1) {
     value2 = readUint16tForChannelFromEepromBuffer(m_nextRunningLight,
                                                    MEM_SLOT_OUTPUT_VALUE2);
+    value1 = readUint16tForChannelFromEepromBuffer(m_nextRunningLight,
+                                                   MEM_SLOT_OUTPUT_VALUE1);
   } else {
-    value1 = 4095;
-    value2 = 0;
+    value2 = 4095;
+    value1 = 0;
   }
 
-  setChannelPwmValue(m_nextRunningLight, value2);
+  setChannelPwmValue(m_nextRunningLight, value1);
 
   // Then we select next output
   m_nextRunningLight++;
@@ -425,18 +425,18 @@ void ChannelController::setNextRunningLight() {
   }
 
   // And set it to value 2
-  useOutputValue2 = readBoolForChannelFromEepromBuffer(
-      m_nextRunningLight, MEM_SLOT_USES_OUTPUT_VALUE2);
+  useOutputValue1 = readBoolForChannelFromEepromBuffer(
+      m_nextRunningLight, MEM_SLOT_USES_OUTPUT_VALUE1);
 
-  if (useOutputValue2) {
-    value1 = readUint16tForChannelFromEepromBuffer(m_nextRunningLight,
-                                                   MEM_SLOT_OUTPUT_VALUE1);
+  if (useOutputValue1) {
     value2 = readUint16tForChannelFromEepromBuffer(m_nextRunningLight,
                                                    MEM_SLOT_OUTPUT_VALUE2);
+    value1 = readUint16tForChannelFromEepromBuffer(m_nextRunningLight,
+                                                   MEM_SLOT_OUTPUT_VALUE1);
   } else {
-    value1 = 4095;
-    value2 = 0;
+    value2 = 4095;
+    value1 = 0;
   }
 
-  setChannelPwmValue(m_nextRunningLight, value1);
+  setChannelPwmValue(m_nextRunningLight, value2);
 }

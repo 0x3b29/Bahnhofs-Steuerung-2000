@@ -59,17 +59,17 @@ void Renderer::renderEditCustomChannelJavascript(WiFiClient client) {
 
     // var percentDisplay = document.getElementById(display);
 
-    if (usage === 'value1' || usage === 'value2') {
+    if (usage === 'value2' || usage === 'value1') {
         const rangeTestSlider = document.querySelector('input[name="rangeTestSlider"]');
-        const outputValue1 = parseInt(document.querySelector('input[name="outputValue1"]').value);
         const outputValue2 = parseInt(document.querySelector('input[name="outputValue2"]').value);
+        const outputValue1 = parseInt(document.querySelector('input[name="outputValue1"]').value);
 
-        if (outputValue1 > outputValue2) {
-          rangeTestSlider.min = outputValue2;
-          rangeTestSlider.max = outputValue1;
+        if (outputValue2 > outputValue1) {
+          rangeTestSlider.min = outputValue1;
+          rangeTestSlider.max = outputValue2;
         } else {
-          rangeTestSlider.min = -outputValue2;
-          rangeTestSlider.max = -outputValue1;
+          rangeTestSlider.min = -outputValue1;
+          rangeTestSlider.max = -outputValue2;
         }
     }
 
@@ -103,7 +103,7 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
     const channelIdToDisplay = document.querySelector('input[name="channelIdToDisplay"]').value;
     const channelName = document.querySelector('input[name="channelName"]').value;
     const initialState = document.querySelector('input[name="initialState"]').checked ? 1 : 0;
-    const outputValue1 = document.querySelector('input[name="outputValue1"]').value;
+    const outputValue2 = document.querySelector('input[name="outputValue2"]').value;
     const randomOn = document.querySelector('input[name="randomOn"]').checked ? 1 : 0;
     const frequencyOn = document.querySelector('input[name="frequencyOn"]').value;
     const randomOff = document.querySelector('input[name="randomOff"]').checked ? 1 : 0;
@@ -112,16 +112,16 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
     const linkedChannelId = document.querySelector('input[name="linkedChannelId"]').value;
     const channelHiddenInCompactView = document.querySelector('input[name="channelHiddenInCompactView"]').checked ? 1 : 0;
     const showSlider = document.querySelector('input[name="showSlider"]').checked ? 1 : 0;
-    const useOutputValue2 = document.querySelector('input[name="useOutputValue2"]').checked ? 1 : 0;
+    const useOutputValue1 = document.querySelector('input[name="useOutputValue1"]').checked ? 1 : 0;
 
-    const outputValue2Slider = document.querySelector('input[name="outputValue2"]');
+    const outputValue1Slider = document.querySelector('input[name="outputValue1"]');
     
 
     var dataString = `updateChannel=true` + 
     `&channelId=${channelId}` + 
     `&channelName=${encodeURIComponent(channelName)}` + 
     `&initialState=${initialState}` +
-    `&outputValue1=${outputValue1}` +
+    `&outputValue2=${outputValue2}` +
     `&randomOn=${randomOn}` +
     `&frequencyOn=${frequencyOn}` +
     `&randomOff=${randomOff}` +
@@ -130,11 +130,11 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
     `&linkedChannelId=${linkedChannelId}` +
     `&channelHiddenInCompactView=${channelHiddenInCompactView}` +
     `&showSlider=${showSlider}`+ 
-    `&useOutputValue2=${useOutputValue2}`;
+    `&useOutputValue1=${useOutputValue1}`;
 
-    if (outputValue2Slider) {
-      const outputValue2 = outputValue2Slider.value;
-      dataString += `&outputValue2=${outputValue2}`;
+    if (outputValue1Slider) {
+      const outputValue1 = outputValue1Slider.value;
+      dataString += `&outputValue1=${outputValue1}`;
     }
 
     fetch("/", {
@@ -180,7 +180,7 @@ void Renderer::renderEditChannelName(WiFiClient client,
       toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit;
 
   bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE2);
+      channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   const char *channelMode =
       toggleUseCustomRange ? I18N_EDIT_MODE_CUSTOM : I18N_EDIT_MODE_NORMAL;
@@ -225,7 +225,7 @@ void Renderer::renderEditInitialState(WiFiClient client,
                                       uint16_t channelIdToEdit,
                                       bool useCustomRange) {
   bool initialState = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
+      channelIdToEdit, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
   char *toggleInitialStateCheckedBuffer =
       initialState ? m_checkedBuffer : m_emptyBuffer;
@@ -267,7 +267,7 @@ void Renderer::renderEditRandomOn(WiFiClient client, uint16_t channelIdToEdit,
       hasRandomOnEvents ? m_checkedBuffer : m_emptyBuffer;
 
   const char *i18n_random_on =
-      useCustomRange ? I18N_EDIT_CUSTOM_RANDOM_VALUE_1 : I18N_EDIT_RANDOM_ON;
+      useCustomRange ? I18N_EDIT_CUSTOM_RANDOM_VALUE_2 : I18N_EDIT_RANDOM_ON;
 
   uint8_t randomOnFreq = readUint8tForChannelFromEepromBuffer(
       channelIdToEdit, MEM_SLOT_RANDOM_ON_FREQ);
@@ -321,7 +321,7 @@ void Renderer::renderEditRandomOff(WiFiClient client, uint16_t channelIdToEdit,
       hasRandomOffEvents ? m_checkedBuffer : m_emptyBuffer;
 
   const char *i18n_random_off =
-      useCustomRange ? I18N_EDIT_CUSTOM_RANDOM_VALUE_2 : I18N_EDIT_RANDOM_OFF;
+      useCustomRange ? I18N_EDIT_CUSTOM_RANDOM_VALUE_1 : I18N_EDIT_RANDOM_OFF;
 
   uint8_t randomOffFreq = readUint8tForChannelFromEepromBuffer(
       channelIdToEdit, MEM_SLOT_RANDOM_OFF_FREQ);
@@ -517,15 +517,15 @@ void Renderer::renderEditCustomChannelToggle(WiFiClient client,
     <input
       class="form-check-input"
       type="checkbox"
-      name="useOutputValue2"
+      name="useOutputValue1"
       value="1"
       role="switch"
-      id="useOutputValue2"
+      id="useOutputValue1"
       value="1"
       onclick="sendEditChannelUpdates(true)"
       %s
     />
-    <label class="form-check-label" for="useOutputValue2">%s</label>
+    <label class="form-check-label" for="useOutputValue1">%s</label>
   </div>
       )html",
                toggleUseCustomRangeCheckedBuffer, I18N_EDIT_USE_CUSTOM_RANGE);
@@ -540,13 +540,13 @@ void Renderer::renderEditNormalChannel(WiFiClient client) {
   uint16_t channelIdToDisplay =
       toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit;
 
-  uint16_t outputValue1 = readUint16tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_OUTPUT_VALUE1);
+  uint16_t outputValue2 = readUint16tForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_OUTPUT_VALUE2);
 
-  uint8_t brightnessAsPercentage = (int)(((float)outputValue1 / 4095) * 100);
+  uint8_t brightnessAsPercentage = (int)(((float)outputValue2 / 4095) * 100);
 
   bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE2);
+      channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   renderEditChannelName(client, channelIdToEdit);
   renderEditInitialState(client, channelIdToEdit, toggleUseCustomRange);
@@ -570,7 +570,7 @@ void Renderer::renderEditNormalChannel(WiFiClient client) {
       type="range"
       min="0"
       max="4095"
-      name="outputValue1"
+      name="outputValue2"
       value="%d"
       onchange="onBrightnessValueChanged(Math.abs(this.value), %d)"
     />
@@ -578,7 +578,7 @@ void Renderer::renderEditNormalChannel(WiFiClient client) {
 </div>
     )html",
                       I18N_EDIT_BRIGHTNESS, brightnessAsPercentage,
-                      outputValue1, channelIdToEdit);
+                      outputValue2, channelIdToEdit);
   pn(client, outputBuffer);
 
   renderEditRandomOn(client, channelIdToEdit, toggleUseCustomRange);
@@ -594,47 +594,53 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
   bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
   uint8_t maxChannelNameLength = MAX_CHANNEL_NAME_LENGTH - 1;
 
-  uint16_t outputValue1 = readUint16tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_OUTPUT_VALUE1);
-
   uint16_t outputValue2 = readUint16tForChannelFromEepromBuffer(
       channelIdToEdit, MEM_SLOT_OUTPUT_VALUE2);
 
-  bool initialState = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
+  uint16_t outputValue1 = readUint16tForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_OUTPUT_VALUE1);
+
+  bool isInitialStateValue2 = readBoolForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
   char *toggleInitialStateCheckedBuffer =
-      initialState ? m_checkedBuffer : m_emptyBuffer;
+      isInitialStateValue2 ? m_checkedBuffer : m_emptyBuffer;
 
-  uint8_t outputValue1AsPercentage = (int)(((float)outputValue1 / 4095) * 100);
   uint8_t outputValue2AsPercentage = (int)(((float)outputValue2 / 4095) * 100);
+  uint8_t outputValue1AsPercentage = (int)(((float)outputValue1 / 4095) * 100);
 
   int rangeTestSliderMin;
   int rangeTestSliderMax;
   int rangeTestSliderValue;
   uint8_t rangeTestSliderPercentage;
 
-  if (initialState == true) {
-    rangeTestSliderValue = outputValue1;
-    rangeTestSliderPercentage = outputValue1AsPercentage;
-  } else {
+  if (isInitialStateValue2) {
     rangeTestSliderValue = outputValue2;
     rangeTestSliderPercentage = outputValue2AsPercentage;
+  } else {
+    rangeTestSliderValue = outputValue1;
+    rangeTestSliderPercentage = outputValue1AsPercentage;
   }
 
-  if (outputValue1 > outputValue2) {
-    rangeTestSliderMin = outputValue2;
-    rangeTestSliderMax = outputValue1;
+  if (outputValue2 > outputValue1) {
+    rangeTestSliderMin = outputValue1;
+    rangeTestSliderMax = outputValue2;
   } else {
-    rangeTestSliderMin = -outputValue2;
-    rangeTestSliderMax = -outputValue1;
+    rangeTestSliderMin = -outputValue1;
+    rangeTestSliderMax = -outputValue2;
+
+    if (isInitialStateValue2) {
+      rangeTestSliderValue = -outputValue2;
+    } else {
+      rangeTestSliderValue = -outputValue1;
+    }
   }
 
   uint16_t channelIdToDisplay =
       toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit;
 
   bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE2);
+      channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   renderEditChannelName(client, channelIdToEdit);
   renderEditInitialState(client, channelIdToEdit, toggleUseCustomRange);
@@ -644,7 +650,6 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
   uint16_t written = 0;
 
   written += snprintf(outputBuffer + written, bufferSize - written, R"html(
-
 <div class="row pt-1">
   <div class="col">
     <div class="col d-flex">
@@ -698,7 +703,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
   <div class="col">
     <div class="col d-flex">
       <div>%s</div>
-      <div id="rangeAsPercentageValue3" class="ps-1 text-muted">(%d %%)</div>
+      <div id="rangeAsPercentageValueTest" class="ps-1 text-muted">(%d %%)</div>
     </div>
   </div>
   <div class="col-12">
@@ -709,7 +714,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       max="%d"
       name="rangeTestSlider"
       value="%d"
-      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValue3, 'test')"
+      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValueTest, 'test')"
     />
   </div>
 </div>

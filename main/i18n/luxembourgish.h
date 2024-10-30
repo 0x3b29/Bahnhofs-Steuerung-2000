@@ -35,11 +35,11 @@
 #define I18N_EDIT_MODE_CUSTOM "(Benotzerdefinéierte Beräich)"
 #define I18N_EDIT_USE_CUSTOM_RANGE "Benotzerdefinéierte Beräich"
 #define I18N_EDIT_CUSTOM_INITIAL_STATE_ON "Ufankszoustand ass Wäert 1"
-#define I18N_EDIT_CUSTOM_PWM_VALUE_1 "Wäert 1"
 #define I18N_EDIT_CUSTOM_PWM_VALUE_2 "Wäert 2"
+#define I18N_EDIT_CUSTOM_PWM_VALUE_1 "Wäert 1"
 #define I18N_EDIT_CUSTOM_PWM_OUTPUT_TEST "Test Beräich"
-#define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Wäert 1 zoufälleg setzen"
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Wäert 2 zoufälleg setzen"
+#define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Wäert 1 zoufälleg setzen"
 
 #define I18N_CHANNEL_CHANNEL "Kanal"
 #define I18N_CHANNEL_BOARD "Platinn"

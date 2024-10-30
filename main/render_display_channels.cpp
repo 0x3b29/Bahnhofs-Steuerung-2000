@@ -12,11 +12,11 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   uint16_t brightness =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE2);
   uint8_t brightnessAsPercentage = (int)(((float)brightness / 4095) * 100);
 
   bool initialState = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
+      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
   bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
 
@@ -182,12 +182,12 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
         <button class="btn" name="editChannel" onclick="openEditChannelPage('%d')">
           🖊
         </button>
-        <button class="btn" onclick="sendValue('setChannelToValue2', '%d')">
+        <button class="btn" onclick="sendValue('setChannelToValue1', '%d')">
           ⛭
         </button>
         <button
           class="btn text-warning"
-          onclick="sendValue('setChannelToValue1', '%d')"
+          onclick="sendValue('setChannelToValue2', '%d')"
         >
           ⛭
         </button>
@@ -292,16 +292,16 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
                                                   bool renderHorizontalRule) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
-  uint16_t value1 =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
-  uint8_t value1AsPercentage = (int)(((float)value1 / 4095) * 100);
-
   uint16_t value2 =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE2);
   uint8_t value2AsPercentage = (int)(((float)value2 / 4095) * 100);
 
-  bool isInitialStateValue1 = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
+  uint16_t value1 =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
+  uint8_t value1AsPercentage = (int)(((float)value1 / 4095) * 100);
+
+  bool isInitialStateValue2 = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
   bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
 
@@ -317,26 +317,26 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
   uint8_t boardSubAddressToDisplay =
       toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
-  char value1Buffer[] = I18N_EDIT_CUSTOM_PWM_VALUE_1;
   char value2Buffer[] = I18N_EDIT_CUSTOM_PWM_VALUE_2;
+  char value1Buffer[] = I18N_EDIT_CUSTOM_PWM_VALUE_1;
 
   char yesBuffer[] = I18N_CHANNEL_YES;
   char noBuffer[] = I18N_CHANNEL_NO;
 
-  char *toggleIsInitialStateValue1CheckedBuffer =
-      isInitialStateValue1 ? value1Buffer : value2Buffer;
+  char *toggleIsInitialStateValue2CheckedBuffer =
+      isInitialStateValue2 ? value2Buffer : value1Buffer;
 
   // --- Prepare random on events ---
-  bool doRandomlySetValue1 =
+  bool doRandomlySetValue2 =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON);
 
-  uint8_t randomlySetValue1Freq =
+  uint8_t randomlySetValue2Freq =
       readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON_FREQ);
 
-  char *randomlySetValue1EventsEnabledBuffer =
-      doRandomlySetValue1 ? yesBuffer : noBuffer;
+  char *randomlySetValue2EventsEnabledBuffer =
+      doRandomlySetValue2 ? yesBuffer : noBuffer;
 
-  char randomlySetValue1FrequencyHtmlInputBuffer[] = R"html(
+  char randomlySetValue2FrequencyHtmlInputBuffer[] = R"html(
   <div class='row'>
     <div class='col'>
       <span class='h6'>%s</span>
@@ -345,37 +345,6 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
       %d/h
     </div>
   </div>)html";
-
-  char randomlySetValue1FrequencyHtmlOutputBuffer[512];
-
-  snprintf(randomlySetValue1FrequencyHtmlOutputBuffer,
-           sizeof(randomlySetValue1FrequencyHtmlOutputBuffer),
-           randomlySetValue1FrequencyHtmlInputBuffer,
-           I18N_CHANNEL_RANDOM_ON_FREQ, randomlySetValue1Freq);
-
-  char *randomlySetValue1EventsFrequencyHtmlToDisplayBuffer =
-      doRandomlySetValue1 ? randomlySetValue1FrequencyHtmlOutputBuffer
-                          : m_emptyBuffer;
-  // --- /Prepare random on events ---
-
-  // --- Prepare random off events ---
-  bool doRandomlySetValue2 =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
-
-  uint8_t randomlySetValue2Freq =
-      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
-
-  char *randomlySetValue2EventsEnabledBuffer =
-      doRandomlySetValue2 ? yesBuffer : noBuffer;
-
-  char randomlySetValue2FrequencyHtmlInputBuffer[] = R"html(
-  <div class="row">
-    <div class="col">
-      <span class="h6">%s</span>
-    </div>
-    <div class="col mtba">%d/h</div>
-  </div>
-      )html";
 
   char randomlySetValue2FrequencyHtmlOutputBuffer[512];
 
@@ -386,6 +355,37 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
 
   char *randomlySetValue2EventsFrequencyHtmlToDisplayBuffer =
       doRandomlySetValue2 ? randomlySetValue2FrequencyHtmlOutputBuffer
+                          : m_emptyBuffer;
+  // --- /Prepare random on events ---
+
+  // --- Prepare random off events ---
+  bool doRandomlySetValue1 =
+      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
+
+  uint8_t randomlySetValue1Freq =
+      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
+
+  char *randomlySetValue1EventsEnabledBuffer =
+      doRandomlySetValue1 ? yesBuffer : noBuffer;
+
+  char randomlySetValue1FrequencyHtmlInputBuffer[] = R"html(
+  <div class="row">
+    <div class="col">
+      <span class="h6">%s</span>
+    </div>
+    <div class="col mtba">%d/h</div>
+  </div>
+      )html";
+
+  char randomlySetValue1FrequencyHtmlOutputBuffer[512];
+
+  snprintf(randomlySetValue1FrequencyHtmlOutputBuffer,
+           sizeof(randomlySetValue1FrequencyHtmlOutputBuffer),
+           randomlySetValue1FrequencyHtmlInputBuffer,
+           I18N_CHANNEL_RANDOM_ON_FREQ, randomlySetValue1Freq);
+
+  char *randomlySetValue1EventsFrequencyHtmlToDisplayBuffer =
+      doRandomlySetValue1 ? randomlySetValue1FrequencyHtmlOutputBuffer
                           : m_emptyBuffer;
 
   // --- /Prepare random off events ---
@@ -471,12 +471,12 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
         <button class="btn" name="editChannel" onclick="openEditChannelPage('%d')">
           🖊
         </button>
-        <button class="btn text-primary" onclick="sendValue('setChannelToValue2', '%d')">
+        <button class="btn text-primary" onclick="sendValue('setChannelToValue1', '%d')">
           ⮘
         </button>
         <button
           class="btn text-primary"
-          onclick="sendValue('setChannelToValue1', '%d')"
+          onclick="sendValue('setChannelToValue2', '%d')"
         >
           ⮚
         </button>
@@ -510,10 +510,10 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
 
   const char *initialStateBuffer;
 
-  if (isInitialStateValue1) {
-    initialStateBuffer = I18N_EDIT_CUSTOM_PWM_VALUE_1;
-  } else {
+  if (isInitialStateValue2) {
     initialStateBuffer = I18N_EDIT_CUSTOM_PWM_VALUE_2;
+  } else {
+    initialStateBuffer = I18N_EDIT_CUSTOM_PWM_VALUE_1;
   }
 
   written +=
@@ -535,21 +535,10 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
   </div>
 )html",
                I18N_CHANNEL_START_STATE, initialStateBuffer, I18N_CHANNEL_RANGE,
-               value1AsPercentage, value2AsPercentage);
+               value2AsPercentage, value1AsPercentage);
 
   written += snprintf(
       outputBuffer + written, bufferSize - written, R"html(
-  <!-- Randomly setting value1 -->
-  <div class="row">
-    <div class="col">
-      <span class="h6">%s</span>
-    </div>
-    <div class="col mtba">%s</div>
-  </div>
-
-  <!-- Setting value1 frequency if randomly setting value1 active -->
-  %s
-
   <!-- Randomly setting value2 -->
   <div class="row">
     <div class="col">
@@ -560,11 +549,22 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
 
   <!-- Setting value2 frequency if randomly setting value2 active -->
   %s
+
+  <!-- Randomly setting value1 -->
+  <div class="row">
+    <div class="col">
+      <span class="h6">%s</span>
+    </div>
+    <div class="col mtba">%s</div>
+  </div>
+
+  <!-- Setting value1 frequency if randomly setting value1 active -->
+  %s
 )html",
-      I18N_EDIT_CUSTOM_RANDOM_VALUE_1, randomlySetValue1EventsEnabledBuffer,
-      randomlySetValue1EventsFrequencyHtmlToDisplayBuffer,
       I18N_EDIT_CUSTOM_RANDOM_VALUE_2, randomlySetValue2EventsEnabledBuffer,
-      randomlySetValue2EventsFrequencyHtmlToDisplayBuffer);
+      randomlySetValue2EventsFrequencyHtmlToDisplayBuffer,
+      I18N_EDIT_CUSTOM_RANDOM_VALUE_1, randomlySetValue1EventsEnabledBuffer,
+      randomlySetValue1EventsFrequencyHtmlToDisplayBuffer);
 
   written += snprintf(outputBuffer + written, bufferSize - written, R"html(
   <!-- Is channel linked -->
@@ -616,18 +616,18 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
       toggleOneBasedAddresses ? subAddress + 1 : subAddress;
 
   bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_USES_OUTPUT_VALUE2);
-
-  uint16_t value1 =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
-  uint8_t value1AsPercentage = (int)(((float)value1 / 4095) * 100);
+      channelId, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   uint16_t value2 =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE2);
   uint8_t value2AsPercentage = (int)(((float)value2 / 4095) * 100);
 
+  uint16_t value1 =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
+  uint8_t value1AsPercentage = (int)(((float)value1 / 4095) * 100);
+
   if (!toggleUseCustomRange) {
-    value2 = 0;
+    value1 = 0;
   }
 
   uint16_t channelIdToDisplay =
@@ -670,7 +670,7 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
   if (toggleUseCustomRange) {
     written += snprintf(outputBuffer + written, bufferSize - written,
                         R"html(
-      <div class="text-muted">%d&nbsp;%% .. %d&nbsp;%%</div>
+      <div class="text-muted">%d&nbsp;%% … %d&nbsp;%%</div>
                       )html",
                         value1AsPercentage, value2AsPercentage);
   } else {
@@ -678,7 +678,7 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
                         R"html(
       <div class="text-muted">%d&nbsp;%%</div>
                       )html",
-                        value1AsPercentage);
+                        value2AsPercentage);
   }
 
   written += snprintf(outputBuffer + written, bufferSize - written, R"html(
@@ -708,13 +708,13 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
     <div class="d-flex">
       <button
         class="btn %s px-1 px-sm-2 px-md-3"
-        onclick="sendValue('setChannelToValue2','%d')"
+        onclick="sendValue('setChannelToValue1','%d')"
       >
         %s
       </button>
       <button
         class="btn %s px-1 px-sm-2 px-md-3"
-        onclick="sendValue('setChannelToValue1','%d')"
+        onclick="sendValue('setChannelToValue2','%d')"
       >
         %s
       </button>
@@ -748,38 +748,38 @@ uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
                                 uint16_t channelId) {
 
   bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_USES_OUTPUT_VALUE2);
-
-  uint16_t outputValue1 =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE1);
+      channelId, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   uint16_t outputValue2 =
       readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_OUTPUT_VALUE2);
 
-  if (!toggleUseCustomRange) {
-    outputValue2 = 0;
+  uint16_t outputValue1 = 0;
+
+  if (toggleUseCustomRange) {
+    outputValue1 = readUint16tForChannelFromEepromBuffer(
+        channelId, MEM_SLOT_OUTPUT_VALUE1);
   }
 
-  bool isInitialStateValue1IsValue1 = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE1);
+  bool isInitialStateValue2 = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
   uint16_t startValue;
 
-  if (isInitialStateValue1IsValue1) {
-    startValue = outputValue1;
-  } else {
+  if (isInitialStateValue2) {
     startValue = outputValue2;
+  } else {
+    startValue = outputValue1;
   }
 
   int sliderMin;
   int sliderMax;
 
-  if (outputValue1 > outputValue2) {
-    sliderMin = outputValue2;
-    sliderMax = outputValue1;
+  if (outputValue2 > outputValue1) {
+    sliderMin = outputValue1;
+    sliderMax = outputValue2;
   } else {
-    sliderMin = -outputValue2;
-    sliderMax = -outputValue1;
+    sliderMin = -outputValue1;
+    sliderMax = -outputValue2;
   }
 
   return snprintf(outputBuffer, bufferSize,
@@ -791,7 +791,7 @@ uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
         type="range"
         min="%d"
         max="%d"
-        name="outputValue1"
+        name="outputValue2"
         value="%d"
         onchange="onBrightnessValueChanged(Math.abs(this.value), %d)"
       />
