@@ -4,3 +4,4 @@ main/arduino_secrets.h
 .vs
 .vscode
 main/.theia/launch.json
+main/.arduino_secrets.h
