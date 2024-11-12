@@ -28,6 +28,23 @@ function openEditChannelPage(channel) {
   window.location.href = `update?${queryString}`
 }
 
+function validateInputData(input, min, max) {
+  let value = Number(input.value);
+
+  if (isNaN(value)) {
+    input.value = min;
+  } 
+  else if (value < min) {
+    input.value = min;
+  } 
+  else if (value > max) {
+    input.value = max;
+  }
+  else {
+    input.value = value;
+  }
+}
+
 function sendValue(key, value, reloadAfterRequest) {
   var dataString =
     encodeURIComponent(key) + "=" + encodeURIComponent(value);

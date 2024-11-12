@@ -298,6 +298,7 @@ void Renderer::renderEditRandomOn(WiFiClient client, uint16_t channelIdToEdit,
         min="0"
         max="255"
         value="%d"
+        oninput="validateInputData(this, 0, 255)"
       />
     </div>
   </div>
@@ -353,6 +354,7 @@ void Renderer::renderEditRandomOff(WiFiClient client, uint16_t channelIdToEdit,
         min="0"
         max="255"
         value="%d"
+        oninput="validateInputData(this, 0, 255)"
       />
     </div>
   </div>
@@ -415,13 +417,15 @@ void Renderer::renderEditChannelLinked(WiFiClient client,
         min="%d"
         max="%d"
         value="%d"
+        oninput="validateInputData(this, %d, %d)"
       />
     </div>
   </div>
   )html",
                toggleIsChannelLinkedCheckedBuffer, I18N_EDIT_LINKED,
                I18N_EDIT_CONTROLLED_BY_CHANNEL, smallesPossibleLinkedAddress,
-               largestPossibleLinkedAddress, displayedLinkedChannelId);
+               largestPossibleLinkedAddress, displayedLinkedChannelId,
+               smallesPossibleLinkedAddress, largestPossibleLinkedAddress);
 
   pn(client, outputBuffer);
 }

@@ -117,6 +117,7 @@ void Renderer::renderOptions(WiFiClient client) {
         min="0"
         max="%d"
         value="%d"
+        oninput="validateInputData(this, 0, %d)"
       />
     </div>
     <div class="col-4 d-flex justify-content-end">
@@ -255,7 +256,8 @@ void Renderer::renderOptions(WiFiClient client) {
   <!-- /Enable random blink -->
 )html",
            renderHiddenBuffer, I18N_OPTIONS_CHANNELS, MAX_TOTAL_CHANNELS,
-           numChannels, I18N_OPTIONS_SEND, toggleOneBasedAddressesCheckedBuffer,
+           numChannels, MAX_TOTAL_CHANNELS, I18N_OPTIONS_SEND,
+           toggleOneBasedAddressesCheckedBuffer,
            I18N_OPTIONS_ONE_BASED_ADDRESSES, toggleCompactDisplayCheckedBuffer,
            I18N_OPTIONS_COMPACT_VIEW, toggleForceAllOffCheckedBuffer,
            I18N_OPTIONS_FORCE_ALL_OFF, toggleForceAllOnCheckedBuffer,
