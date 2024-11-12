@@ -793,7 +793,7 @@ uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
         max="%d"
         name="outputValue2"
         value="%d"
-        onchange="onBrightnessValueChanged(Math.abs(this.value), %d)"
+        onchange="onSliderValueChanged(Math.abs(this.value), %d)"
       />
     </div>
   </div> 

@@ -108,7 +108,7 @@ function sendCheckbox(checkbox, reloadAfterRequest, additionalData) {
   });
 }
 
-function onBrightnessValueChanged(value, channelId) {
+function onSliderValueChanged(value, channelId) {
   var brightnessAsPercentage = Math.floor((value / 4095) * 100);
 
   var percentDisplay = document.getElementById("rangeAsPercentage");

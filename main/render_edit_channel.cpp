@@ -6,17 +6,14 @@
 
 void Renderer::renderEditNormalChannelJavascript(WiFiClient client) {
   pn(client, R"html(
-  function onBrightnessValueChanged(value, channelId) {
+  function onSliderValueInput(value){
     var brightnessAsPercentage = Math.floor((value / 4095) * 100);
-
     var percentDisplay = document.getElementById("rangeAsPercentage");
 
-    if (percentDisplay) 
-    {
-      percentDisplay.textContent =
-      "(" + brightnessAsPercentage + "%)";
-    }
+    percentDisplay.textContent = "(" + brightnessAsPercentage + "%)"; 
+  }
 
+  function onSliderValueChanged(value, channelId) {
     var dataString =
       "setCustomValue=1" +
       "&propagateValue=0" +
@@ -54,9 +51,12 @@ void Renderer::renderEditCustomChannelJavascript(WiFiClient client) {
     });
   }
 
-  function onBrightnessValueChanged(value, channelId, display, usage) {
-    var brightnessAsPercentage = Math.floor((Math.abs(value) / 4095) * 100);
+  function onSliderValueInput(value, display) {
+      var brightnessAsPercentage = Math.floor((Math.abs(value) / 4095) * 100);
+      display.textContent = "(" + brightnessAsPercentage + "%)";
+  }
 
+  function onSliderValueChanged(value, channelId, usage) {
     if (usage === 'value2' || usage === 'value1') {
         const rangeTestSlider = document.querySelector('input[name="rangeTestSlider"]');
         const outputValue2 = parseInt(document.querySelector('input[name="outputValue2"]').value);
@@ -73,12 +73,6 @@ void Renderer::renderEditCustomChannelJavascript(WiFiClient client) {
         var percentDisplay = document.getElementById("rangeAsPercentageValueTest");
         var testSliderAsPercentage = Math.floor((Math.abs(rangeTestSlider.value) / 4095) * 100);
         percentDisplay.textContent = "(" + testSliderAsPercentage + "%)";
-    }
-
-    if (display) 
-    {
-      display.textContent =
-      "(" + brightnessAsPercentage + "%)";
     }
 
     var dataString =
@@ -574,7 +568,8 @@ void Renderer::renderEditNormalChannel(WiFiClient client) {
       max="4095"
       name="outputValue2"
       value="%d"
-      onchange="onBrightnessValueChanged(Math.abs(this.value), %d)"
+      oninput="onSliderValueInput(Math.abs(this.value))"
+      onchange="onSliderValueChanged(Math.abs(this.value), %d)"
     />
   </div>
 </div>
@@ -667,7 +662,8 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       max="4095"
       name="outputValue1"
       value="%d"
-      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValue1, 'value1')"
+      oninput="onSliderValueInput(Math.abs(this.value), rangeAsPercentageValue1)"
+      onchange="onSliderValueChanged(Math.abs(this.value), %d, 'value1')"
     />
   </div>
 </div>
@@ -691,7 +687,8 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       max="4095"
       name="outputValue2"
       value="%d"
-      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValue2, 'value2')"
+      oninput="onSliderValueInput(Math.abs(this.value), rangeAsPercentageValue2)"
+      onchange="onSliderValueChanged(Math.abs(this.value), %d, rangeAsPercentageValue2, 'value2')"
     />
   </div>
 </div>
@@ -716,7 +713,8 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       max="%d"
       name="rangeTestSlider"
       value="%d"
-      onchange="onBrightnessValueChanged(Math.abs(this.value), %d, rangeAsPercentageValueTest, 'test')"
+      oninput="onSliderValueInput(Math.abs(this.value), rangeAsPercentageValueTest)"
+      onchange="onSliderValueChanged(Math.abs(this.value), %d, rangeAsPercentageValueTest, 'test')"
     />
   </div>
 </div>
