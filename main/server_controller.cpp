@@ -132,6 +132,18 @@ void ServerController::updateUint16tIfFound(uint16_t channelId,
   }
 }
 
+void ServerController::updateFloatIfFound(uint16_t channelId,
+                                          const char *buffer, const char *key,
+                                          int memorySlot) {
+  char floatBuffer[10] = "0";
+  bool foundKey = getValueFromData(buffer, key, floatBuffer, 10);
+
+  if (foundKey) {
+    float floatValue = atof(floatBuffer);
+    writeFloatForChannelToEepromBuffer(channelId, memorySlot, floatValue);
+  }
+}
+
 void ServerController::updateChannel() {
   bool foundChannelId =
       getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
@@ -184,6 +196,12 @@ void ServerController::updateChannel() {
 
   updateUint16tIfFound(channelIdAsNumber, m_requestBuffer,
                        "outputValue1=", MEM_SLOT_OUTPUT_VALUE1);
+
+  updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
+                    "channelLerped=", MEM_SLOT_IS_LERPED);
+
+  updateFloatIfFound(channelIdAsNumber, m_requestBuffer,
+                     "lerpSpeed=", MEM_SLOT_LERP_SPEED);
 
   char linkedChannelIdBuffer[4] = "0";
   getValueFromData(m_requestBuffer, "linkedChannelId=", linkedChannelIdBuffer,

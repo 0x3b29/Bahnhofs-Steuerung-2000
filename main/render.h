@@ -52,6 +52,7 @@ private:
   void renderEditCustomChannelToggle(WiFiClient client,
                                      uint16_t channelIdToEdit,
                                      bool useCustomRange);
+  void renderEditChannelLerp(WiFiClient client, uint16_t channelIdToEdit);
 
   void renderEditNormalChannel(WiFiClient client);
   void renderEditCustomChannel(WiFiClient client);

@@ -109,9 +109,11 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
     const channelHiddenInCompactView = document.querySelector('input[name="channelHiddenInCompactView"]').checked ? 1 : 0;
     const showSlider = document.querySelector('input[name="showSlider"]').checked ? 1 : 0;
     const useOutputValue1 = document.querySelector('input[name="useOutputValue1"]').checked ? 1 : 0;
+    const channelLerped = document.querySelector('input[name="channelLerped"]').checked ? 1 : 0;
+    const lerpSpeed = document.querySelector('input[name="lerpSpeed"]').value;
 
+    // Special case, the data is fetched later based on outputValue1Slider
     const outputValue1Slider = document.querySelector('input[name="outputValue1"]');
-    
 
     var dataString = `updateChannel=true` + 
     `&channelId=${channelId}` + 
@@ -126,7 +128,9 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
     `&linkedChannelId=${linkedChannelId}` +
     `&channelHiddenInCompactView=${channelHiddenInCompactView}` +
     `&showSlider=${showSlider}`+ 
-    `&useOutputValue1=${useOutputValue1}`;
+    `&useOutputValue1=${useOutputValue1}`+ 
+    `&channelLerped=${channelLerped}`+ 
+    `&lerpSpeed=${lerpSpeed}`;
 
     if (outputValue1Slider) {
       const outputValue1 = outputValue1Slider.value;
@@ -243,7 +247,6 @@ void Renderer::renderEditInitialState(WiFiClient client,
     value="1"
     role="switch"
     id="initialState"
-    value="1"
     %s
   />
   <label class="form-check-label" for="initialState">%s</label>
@@ -281,7 +284,6 @@ void Renderer::renderEditRandomOn(WiFiClient client, uint16_t channelIdToEdit,
       value="1"
       role="switch"
       id="randomOn"
-      value="1"
       %s
     />
     <label class="form-check-label" for="randomOn">
@@ -336,7 +338,6 @@ void Renderer::renderEditRandomOff(WiFiClient client, uint16_t channelIdToEdit,
       value="1"
       role="switch"
       id="randomOff"
-      value="1"
       %s
     />
     <label class="form-check-label" for="randomOff">
@@ -398,7 +399,6 @@ void Renderer::renderEditChannelLinked(WiFiClient client,
       class="form-check-input"
       type="checkbox"
       name="channelLinked"
-      value="1"
       role="switch"
       id="channelLinked"
       value="1"
@@ -430,6 +430,54 @@ void Renderer::renderEditChannelLinked(WiFiClient client,
   pn(client, outputBuffer);
 }
 
+void Renderer::renderEditChannelLerp(WiFiClient client,
+                                     uint16_t channelIdToEdit) {
+  bool isChannelLerped =
+      readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_IS_LERPED);
+
+  float lerpSpeed =
+      readFloatForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_LERP_SPEED);
+
+  char *toggleIsChannelLerpedCheckedBuffer =
+      isChannelLerped ? m_checkedBuffer : m_emptyBuffer;
+
+  char outputBuffer[1024] = {0};
+  uint16_t bufferSize = sizeof(outputBuffer);
+  uint16_t written = 0;
+
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+  <div class="form-check form-switch pt-3">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="channelLerped"
+      role="switch"
+      id="channelLerped"
+      value="1"
+      %s
+    />
+    <label class="form-check-label" for="channelLerped">%s</label>
+  </div>
+
+  <div class="row">
+    <div class="col d-flex align-items-center">%s</div>
+    <div class="col d-flex align-items-center justify-content-end">
+      <input
+        class="form-control"
+        type="number"
+        step="any"
+        name="lerpSpeed"
+        value="%f"
+      />
+    </div>
+  </div>
+  )html",
+                      toggleIsChannelLerpedCheckedBuffer, "I18N_IS_LERPED",
+                      "I18N_LERP_SPEED", lerpSpeed);
+
+  pn(client, outputBuffer);
+}
+
 void Renderer::renderEditChannelHiddenInCompactView(WiFiClient client,
                                                     uint16_t channelIdToEdit) {
   bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
@@ -451,7 +499,6 @@ void Renderer::renderEditChannelHiddenInCompactView(WiFiClient client,
       value="1"
       role="switch"
       id="channelHiddenInCompactView"
-      value="1"
       %s
     />
     <label class="form-check-label" for="channelHiddenInCompactView">%s</label>
@@ -490,7 +537,6 @@ void Renderer::renderEditShowSlider(WiFiClient client,
       value="1"
       role="switch"
       id="showSlider"
-      value="1"
       %s
     />
     <label class="form-check-label" for="showSlider">%s</label>
@@ -521,7 +567,6 @@ void Renderer::renderEditCustomChannelToggle(WiFiClient client,
       value="1"
       role="switch"
       id="useOutputValue1"
-      value="1"
       onclick="sendEditChannelUpdates(true)"
       %s
     />
@@ -588,6 +633,7 @@ void Renderer::renderEditNormalChannel(WiFiClient client) {
   renderEditChannelHiddenInCompactView(client, channelIdToEdit);
   renderEditShowSlider(client, channelIdToEdit);
   renderEditCustomChannelToggle(client, channelIdToEdit, toggleUseCustomRange);
+  renderEditChannelLerp(client, channelIdToEdit);
 }
 
 void Renderer::renderEditCustomChannel(WiFiClient client) {
@@ -735,6 +781,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
   renderEditChannelHiddenInCompactView(client, channelIdToEdit);
   renderEditShowSlider(client, channelIdToEdit);
   renderEditCustomChannelToggle(client, channelIdToEdit, toggleUseCustomRange);
+  renderEditChannelLerp(client, channelIdToEdit);
 }
 
 void Renderer::renderEditSaveAndDiscardButtons(WiFiClient client) {

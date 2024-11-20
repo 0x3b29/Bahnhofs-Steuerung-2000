@@ -53,6 +53,8 @@ private:
                            const char *key, int memorySlot);
   void updateUint16tIfFound(uint16_t channelId, const char *buffer,
                             const char *key, int memorySlot);
+  void updateFloatIfFound(uint16_t channelId, const char *buffer,
+                          const char *key, int memorySlot);
 
   bool getValueFromData(const char *data, const char *key, char *value,
                         int valueLen);

@@ -34,6 +34,11 @@
 #define MEM_SLOT_USES_OUTPUT_VALUE1 42
 #define MEM_SLOT_OUTPUT_VALUE1 43
 
+#define MEM_SLOT_IS_LERPED 45
+#define MEM_SLOT_TARGET_VALUE 46
+#define MEM_SLOT_LERP_CURRENT_POS 48
+#define MEM_SLOT_LERP_SPEED 52
+
 // Memory Slot for general settings and each channel
 #define MEM_SLOT_CRC 62
 
@@ -56,9 +61,11 @@ void writeToEepromBuffer(uint16_t writeAddress, uint8_t *data, uint8_t length);
 void writeBoolToEepromBuffer(uint16_t writeAddress, bool value);
 void writeUInt8ToEepromBuffer(uint16_t writeAddress, uint8_t value);
 void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value);
+void writeFloatToEepromBuffer(uint16_t writeAddress, float value);
 
 bool readBoolFromEepromBuffer(uint16_t readAddress);
 void readFromEepromBuffer(uint16_t readAddress, uint8_t *data, uint8_t length);
+float readFloatFromEepromBuffer(uint16_t readAddress);
 uint16_t readUInt16FromEepromBuffer(uint16_t readAddress);
 uint8_t readUInt8FromEepromBuffer(uint16_t readAddress);
 void readChannelNameFromEepromBufferToChannelNameBuffer(int channel);
@@ -68,7 +75,10 @@ void writeUint8tForChannelToEepromBuffer(int channel, int memorySlot,
                                          uint8_t value);
 void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
                                           uint16_t value);
+void writeFloatForChannelToEepromBuffer(int channel, int memorySlot,
+                                        float value);
 
+float readFloatForChannelFromEepromBuffer(int channel, int memorySlot);
 uint16_t readUint16tForChannelFromEepromBuffer(int channel, int memorySlot);
 bool readBoolForChannelFromEepromBuffer(int channel, int memorySlot);
 uint8_t readUint8tForChannelFromEepromBuffer(int channel, int memorySlot);

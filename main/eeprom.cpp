@@ -44,6 +44,16 @@ void writeUInt16ToEepromBuffer(uint16_t writeAddress, uint16_t value) {
   writeToEepromBuffer(writeAddress, data, 2);
 }
 
+void writeFloatToEepromBuffer(uint16_t writeAddress, float value) {
+  uint8_t data[4]; // Create a byte array to hold the float value
+
+  // Copy the float into the byte array
+  memcpy(data, &value, sizeof(float));
+
+  // Write the 4-byte array to the EEPROM buffer
+  writeToEepromBuffer(writeAddress, data, 4);
+}
+
 void writeUInt8ToEepromBuffer(uint16_t writeAddress, uint8_t value) {
   writeToEepromBuffer(writeAddress, &value, 1);
 }
@@ -74,6 +84,16 @@ void readFromEepromBuffer(uint16_t readAddress, uint8_t *data, uint8_t length) {
   for (int i = 0; i < length; i++) {
     data[i] = m_eepromBuffer[readAddress + i];
   }
+}
+
+float readFloatFromEepromBuffer(uint16_t readAddress) {
+  uint8_t data[4]; // Create a byte array to hold the 4 bytes of the float
+  readFromEepromBuffer(readAddress, data, 4); // Read 4 bytes from EEPROM
+
+  float value;
+  // Combine the bytes into a float using memcpy
+  memcpy(&value, data, sizeof(float));
+  return value;
 }
 
 uint16_t readUInt16FromEepromBuffer(uint16_t readAddress) {
@@ -111,6 +131,17 @@ void writeUint16tForChannelToEepromBuffer(int channel, int memorySlot,
                                           uint16_t value) {
   int startAddress = (channel + 1) * 64 + memorySlot;
   writeUInt16ToEepromBuffer(startAddress, value);
+}
+
+void writeFloatForChannelToEepromBuffer(int channel, int memorySlot,
+                                        float value) {
+  int startAddress = (channel + 1) * 64 + memorySlot;
+  writeFloatToEepromBuffer(startAddress, value);
+}
+
+float readFloatForChannelFromEepromBuffer(int channel, int memorySlot) {
+  int startAddress = (channel + 1) * 64 + memorySlot;
+  return readFloatFromEepromBuffer(startAddress);
 }
 
 uint16_t readUint16tForChannelFromEepromBuffer(int channel, int memorySlot) {
