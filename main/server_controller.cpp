@@ -271,7 +271,7 @@ void ServerController::setChannelToValue1() {
   bool useOutputValue1 = readBoolForChannelFromEepromBuffer(
       setChannelToValue1Id, MEM_SLOT_USES_OUTPUT_VALUE1);
 
-  uint16_t value1;
+  uint16_t value1 = 0;
 
   if (useOutputValue1) {
     value1 = readUint16tForChannelFromEepromBuffer(setChannelToValue1Id,
