@@ -42,6 +42,10 @@ void ChannelController::initializePwmBoards() {
   }
 }
 
+void ChannelController::initializeLerpTimer() {
+  previousTime = millis() / 1000.0;
+}
+
 void ChannelController::updatePwmBoard(int boardIndex) {
   int pwmAddress = 0x40 + boardIndex;
   bool isBoardHighPwm = m_stateManager->getHighPwmBoard(boardIndex);
@@ -79,16 +83,18 @@ void ChannelController::setChannelPwmValue(int channel, uint16_t pwmValue) {
       readBoolForChannelFromEepromBuffer(channel, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   if (m_stateManager->getToggleForceAllOff() == true) {
-    uint16_t value1;
+    uint16_t value1 = 0;
 
     if (useOutputValue1) {
       value1 = readUint16tForChannelFromEepromBuffer(channel,
                                                      MEM_SLOT_OUTPUT_VALUE1);
-    } else {
-      value1 = 0;
     }
 
-    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value1);
+    // Immediate respnse
+    // this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value1);
+
+    // Lerped response
+    setPWM(channel, boardIndex, subAddress, value1);
     return;
   }
 
@@ -102,11 +108,126 @@ void ChannelController::setChannelPwmValue(int channel, uint16_t pwmValue) {
       value2 = 4095;
     }
 
-    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value2);
+    // Immediate respnse
+    // this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, value2);
+
+    // Lerped response
+    setPWM(channel, boardIndex, subAddress, value2);
     return;
   }
 
+  Serial.print("The pwmValue: ");
+  Serial.println(pwmValue);
+  setPWM(channel, boardIndex, subAddress, pwmValue);
+}
+
+void ChannelController::setPWM(int channel, int boardIndex, int subAddress,
+                               uint16_t pwmValue) {
+  bool isChannelLerped =
+      readBoolForChannelFromEepromBuffer(channel, MEM_SLOT_IS_LERPED);
+
+  if (isChannelLerped) {
+    writeUint16tForChannelToEepromBuffer(channel, MEM_SLOT_LERP_TARGET_VALUE,
+                                         pwmValue);
+
+    addChannelToActiveList(channel);
+  } else {
+    this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, pwmValue);
+  }
+}
+
+void ChannelController::addChannelToActiveList(uint16_t channel) {
+  // Check if the channel is already in the list
+  for (uint16_t i = 0; i < activeChannelCount; i++) {
+    if (activeChannels[i] == channel)
+      return;
+  }
+
+  // Add the channel to the list
+  if (activeChannelCount < MAX_TOTAL_CHANNELS) {
+    activeChannels[activeChannelCount++] = channel;
+  }
+}
+
+void ChannelController::removeChannelFromActiveList(uint16_t channel) {
+  for (uint16_t i = 0; i < activeChannelCount; i++) {
+    if (activeChannels[i] == channel) {
+      // Remove the channel by shifting the remaining elements
+      for (uint16_t j = i; j < activeChannelCount - 1; j++) {
+        activeChannels[j] = activeChannels[j + 1];
+      }
+      activeChannelCount--;
+      return;
+    }
+  }
+}
+
+void ChannelController::updateLerpingChannel(uint16_t channel) {
+  // Read current position and target position
+  float currentValue =
+      readFloatForChannelFromEepromBuffer(channel, MEM_SLOT_LERP_CURRENT_POS);
+  float targetValue = (float)readUint16tForChannelFromEepromBuffer(
+      channel, MEM_SLOT_LERP_TARGET_VALUE);
+  float lerpSpeed = readFloatForChannelFromEepromBuffer(
+      channel, MEM_SLOT_LERP_SPEED); // Time to complete lerp in seconds
+
+  uint16_t value1 = 0;
+  uint16_t value2 =
+      readUint16tForChannelFromEepromBuffer(channel, MEM_SLOT_OUTPUT_VALUE2);
+
+  bool usesValue1 =
+      readBoolForChannelFromEepromBuffer(channel, MEM_SLOT_USES_OUTPUT_VALUE1);
+
+  if (usesValue1) {
+    value1 =
+        readUint16tForChannelFromEepromBuffer(channel, MEM_SLOT_OUTPUT_VALUE1);
+  }
+
+  // Dynamically determine the range (position1 to position2)
+  float position1 = (float)value1;
+  float position2 = (float)value2;
+  float range = abs(position2 - position1);
+
+  // Calculate step size (delta) based on range, speed, and update rate
+  const float updatesPerSecond = 100.0; // Adjust based on your loop frequency
+  float delta = range / (lerpSpeed * updatesPerSecond);
+
+  // Determine the direction of movement
+  if (currentValue < targetValue) {
+    currentValue =
+        min(currentValue + delta, targetValue); // Increment towards target
+  } else {
+    currentValue =
+        max(currentValue - delta, targetValue); // Decrement towards target
+  }
+
+  /*
+    Serial.print("channel: ");
+    Serial.print(channel);
+    Serial.print(" currentValue: ");
+    Serial.print(currentValue, 2);
+    Serial.print(" targetValue: ");
+    Serial.print(targetValue, 2);
+    Serial.print(" delta: ");
+    Serial.println(delta, 4);
+  */
+
+  // Write the new value back to memory
+  writeFloatForChannelToEepromBuffer(channel, MEM_SLOT_LERP_CURRENT_POS,
+                                     currentValue);
+
+  // Send value to controller
+  int boardIndex = getBoardIndexForChannel(channel);
+  int subAddress = getBoardSubAddressForChannel(channel);
+  uint16_t pwmValue = (uint16_t)round(currentValue);
   this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, pwmValue);
+
+  // If the current value is close to the target, stop lerping
+  float diff = abs(currentValue - targetValue);
+  if (diff < 0.01) {
+    removeChannelFromActiveList(channel);
+    Serial.println("Remove");
+  }
 }
 
 void ChannelController::applyAndPropagateValue(int channel, uint16_t pwmValue,
@@ -439,4 +560,10 @@ void ChannelController::setNextRunningLight() {
   }
 
   setChannelPwmValue(m_nextRunningLight, value2);
+}
+
+void ChannelController::loopEvent() {
+  for (uint16_t i = 0; i < activeChannelCount; i++) {
+    updateLerpingChannel(activeChannels[i]);
+  }
 }

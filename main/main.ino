@@ -107,6 +107,7 @@ void setup() {
   randomSeed(analogValue);
 
   m_channelController.applyInitialState();
+  m_channelController.initializeLerpTimer();
 }
 
 void loop() {
@@ -129,4 +130,5 @@ void loop() {
   }
 
   m_serverController.loopEvent();
+  m_channelController.loopEvent();
 }

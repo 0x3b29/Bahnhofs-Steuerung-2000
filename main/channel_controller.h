@@ -16,15 +16,27 @@ private:
 
   Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
+  uint16_t activeChannels[MAX_TOTAL_CHANNELS];
+  uint16_t activeChannelCount = 0;
+
+  float previousTime = 0;
+
 public:
   ChannelController(StateManager *stateManager);
   void initializePwmBoards();
   void updatePwmBoard(int boardIndex);
+  void initializeLerpTimer();
 
   bool getFoundRecursion();
   void resetRecursionFlag();
 
   void setChannelPwmValue(int channel, uint16_t pwmValue);
+  void setPWM(int channel, int boardIndex, int subAddress, uint16_t pwmValue);
+
+  void addChannelToActiveList(uint16_t channel);
+  void removeChannelFromActiveList(uint16_t channel);
+  void updateLerpingChannel(uint16_t channel);
+
   void commandLinkedChannel(uint16_t commandingChannelId, float percentage,
                             int depth, int maxDepth);
   void applyAndPropagateValue(int channel, uint16_t pwmValue, float percentage);
@@ -38,6 +50,8 @@ public:
   void calculateRandomEvents();
   void setEveryChannelToRandomValue();
   void setNextRunningLight();
+
+  void loopEvent();
 };
 
 #endif // led_controller
