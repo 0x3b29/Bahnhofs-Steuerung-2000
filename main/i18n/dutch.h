@@ -41,6 +41,9 @@
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Waarde 2 Willekeurig Instellen"
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Waarde 1 Willekeurig Instellen"
 
+#define I18N_EDIT_IS_LERPED "Wordt Kanaal Gelerkt"
+#define I18N_EDIT_LERP_SPEED "Lerpsnelheid"
+
 #define I18N_CHANNEL_CHANNEL "Kanaal"
 #define I18N_CHANNEL_BOARD "Bord"
 #define I18N_CHANNEL_PIN "Pin"

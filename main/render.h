@@ -6,12 +6,6 @@
 #include <Arduino.h>
 #include <WiFiNINA.h>
 
-#include "i18n/english.h"
-// #include "i18n/german.h"
-// #include "i18n/french.h"
-// #include "i18n/dutch.h"
-// #include "i18n/luxembourgish.h"
-
 #include "helpers.h"
 
 class Renderer {

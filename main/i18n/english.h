@@ -41,6 +41,9 @@
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Randomly Set Value 2"
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Randomly Set Value 1"
 
+#define I18N_EDIT_IS_LERPED "Is Channel Lerped"
+#define I18N_EDIT_LERP_SPEED "Lerp Speed"
+
 #define I18N_CHANNEL_CHANNEL "Channel"
 #define I18N_CHANNEL_BOARD "Board"
 #define I18N_CHANNEL_PIN "Pin"

@@ -385,8 +385,8 @@ void Renderer::renderEditChannelLerp(WiFiClient client,
     </div>
   </div>
   )html",
-                      toggleIsChannelLerpedCheckedBuffer, "I18N_IS_LERPED",
-                      "I18N_LERP_SPEED", lerpSpeed);
+                      toggleIsChannelLerpedCheckedBuffer, I18N_EDIT_IS_LERPED,
+                      I18N_EDIT_LERP_SPEED, lerpSpeed);
 
   pn(client, outputBuffer);
 }

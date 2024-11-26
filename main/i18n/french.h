@@ -41,6 +41,9 @@
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Valeur 2 Définie Aléatoirement"
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Valeur 1 Définie Aléatoirement"
 
+#define I18N_EDIT_IS_LERPED "Le Canal est Interpolé"
+#define I18N_EDIT_LERP_SPEED "Vitesse d'Interpolation"
+
 #define I18N_CHANNEL_CHANNEL "Canal"
 #define I18N_CHANNEL_BOARD "Carte"
 #define I18N_CHANNEL_PIN "Pin"

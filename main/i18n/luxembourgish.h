@@ -41,6 +41,9 @@
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_2 "Wäert 2 zoufälleg setzen"
 #define I18N_EDIT_CUSTOM_RANDOM_VALUE_1 "Wäert 1 zoufälleg setzen"
 
+#define I18N_EDIT_IS_LERPED "Kanal gett Interpoliert"
+#define I18N_EDIT_LERP_SPEED "Interpolatiounsvitesse"
+
 #define I18N_CHANNEL_CHANNEL "Kanal"
 #define I18N_CHANNEL_BOARD "Platinn"
 #define I18N_CHANNEL_PIN "Pin"
