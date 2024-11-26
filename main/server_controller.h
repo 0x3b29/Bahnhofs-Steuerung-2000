@@ -66,6 +66,9 @@ private:
   bool isArgInRequest(char *request, char *arg);
   uint16_t getUint16tFromRequest(char *request, char *arg);
 
+#define REQUEST_BUFFER_SIZE 1024
+  char m_requestBuffer[REQUEST_BUFFER_SIZE];
+
 public:
   ServerController(StateManager *stateManager,
                    ChannelController *channelController, Renderer *renderer);
