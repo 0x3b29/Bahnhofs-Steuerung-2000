@@ -33,8 +33,8 @@ public:
   void setChannelPwmValue(int channel, uint16_t pwmValue);
   void setPWM(int channel, int boardIndex, int subAddress, uint16_t pwmValue);
 
-  void addChannelToActiveList(uint16_t channel);
-  void removeChannelFromActiveList(uint16_t channel);
+  void addChannelToCurrentlyLerpingList(uint16_t channel);
+  void removeChannelFromCurrentlyLerpingList(uint16_t channel);
   void updateLerpingChannel(uint16_t channel);
 
   void commandLinkedChannel(uint16_t commandingChannelId, float percentage,

@@ -130,13 +130,13 @@ void ChannelController::setPWM(int channel, int boardIndex, int subAddress,
     writeUint16tForChannelToEepromBuffer(channel, MEM_SLOT_LERP_TARGET_VALUE,
                                          pwmValue);
 
-    addChannelToActiveList(channel);
+    addChannelToCurrentlyLerpingList(channel);
   } else {
     this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, pwmValue);
   }
 }
 
-void ChannelController::addChannelToActiveList(uint16_t channel) {
+void ChannelController::addChannelToCurrentlyLerpingList(uint16_t channel) {
   // Check if the channel is already in the list
   for (uint16_t i = 0; i < currentlyLerpingChannelCount; i++) {
     if (currenltyLerpingChannels[i] == channel)
@@ -149,7 +149,8 @@ void ChannelController::addChannelToActiveList(uint16_t channel) {
   }
 }
 
-void ChannelController::removeChannelFromActiveList(uint16_t channel) {
+void ChannelController::removeChannelFromCurrentlyLerpingList(
+    uint16_t channel) {
   for (uint16_t i = 0; i < currentlyLerpingChannelCount; i++) {
     if (currenltyLerpingChannels[i] == channel) {
       // Remove the channel by shifting the remaining elements
@@ -225,7 +226,7 @@ void ChannelController::updateLerpingChannel(uint16_t channel) {
   // If the current value is close to the target, stop lerping
   float diff = abs(currentValue - targetValue);
   if (diff < 0.01) {
-    removeChannelFromActiveList(channel);
+    removeChannelFromCurrentlyLerpingList(channel);
     Serial.println("Remove");
   }
 }
