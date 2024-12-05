@@ -138,25 +138,25 @@ void ChannelController::setPWM(int channel, int boardIndex, int subAddress,
 
 void ChannelController::addChannelToActiveList(uint16_t channel) {
   // Check if the channel is already in the list
-  for (uint16_t i = 0; i < activeChannelCount; i++) {
-    if (activeChannels[i] == channel)
+  for (uint16_t i = 0; i < currentlyLerpingChannelCount; i++) {
+    if (currenltyLerpingChannels[i] == channel)
       return;
   }
 
   // Add the channel to the list
-  if (activeChannelCount < MAX_TOTAL_CHANNELS) {
-    activeChannels[activeChannelCount++] = channel;
+  if (currentlyLerpingChannelCount < MAX_TOTAL_CHANNELS) {
+    currenltyLerpingChannels[currentlyLerpingChannelCount++] = channel;
   }
 }
 
 void ChannelController::removeChannelFromActiveList(uint16_t channel) {
-  for (uint16_t i = 0; i < activeChannelCount; i++) {
-    if (activeChannels[i] == channel) {
+  for (uint16_t i = 0; i < currentlyLerpingChannelCount; i++) {
+    if (currenltyLerpingChannels[i] == channel) {
       // Remove the channel by shifting the remaining elements
-      for (uint16_t j = i; j < activeChannelCount - 1; j++) {
-        activeChannels[j] = activeChannels[j + 1];
+      for (uint16_t j = i; j < currentlyLerpingChannelCount - 1; j++) {
+        currenltyLerpingChannels[j] = currenltyLerpingChannels[j + 1];
       }
-      activeChannelCount--;
+      currentlyLerpingChannelCount--;
       return;
     }
   }
@@ -563,7 +563,7 @@ void ChannelController::setNextRunningLight() {
 }
 
 void ChannelController::loopEvent() {
-  for (uint16_t i = 0; i < activeChannelCount; i++) {
-    updateLerpingChannel(activeChannels[i]);
+  for (uint16_t i = 0; i < currentlyLerpingChannelCount; i++) {
+    updateLerpingChannel(currenltyLerpingChannels[i]);
   }
 }

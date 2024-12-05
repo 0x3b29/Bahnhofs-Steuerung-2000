@@ -16,8 +16,8 @@ private:
 
   Adafruit_PWMServoDriver m_pwmBoards[PWM_BOARDS];
 
-  uint16_t activeChannels[MAX_TOTAL_CHANNELS];
-  uint16_t activeChannelCount = 0;
+  uint16_t currenltyLerpingChannels[MAX_TOTAL_CHANNELS];
+  uint16_t currentlyLerpingChannelCount = 0;
 
   float previousTime = 0;
 
