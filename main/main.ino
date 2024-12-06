@@ -107,7 +107,7 @@ void setup() {
   randomSeed(analogValue);
 
   m_channelController.applyInitialState();
-  m_channelController.initializeLerpTimer();
+  m_channelController.initializePreviousMillis();
 }
 
 void loop() {

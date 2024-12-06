@@ -32,6 +32,8 @@
 // If complex group structures are required, the max recursion value can be
 // increased to allow for a higher depth before showing an error message.
 #define MAX_RECURSION 5
+#define MAX_LERPING_CHANNELS 64
+#define MAX_WAITING_CHANNELS 64
 
 // Do not edit any of lines below this line
 // -----------------------------------------------------------------------------
