@@ -34,18 +34,6 @@ private:
   void lerpLoopEvent(uint16_t deltaTimeInMilliseconds);
   void waitLoopEvent(uint16_t deltaTimeInMilliseconds);
 
-public:
-  ChannelController(StateManager *stateManager);
-  void initializePwmBoards();
-  void updatePwmBoard(int boardIndex);
-  void initializePreviousMillis();
-
-  bool getFoundRecursion();
-  void resetRecursionFlag();
-
-  void setChannelPwmValue(int channel, uint16_t pwmValue);
-  void setPWM(int channel, int boardIndex, int subAddress, uint16_t pwmValue);
-
   void addChannelToCurrentlyLerpingList(uint16_t channelId);
   void removeChannelFromCurrentlyLerpingList(uint16_t channelId);
   float updateLerpingChannel(uint16_t channelId,
@@ -59,6 +47,19 @@ public:
 
   void commandLinkedChannel(uint16_t commandingChannelId, float percentage,
                             int depth);
+
+public:
+  ChannelController(StateManager *stateManager);
+  void initializePwmBoards();
+  void updatePwmBoard(int boardIndex);
+  void initializePreviousMillis();
+
+  bool getFoundRecursion();
+  void resetRecursionFlag();
+
+  void setChannelPwmValue(int channel, uint16_t pwmValue);
+  void setPWM(int channel, int boardIndex, int subAddress, uint16_t pwmValue);
+
   void applyAndPropagateValue(int channel, uint16_t pwmValue, float percentage);
   void applyInitialState();
   void setAllChannels(uint8_t percentage);
