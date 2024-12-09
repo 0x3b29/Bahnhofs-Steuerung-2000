@@ -116,8 +116,6 @@ void ChannelController::setChannelPwmValue(int channelId, uint16_t pwmValue) {
     return;
   }
 
-  Serial.print("The pwmValue: ");
-  Serial.println(pwmValue);
   setPWM(channelId, boardIndex, subAddress, pwmValue);
 }
 

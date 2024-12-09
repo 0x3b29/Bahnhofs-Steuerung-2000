@@ -102,7 +102,6 @@ void ChannelController::lerpLoopEvent(uint16_t deltaTimeInMilliseconds) {
 
     if (remainingDelta < 0.01) {
       removeChannelFromCurrentlyLerpingList(m_currenltyLerpingChannels[i]);
-      Serial.println("Remove");
       // Recheck from current index after removing currentl position
       i--;
     }
