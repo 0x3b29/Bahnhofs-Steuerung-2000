@@ -57,29 +57,17 @@ float ChannelController::updateLerpingChannel(
   float position2 = (float)value2;
   float range = abs(position2 - position1);
 
-  // Calculate step size (delta) based on range, speed, and update rate
   float deltaTimeInSeconds = deltaTimeInMilliseconds / (float)1000;
-  float delta = range / lerpSpeed * deltaTimeInSeconds;
+  float deltaValue = lerpSpeed * deltaTimeInSeconds;
 
   // Determine the direction of movement
   if (currentValue < targetValue) {
     currentValue =
-        min(currentValue + delta, targetValue); // Increment towards target
+        min(currentValue + deltaValue, targetValue); // Increment towards target
   } else {
     currentValue =
-        max(currentValue - delta, targetValue); // Decrement towards target
+        max(currentValue - deltaValue, targetValue); // Decrement towards target
   }
-
-  /*
-    Serial.print("channelId: ");
-    Serial.print(channelId);
-    Serial.print(" currentValue: ");
-    Serial.print(currentValue, 2);
-    Serial.print(" targetValue: ");
-    Serial.print(targetValue, 2);
-    Serial.print(" delta: ");
-    Serial.println(delta, 4);
-  */
 
   // Write the new value back to memory
   writeFloatForChannelToEepromBuffer(channelId, MEM_SLOT_LERP_CURRENT_POS,
@@ -91,7 +79,7 @@ float ChannelController::updateLerpingChannel(
   uint16_t pwmValue = (uint16_t)round(currentValue);
   this->m_pwmBoards[boardIndex].setPWM(subAddress, 0, pwmValue);
 
-  // If the current value is close to the target, stop lerping
+  // Return the remaining delat to go
   return abs(currentValue - targetValue);
 }
 

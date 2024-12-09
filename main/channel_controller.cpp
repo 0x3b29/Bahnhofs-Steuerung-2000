@@ -499,6 +499,6 @@ void ChannelController::loopEvent() {
   uint16_t deltaTimeInMilliseconds = currentMillis - m_previousMillis;
   m_previousMillis = currentMillis;
 
-  ChannelController::waitLoopEvent(deltaTimeInMilliseconds);
-  ChannelController::lerpLoopEvent(deltaTimeInMilliseconds);
+  waitLoopEvent(deltaTimeInMilliseconds);
+  lerpLoopEvent(deltaTimeInMilliseconds);
 }

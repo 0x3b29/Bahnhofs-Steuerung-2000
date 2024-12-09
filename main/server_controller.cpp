@@ -36,6 +36,7 @@ void ServerController::cancelChannelUpdate() {
   getValueFromData(m_requestBuffer, "channelId=", m_channelIdBuffer, 5);
   uint16_t channelIdAsNumber = atoi(m_channelIdBuffer);
 
+  // TODO: do not always read value2, but previous set value instead
   uint16_t originalBrightness = readUint16tForChannelFromEepromBuffer(
       channelIdAsNumber, MEM_SLOT_OUTPUT_VALUE2);
 
