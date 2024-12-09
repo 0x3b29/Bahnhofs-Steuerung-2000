@@ -35,10 +35,10 @@ private:
   void renderEditChannelName(WiFiClient client, uint16_t channelIdToEdit);
   void renderEditInitialState(WiFiClient client, uint16_t channelIdToEdit,
                               bool useCustomRange);
-  void renderEditRandomOn(WiFiClient client, uint16_t channelIdToEdit,
-                          bool useCustomRange);
-  void renderEditRandomOff(WiFiClient client, uint16_t channelIdToEdit,
-                           bool useCustomRange);
+  void renderEditRandomValue2(WiFiClient client, uint16_t channelIdToEdit,
+                              bool useCustomRange);
+  void renderEditRandomValue1(WiFiClient client, uint16_t channelIdToEdit,
+                              bool useCustomRange);
   void renderEditChannelLinked(WiFiClient client, uint16_t channelIdToEdit);
   void renderEditChannelHiddenInCompactView(WiFiClient client,
                                             uint16_t channelIdToEdit);

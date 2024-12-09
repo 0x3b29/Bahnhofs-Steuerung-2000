@@ -79,8 +79,8 @@ void Renderer::renderEditNormalChannel(WiFiClient client) {
                       outputValue2, channelIdToEdit);
   pn(client, outputBuffer);
 
-  renderEditRandomOn(client, channelIdToEdit, toggleUseCustomRange);
-  renderEditRandomOff(client, channelIdToEdit, toggleUseCustomRange);
+  renderEditRandomValue2(client, channelIdToEdit, toggleUseCustomRange);
+  renderEditRandomValue1(client, channelIdToEdit, toggleUseCustomRange);
   renderEditChannelLinked(client, channelIdToEdit);
   renderEditChannelHiddenInCompactView(client, channelIdToEdit);
   renderEditShowSlider(client, channelIdToEdit);

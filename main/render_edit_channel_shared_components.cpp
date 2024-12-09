@@ -170,8 +170,9 @@ void Renderer::renderEditInitialState(WiFiClient client,
   pn(client, outputBuffer);
 }
 
-void Renderer::renderEditRandomOn(WiFiClient client, uint16_t channelIdToEdit,
-                                  bool useCustomRange) {
+void Renderer::renderEditRandomValue2(WiFiClient client,
+                                      uint16_t channelIdToEdit,
+                                      bool useCustomRange) {
   bool hasRandomOnEvents =
       readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_ON);
 
@@ -224,8 +225,9 @@ void Renderer::renderEditRandomOn(WiFiClient client, uint16_t channelIdToEdit,
   pn(client, outputBuffer);
 }
 
-void Renderer::renderEditRandomOff(WiFiClient client, uint16_t channelIdToEdit,
-                                   bool useCustomRange) {
+void Renderer::renderEditRandomValue1(WiFiClient client,
+                                      uint16_t channelIdToEdit,
+                                      bool useCustomRange) {
   bool hasRandomOffEvents =
       readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_OFF);
 
