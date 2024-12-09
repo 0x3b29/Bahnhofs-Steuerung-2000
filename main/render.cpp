@@ -207,7 +207,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
     bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
         channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
-    renderSaveAndDiscardJavascript(client);
+    renderUpdateChannelJavascript(client);
 
     if (toggleUseCustomRange) {
       renderEditCustomChannelJavascript(client);

@@ -131,6 +131,9 @@ void ServerController::updateChannel() {
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
                     "channelLinked=", MEM_SLOT_IS_LINKED);
 
+  updateUint16tIfFound(channelIdAsNumber, m_requestBuffer,
+                       "channelLinkDelay=", MEM_SLOT_LINK_DELAY);
+
   updateBoolIfFound(
       channelIdAsNumber, m_requestBuffer,
       "channelHiddenInCompactView=", MEM_SLOT_HIDE_IN_COMPACT_VIEW);

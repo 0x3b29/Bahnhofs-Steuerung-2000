@@ -4,7 +4,7 @@
 
 #include <WiFiNINA.h>
 
-void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
+void Renderer::renderUpdateChannelJavascript(WiFiClient client) {
 
   pn(client, R"html(
   function sendEditChannelUpdates(stayOnPageAfterUpdate) {
@@ -19,6 +19,7 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
     const frequencyOff = document.querySelector('input[name="frequencyOff"]').value;
     const channelLinked = document.querySelector('input[name="channelLinked"]').checked ? 1 : 0;
     const linkedChannelId = document.querySelector('input[name="linkedChannelId"]').value;
+    const channelLinkDelay = document.querySelector('input[name="channelLinkDelay"]').value;
     const channelHiddenInCompactView = document.querySelector('input[name="channelHiddenInCompactView"]').checked ? 1 : 0;
     const showSlider = document.querySelector('input[name="showSlider"]').checked ? 1 : 0;
     const useOutputValue1 = document.querySelector('input[name="useOutputValue1"]').checked ? 1 : 0;
@@ -39,6 +40,7 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
     `&frequencyOff=${frequencyOff}` +
     `&channelLinked=${channelLinked}` +
     `&linkedChannelId=${linkedChannelId}` +
+    `&channelLinkDelay=${channelLinkDelay}` +
     `&channelHiddenInCompactView=${channelHiddenInCompactView}` +
     `&showSlider=${showSlider}`+ 
     `&useOutputValue1=${useOutputValue1}`+ 
@@ -64,7 +66,9 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
       }
     });
   }
+    )html");
 
+  pn(client, R"html(
   function cancelEditChannelUpdates() {
     const channelId = document.querySelector('input[name="channelId"]').value;
     const channelIdToDisplay = document.querySelector('input[name="channelIdToDisplay"]').value;
@@ -81,6 +85,17 @@ void Renderer::renderSaveAndDiscardJavascript(WiFiClient client) {
         window.location.href = `/#channel-${channelIdToDisplay}`;
       }
     });
+  }
+
+  function toggleRowVisibility(checkbox, rowName, inputName) {
+    const row = document.getElementById(rowName);
+    const input = document.getElementById(inputName);
+    if (checkbox.checked) {
+      row.style.display = 'flex';
+    } else {
+      row.style.display = 'none';
+      input.value = 0;
+    }
   }
   )html");
 }
@@ -341,6 +356,57 @@ void Renderer::renderEditChannelLinked(WiFiClient client,
                I18N_EDIT_CONTROLLED_BY_CHANNEL, smallesPossibleLinkedAddress,
                largestPossibleLinkedAddress, displayedLinkedChannelId,
                smallesPossibleLinkedAddress, largestPossibleLinkedAddress);
+
+  pn(client, outputBuffer);
+}
+
+void Renderer::renderEditChannelLinkDelay(WiFiClient client,
+                                          uint16_t channelIdToEdit) {
+
+  uint16_t linkDelay = readUint16tForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_LINK_DELAY);
+
+  char *toggleHasChannelLinkDelayCheckedBuffer =
+      linkDelay ? m_checkedBuffer : m_emptyBuffer;
+
+  char outputBuffer[1024] = {0};
+  uint16_t bufferSize = sizeof(outputBuffer);
+  uint16_t written = 0;
+
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+  <div class="form-check form-switch pt-3">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      name="hasChannelLinkDelay"
+      role="switch"
+      id="hasChannelLinkDelay"
+      value="1"
+      %s
+      onchange="toggleRowVisibility(this, 'linkDelayRow', 'channelLinkDelay')"
+    />
+    <label class="form-check-label" for="hasChannelLinkDelay">%s</label>
+  </div>
+
+  <div class="row" id="linkDelayRow" style="%s">
+    <div class="col d-flex align-items-center">%s</div>
+    <div class="col d-flex align-items-center justify-content-end">
+      <input
+        class="form-control"
+        type="number"
+        id="channelLinkDelay"
+        name="channelLinkDelay"
+        min="%d"
+        max="%d"
+        value="%d"
+        oninput="validateInputData(this, %d, %d)"
+      />
+    </div>
+  </div>
+  )html",
+                      toggleHasChannelLinkDelayCheckedBuffer,
+                      I18N_EDIT_LINK_DELAY, linkDelay ? "" : "display: none;",
+                      I18N_EDIT_LINK_DELAY_MS, 0, 65535, linkDelay, 0, 65535);
 
   pn(client, outputBuffer);
 }

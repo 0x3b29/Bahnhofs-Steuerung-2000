@@ -6,18 +6,36 @@
 void ChannelController::addChannelToCurrentlyLerpingList(uint16_t channelId) {
   // Check if the channelId is already in the list
   for (uint16_t i = 0; i < m_currentlyLerpingChannelCount; i++) {
-    if (m_currenltyLerpingChannels[i] == channelId)
+    if (m_currenltyLerpingChannels[i] == channelId) {
+      if (SHOW_DEBUG_INFO) {
+        st("Channel ");
+        st(channelId);
+        sn(" was already in list of lerping channels");
+      }
+
+      // Bail out if channel is already in list of lerping channels
       return;
+    }
   }
 
   // Add the channelId to the list
   if (m_currentlyLerpingChannelCount < MAX_LERPING_CHANNELS) {
+    if (SHOW_DEBUG_INFO) {
+      st("Channel ");
+      st(channelId);
+      sn(" added to list of lerping channels");
+    }
+
     m_currenltyLerpingChannels[m_currentlyLerpingChannelCount++] = channelId;
+  } else {
+    // TODO: implement behaviour here!
+    sn("No more free slots for channels to lerp!");
   }
 }
 
 void ChannelController::removeChannelFromCurrentlyLerpingList(
     uint16_t channelId) {
+
   for (uint16_t i = 0; i < m_currentlyLerpingChannelCount; i++) {
     if (m_currenltyLerpingChannels[i] == channelId) {
       // Remove the channelId by shifting the remaining elements
@@ -25,6 +43,14 @@ void ChannelController::removeChannelFromCurrentlyLerpingList(
         m_currenltyLerpingChannels[j] = m_currenltyLerpingChannels[j + 1];
       }
       m_currentlyLerpingChannelCount--;
+
+      if (SHOW_DEBUG_INFO) {
+        st("Channel ");
+        st(channelId);
+        sn(" has finished lerping and was removed from list of lerping "
+           "channels");
+      }
+
       return;
     }
   }

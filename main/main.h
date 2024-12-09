@@ -15,6 +15,10 @@
 // #include "i18n/dutch.h"
 // #include "i18n/luxembourgish.h"
 
+// Set this flag to true to see debug information on the serial interface
+// Set to false for maximum performance
+#define SHOW_DEBUG_INFO true
+
 // Select the number of pwm boards you need. Please note that more than 16 pwm
 // boards is currently not actively tested.
 #define PWM_BOARDS 16

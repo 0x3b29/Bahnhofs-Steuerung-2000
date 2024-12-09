@@ -39,7 +39,7 @@
 #define MEM_SLOT_LERP_CURRENT_POS 48
 #define MEM_SLOT_LERP_SPEED 52
 
-#define MEM_SLOT_LINK_TIMEOUT 56
+#define MEM_SLOT_LINK_DELAY 56
 
 // Memory Slot for general settings and each channel
 #define MEM_SLOT_CRC 62

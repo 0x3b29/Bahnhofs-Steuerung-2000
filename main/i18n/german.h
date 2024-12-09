@@ -27,6 +27,8 @@
 #define I18N_EDIT_RANDOM_OFF "Zufällig Ausschalten"
 #define I18N_EDIT_LINKED "Verknüpft"
 #define I18N_EDIT_CONTROLLED_BY_CHANNEL "Gesteuert von Kanal"
+#define I18N_EDIT_LINK_DELAY "Hat Verknüpfungsverzögerung"
+#define I18N_EDIT_LINK_DELAY_MS "Verknüpfungsverzögerung (ms)"
 #define I18N_EDIT_SHOW_SLIDER "Zeige Schieberegler"
 #define I18N_EDIT_DISCARD "Verwerfen"
 #define I18N_EDIT_SAVE "Speichern"

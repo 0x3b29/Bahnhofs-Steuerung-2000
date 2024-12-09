@@ -39,11 +39,11 @@ private:
   float updateLerpingChannel(uint16_t channelId,
                              uint16_t deltaTimeInMilliseconds);
 
-  void addChannelToCurrentlyWaitingList(uint16_t channelId, uint16_t timeout,
+  void addChannelToCurrentlyWaitingList(uint16_t channelId, uint16_t delay,
                                         uint16_t pwmValue, float percentage);
   void removeChannelFromWaitingList(uint16_t channelId);
   bool updateCurrenltyWaitingChannel(uint16_t channelIndex,
-                                     uint16_t deltaTimeInMilliseconds);
+                                     uint16_t elapsedTime);
 
   void commandLinkedChannel(uint16_t commandingChannelId, float percentage,
                             int depth);

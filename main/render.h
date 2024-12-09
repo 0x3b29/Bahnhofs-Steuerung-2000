@@ -28,7 +28,7 @@ private:
   uint16_t renderSlider(char *outputBuffer, uint16_t bufferSize,
                         uint16_t channelId);
 
-  void renderSaveAndDiscardJavascript(WiFiClient client);
+  void renderUpdateChannelJavascript(WiFiClient client);
   void renderEditNormalChannelJavascript(WiFiClient client);
   void renderEditCustomChannelJavascript(WiFiClient client);
 
@@ -40,6 +40,7 @@ private:
   void renderEditRandomValue1(WiFiClient client, uint16_t channelIdToEdit,
                               bool useCustomRange);
   void renderEditChannelLinked(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditChannelLinkDelay(WiFiClient client, uint16_t channelIdToEdit);
   void renderEditChannelHiddenInCompactView(WiFiClient client,
                                             uint16_t channelIdToEdit);
   void renderEditShowSlider(WiFiClient client, uint16_t channelIdToEdit);

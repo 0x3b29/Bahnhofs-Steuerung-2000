@@ -27,6 +27,8 @@
 #define I18N_EDIT_RANDOM_OFF "Zoufälleg Aus"
 #define I18N_EDIT_LINKED "Verbonnen"
 #define I18N_EDIT_CONTROLLED_BY_CHANNEL "Gesteiert vu Kanal"
+#define I18N_EDIT_LINK_DELAY "Huet Verzögerung an der Verbingung"
+#define I18N_EDIT_LINK_DELAY_MS "Verbingungsverzögerung (ms)"
 #define I18N_EDIT_SHOW_SLIDER "Weis Rutschregeler"
 #define I18N_EDIT_DISCARD "Ofbriechen"
 #define I18N_EDIT_SAVE "Späicheren"

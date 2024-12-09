@@ -193,12 +193,12 @@ void ChannelController::commandLinkedChannel(uint16_t commandingChannelId,
 
     uint16_t pwmValue = (int)mapf(percentage, 0, 100, value1, value2);
 
-    uint16_t linkTimeout =
-        readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINK_TIMEOUT);
+    uint16_t linkDelay =
+        readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINK_DELAY);
 
-    if (linkTimeout > 0) {
+    if (linkDelay > 0) {
       // Add to list of waiting channels
-      addChannelToCurrentlyWaitingList(channelId, linkTimeout, pwmValue,
+      addChannelToCurrentlyWaitingList(channelId, linkDelay, pwmValue,
                                        percentage);
     } else {
       // Set channelId and search for more linked channels
