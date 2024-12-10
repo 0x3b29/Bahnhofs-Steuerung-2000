@@ -118,6 +118,7 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
       channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
   renderEditChannelName(client, channelIdToEdit);
+  renderEditCustomChannelToggle(client, channelIdToEdit, toggleUseCustomRange);
   renderEditInitialState(client, channelIdToEdit, toggleUseCustomRange);
 
   char outputBuffer[4096] = {0};
@@ -209,6 +210,5 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
   renderEditChannelLinkDelay(client, channelIdToEdit);
   renderEditChannelHiddenInCompactView(client, channelIdToEdit);
   renderEditShowSlider(client, channelIdToEdit);
-  renderEditCustomChannelToggle(client, channelIdToEdit, toggleUseCustomRange);
   renderEditChannelLerp(client, channelIdToEdit);
 }
