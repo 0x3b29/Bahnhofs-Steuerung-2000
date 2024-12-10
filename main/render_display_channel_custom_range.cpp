@@ -46,11 +46,11 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
       isInitialStateValue2 ? value2Buffer : value1Buffer;
 
   // --- Prepare random on events ---
-  bool doRandomlySetValue2 =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON);
+  bool doRandomlySetValue2 = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_DO_RANDOMLY_SET_VALUE2);
 
-  uint8_t randomlySetValue2Freq =
-      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON_FREQ);
+  uint8_t randomlySetValue2Freq = readUint8tForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_RANDOMLY_SET_VALUE2_FREQ);
 
   char *randomlySetValue2EventsEnabledBuffer =
       doRandomlySetValue2 ? yesBuffer : noBuffer;
@@ -78,11 +78,11 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
   // --- /Prepare random on events ---
 
   // --- Prepare random off events ---
-  bool doRandomlySetValue1 =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
+  bool doRandomlySetValue1 = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_DO_RANDOMLY_SET_VALUE1);
 
-  uint8_t randomlySetValue1Freq =
-      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
+  uint8_t randomlySetValue1Freq = readUint8tForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_RANDOMLY_SET_VALUE1_FREQ);
 
   char *randomlySetValue1EventsEnabledBuffer =
       doRandomlySetValue1 ? yesBuffer : noBuffer;

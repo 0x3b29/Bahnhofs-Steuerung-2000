@@ -42,15 +42,16 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
       initialState ? enabledBuffer : disabledBuffer;
 
   // --- Prepare random on events ---
-  bool randomOn =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON);
+  bool doRandomlySetValue2 = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_DO_RANDOMLY_SET_VALUE2);
 
-  uint8_t randomOnFreq =
-      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON_FREQ);
+  uint8_t doRandomlySetValue2Freq = readUint8tForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_RANDOMLY_SET_VALUE2_FREQ);
 
-  char *randomOnEventsEnabledBuffer = randomOn ? yesBuffer : noBuffer;
+  char *doRandomlySetValue2EventsEnabledBuffer =
+      doRandomlySetValue2 ? yesBuffer : noBuffer;
 
-  char randomOnFrequencyHtmlInputBuffer[] = R"html(
+  char doRandomlySetValue2FrequencyHtmlInputBuffer[] = R"html(
   <div class='row'>
     <div class='col'>
       <span class='h6'>%s</span>
@@ -60,27 +61,29 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
     </div>
   </div>)html";
 
-  char randomOnFrequencyHtmlOutputBuffer[512];
+  char doRandomlySetValue2FrequencyHtmlOutputBuffer[512];
 
-  snprintf(randomOnFrequencyHtmlOutputBuffer,
-           sizeof(randomOnFrequencyHtmlOutputBuffer),
-           randomOnFrequencyHtmlInputBuffer, I18N_CHANNEL_RANDOM_ON_FREQ,
-           randomOnFreq);
+  snprintf(doRandomlySetValue2FrequencyHtmlOutputBuffer,
+           sizeof(doRandomlySetValue2FrequencyHtmlOutputBuffer),
+           doRandomlySetValue2FrequencyHtmlInputBuffer,
+           I18N_CHANNEL_RANDOM_ON_FREQ, doRandomlySetValue2Freq);
 
-  char *randomOnEventsFrequencyHtmlToDisplayBuffer =
-      randomOn ? randomOnFrequencyHtmlOutputBuffer : m_emptyBuffer;
+  char *doRandomlySetValue2EventsFrequencyHtmlToDisplayBuffer =
+      doRandomlySetValue2 ? doRandomlySetValue2FrequencyHtmlOutputBuffer
+                          : m_emptyBuffer;
   // --- /Prepare random on events ---
 
   // --- Prepare random off events ---
-  bool randomOff =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
+  bool doRandomlySetValue1 = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_DO_RANDOMLY_SET_VALUE1);
 
-  uint8_t randomOffFreq =
-      readUint8tForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF_FREQ);
+  uint8_t doRandomlySetValue1Freq = readUint8tForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_RANDOMLY_SET_VALUE1_FREQ);
 
-  char *randomOffEventsEnabledBuffer = randomOff ? yesBuffer : noBuffer;
+  char *doRandomlySetValue1EventsEnabledBuffer =
+      doRandomlySetValue1 ? yesBuffer : noBuffer;
 
-  char randomOffFrequencyHtmlInputBuffer[] = R"html(
+  char doRandomlySetValue1FrequencyHtmlInputBuffer[] = R"html(
   <div class="row">
     <div class="col">
       <span class="h6">%s</span>
@@ -89,15 +92,16 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
   </div>
       )html";
 
-  char randomOffFrequencyHtmlOutputBuffer[512];
+  char doRandomlySetValue1FrequencyHtmlOutputBuffer[512];
 
-  snprintf(randomOffFrequencyHtmlOutputBuffer,
-           sizeof(randomOffFrequencyHtmlOutputBuffer),
-           randomOffFrequencyHtmlInputBuffer, I18N_CHANNEL_RANDOM_ON_FREQ,
-           randomOffFreq);
+  snprintf(doRandomlySetValue1FrequencyHtmlOutputBuffer,
+           sizeof(doRandomlySetValue1FrequencyHtmlOutputBuffer),
+           doRandomlySetValue1FrequencyHtmlInputBuffer,
+           I18N_CHANNEL_RANDOM_ON_FREQ, doRandomlySetValue1Freq);
 
-  char *randomOffEventsFrequencyHtmlToDisplayBuffer =
-      randomOff ? randomOffFrequencyHtmlOutputBuffer : m_emptyBuffer;
+  char *doRandomlySetValue1EventsFrequencyHtmlToDisplayBuffer =
+      doRandomlySetValue1 ? doRandomlySetValue1FrequencyHtmlOutputBuffer
+                          : m_emptyBuffer;
 
   // --- /Prepare random off events ---
 
@@ -277,10 +281,12 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
       I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer, I18N_CHANNEL_START_STATE,
       toggleInitialStateCheckedBuffer, I18N_CHANNEL_BRIGHTNESS,
       brightnessAsPercentage, I18N_CHANNEL_RANDOMLY_ON,
-      randomOnEventsEnabledBuffer, randomOnEventsFrequencyHtmlToDisplayBuffer,
-      I18N_CHANNEL_RANDOMLY_OFF, randomOffEventsEnabledBuffer,
-      randomOffEventsFrequencyHtmlToDisplayBuffer, I18N_CHANNEL_LINKED,
-      isChannelLinkedBuffer, linkedChannelHtmlToDisplayBuffer,
+      doRandomlySetValue2EventsEnabledBuffer,
+      doRandomlySetValue2EventsFrequencyHtmlToDisplayBuffer,
+      I18N_CHANNEL_RANDOMLY_OFF, doRandomlySetValue1EventsEnabledBuffer,
+      doRandomlySetValue1EventsFrequencyHtmlToDisplayBuffer,
+      I18N_CHANNEL_LINKED, isChannelLinkedBuffer,
+      linkedChannelHtmlToDisplayBuffer,
       isChannelHiddenInCompactViewHtmlToDisplayBuffer,
       horizontalRuleHtmlToDisplayBuffer);
 

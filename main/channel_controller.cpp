@@ -371,26 +371,26 @@ bool ChannelController::shouldInvokeEvent(uint8_t freq) {
 void ChannelController::calculateRandomEvents() {
   for (int channelId = 0; channelId < m_stateManager->getNumChannels();
        channelId++) {
-    bool randomOn =
-        readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_ON);
-    bool randomOff =
-        readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_RANDOM_OFF);
+    bool doRandomlySetValue2 = readBoolForChannelFromEepromBuffer(
+        channelId, MEM_SLOT_DO_RANDOMLY_SET_VALUE2);
+    bool doRandomlySetValue1 = readBoolForChannelFromEepromBuffer(
+        channelId, MEM_SLOT_DO_RANDOMLY_SET_VALUE1);
 
     // No need for further checks if channelId has no random events
-    if (!randomOn && !randomOff) {
+    if (!doRandomlySetValue2 && !doRandomlySetValue1) {
       continue;
     }
 
-    uint8_t randomOnFreq = readUint8tForChannelFromEepromBuffer(
-        channelId, MEM_SLOT_RANDOM_ON_FREQ);
+    uint8_t doRandomlySetValue2Freq = readUint8tForChannelFromEepromBuffer(
+        channelId, MEM_SLOT_RANDOMLY_SET_VALUE2_FREQ);
 
-    uint8_t randomOffFreq = readUint8tForChannelFromEepromBuffer(
-        channelId, MEM_SLOT_RANDOM_OFF_FREQ);
+    uint8_t doRandomlySetValue1Freq = readUint8tForChannelFromEepromBuffer(
+        channelId, MEM_SLOT_RANDOMLY_SET_VALUE1_FREQ);
 
-    bool turnOn = shouldInvokeEvent(randomOnFreq);
-    bool turnOff = shouldInvokeEvent(randomOffFreq);
+    bool setValue2 = shouldInvokeEvent(doRandomlySetValue2Freq);
+    bool setValue1 = shouldInvokeEvent(doRandomlySetValue1Freq);
 
-    if (randomOn & turnOn) {
+    if (doRandomlySetValue2 & setValue2) {
       st("Got random on/value2 event for channelId ");
       st(channelId);
       st(" at ");
@@ -400,7 +400,7 @@ void ChannelController::calculateRandomEvents() {
           channelId, MEM_SLOT_OUTPUT_VALUE2);
 
       applyAndPropagateValue(channelId, outputValue2, 100);
-    } else if (randomOff & turnOff) {
+    } else if (doRandomlySetValue1 & setValue1) {
       st("Got random off/value1 event for channelId ");
       st(channelId);
       st(" at ");

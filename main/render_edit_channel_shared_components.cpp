@@ -13,10 +13,10 @@ void Renderer::renderUpdateChannelJavascript(WiFiClient client) {
     const channelName = document.querySelector('input[name="channelName"]').value;
     const initialState = document.querySelector('input[name="initialState"]').checked ? 1 : 0;
     const outputValue2 = document.querySelector('input[name="outputValue2"]').value;
-    const randomOn = document.querySelector('input[name="randomOn"]').checked ? 1 : 0;
-    const frequencyOn = document.querySelector('input[name="frequencyOn"]').value;
-    const randomOff = document.querySelector('input[name="randomOff"]').checked ? 1 : 0;
-    const frequencyOff = document.querySelector('input[name="frequencyOff"]').value;
+    const doRandomlySetValue2 = document.querySelector('input[name="doRandomlySetValue2"]').checked ? 1 : 0;
+    const frequencyValue2 = document.querySelector('input[name="frequencyValue2"]').value;
+    const doRandomlySetValue1 = document.querySelector('input[name="doRandomlySetValue1"]').checked ? 1 : 0;
+    const frequencyValue1 = document.querySelector('input[name="frequencyValue1"]').value;
     const channelLinked = document.querySelector('input[name="channelLinked"]').checked ? 1 : 0;
     const linkedChannelId = document.querySelector('input[name="linkedChannelId"]').value;
     const channelLinkDelay = document.querySelector('input[name="channelLinkDelay"]').value;
@@ -34,10 +34,10 @@ void Renderer::renderUpdateChannelJavascript(WiFiClient client) {
     `&channelName=${encodeURIComponent(channelName)}` + 
     `&initialState=${initialState}` +
     `&outputValue2=${outputValue2}` +
-    `&randomOn=${randomOn}` +
-    `&frequencyOn=${frequencyOn}` +
-    `&randomOff=${randomOff}` +
-    `&frequencyOff=${frequencyOff}` +
+    `&doRandomlySetValue2=${doRandomlySetValue2}` +
+    `&frequencyValue2=${frequencyValue2}` +
+    `&doRandomlySetValue1=${doRandomlySetValue1}` +
+    `&frequencyValue1=${frequencyValue1}` +
     `&channelLinked=${channelLinked}` +
     `&linkedChannelId=${linkedChannelId}` +
     `&channelLinkDelay=${channelLinkDelay}` +
@@ -188,44 +188,48 @@ void Renderer::renderEditInitialState(WiFiClient client,
 void Renderer::renderEditRandomValue2(WiFiClient client,
                                       uint16_t channelIdToEdit,
                                       bool useCustomRange) {
-  bool hasRandomOnEvents =
-      readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_ON);
+  bool hasdoRandomlySetValue2Events = readBoolForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_DO_RANDOMLY_SET_VALUE2);
 
-  char *toggleHasRandomOnEventsCheckedBuffer =
-      hasRandomOnEvents ? m_checkedBuffer : m_emptyBuffer;
+  char *toggleHasdoRandomlySetValue2EventsCheckedBuffer =
+      hasdoRandomlySetValue2Events ? m_checkedBuffer : m_emptyBuffer;
 
   const char *i18n_random_on =
       useCustomRange ? I18N_EDIT_CUSTOM_RANDOM_VALUE_2 : I18N_EDIT_RANDOM_ON;
 
-  uint8_t randomOnFreq = readUint8tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_RANDOM_ON_FREQ);
+  uint8_t doRandomlySetValue2Freq = readUint8tForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_RANDOMLY_SET_VALUE2_FREQ);
 
   char outputBuffer[1024] = {0};
   uint16_t bufferSize = sizeof(outputBuffer);
   uint16_t written = 0;
 
-  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+  written +=
+      snprintf(outputBuffer + written, bufferSize - written, R"html(
   <div class="form-check form-switch pt-3">
     <input
       class="form-check-input"
       type="checkbox"
-      name="randomOn"
+      name="doRandomlySetValue2"
       value="1"
       role="switch"
-      id="randomOn"
+      id="doRandomlySetValue2"
+      onchange="toggleRowVisibility(this, 'frequencyValue2Row', 'frequencyValue2')"
       %s
     />
-    <label class="form-check-label" for="randomOn">
+    <label class="form-check-label" for="doRandomlySetValue2">
       %s
     </label>
   </div>
-  <div class="row">
+
+  <div id="frequencyValue2Row" class="row" style="%s">
     <div class="col d-flex align-items-center">%s</div>
     <div class="col d-flex justify-content-end">
       <input
+        id="frequencyValue2"
         class="form-control"
         type="number"
-        name="frequencyOn"
+        name="frequencyValue2"
         min="0"
         max="255"
         value="%d"
@@ -234,8 +238,9 @@ void Renderer::renderEditRandomValue2(WiFiClient client,
     </div>
   </div>
 )html",
-                      toggleHasRandomOnEventsCheckedBuffer, i18n_random_on,
-                      I18N_EDIT_RANDOM_FREQ, randomOnFreq);
+               toggleHasdoRandomlySetValue2EventsCheckedBuffer, i18n_random_on,
+               hasdoRandomlySetValue2Events ? "" : "display: none;",
+               I18N_EDIT_RANDOM_FREQ, doRandomlySetValue2Freq);
 
   pn(client, outputBuffer);
 }
@@ -243,34 +248,35 @@ void Renderer::renderEditRandomValue2(WiFiClient client,
 void Renderer::renderEditRandomValue1(WiFiClient client,
                                       uint16_t channelIdToEdit,
                                       bool useCustomRange) {
-  bool hasRandomOffEvents =
-      readBoolForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_RANDOM_OFF);
+  bool hasdoRandomlySetValue1Events = readBoolForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_DO_RANDOMLY_SET_VALUE1);
 
-  char *toggleHasRandomOffEventsCheckedBuffer =
-      hasRandomOffEvents ? m_checkedBuffer : m_emptyBuffer;
+  char *toggleHasdoRandomlySetValue1EventsCheckedBuffer =
+      hasdoRandomlySetValue1Events ? m_checkedBuffer : m_emptyBuffer;
 
   const char *i18n_random_off =
       useCustomRange ? I18N_EDIT_CUSTOM_RANDOM_VALUE_1 : I18N_EDIT_RANDOM_OFF;
 
-  uint8_t randomOffFreq = readUint8tForChannelFromEepromBuffer(
-      channelIdToEdit, MEM_SLOT_RANDOM_OFF_FREQ);
+  uint8_t doRandomlySetValue1Freq = readUint8tForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_RANDOMLY_SET_VALUE1_FREQ);
 
   char outputBuffer[1024] = {0};
   uint16_t bufferSize = sizeof(outputBuffer);
   uint16_t written = 0;
 
-  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+  written +=
+      snprintf(outputBuffer + written, bufferSize - written, R"html(
   <div class="form-check form-switch pt-3">
     <input
       class="form-check-input"
       type="checkbox"
-      name="randomOff"
+      name="doRandomlySetValue1"
       value="1"
       role="switch"
-      id="randomOff"
+      id="doRandomlySetValue1"
       %s
     />
-    <label class="form-check-label" for="randomOff">
+    <label class="form-check-label" for="doRandomlySetValue1">
       %s
     </label>
   </div>
@@ -281,7 +287,7 @@ void Renderer::renderEditRandomValue1(WiFiClient client,
       <input
         class="form-control"
         type="number"
-        name="frequencyOff"
+        name="frequencyValue1"
         min="0"
         max="255"
         value="%d"
@@ -290,8 +296,8 @@ void Renderer::renderEditRandomValue1(WiFiClient client,
     </div>
   </div>
   )html",
-                      toggleHasRandomOffEventsCheckedBuffer, i18n_random_off,
-                      I18N_EDIT_RANDOM_FREQ, randomOffFreq);
+               toggleHasdoRandomlySetValue1EventsCheckedBuffer, i18n_random_off,
+               I18N_EDIT_RANDOM_FREQ, doRandomlySetValue1Freq);
 
   pn(client, outputBuffer);
 }

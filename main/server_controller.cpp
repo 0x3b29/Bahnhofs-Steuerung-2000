@@ -117,16 +117,16 @@ void ServerController::updateChannel() {
                     "initialState=", MEM_SLOT_IS_START_VALUE_OUTPUT_VALUE2);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
-                    "randomOn=", MEM_SLOT_RANDOM_ON);
+                    "doRandomlySetValue2=", MEM_SLOT_DO_RANDOMLY_SET_VALUE2);
 
   updateUint8tIfFound(channelIdAsNumber, m_requestBuffer,
-                      "frequencyOn=", MEM_SLOT_RANDOM_ON_FREQ);
+                      "frequencyValue2=", MEM_SLOT_RANDOMLY_SET_VALUE2_FREQ);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
-                    "randomOff=", MEM_SLOT_RANDOM_OFF);
+                    "doRandomlySetValue1=", MEM_SLOT_DO_RANDOMLY_SET_VALUE1);
 
   updateUint8tIfFound(channelIdAsNumber, m_requestBuffer,
-                      "frequencyOff=", MEM_SLOT_RANDOM_OFF_FREQ);
+                      "frequencyValue1=", MEM_SLOT_RANDOMLY_SET_VALUE1_FREQ);
 
   updateBoolIfFound(channelIdAsNumber, m_requestBuffer,
                     "channelLinked=", MEM_SLOT_IS_LINKED);
