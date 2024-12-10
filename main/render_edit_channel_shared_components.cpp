@@ -274,6 +274,7 @@ void Renderer::renderEditRandomValue1(WiFiClient client,
       value="1"
       role="switch"
       id="doRandomlySetValue1"
+      onchange="toggleRowVisibility(this, 'frequencyValue1Row', 'frequencyValue1')"
       %s
     />
     <label class="form-check-label" for="doRandomlySetValue1">
@@ -281,10 +282,11 @@ void Renderer::renderEditRandomValue1(WiFiClient client,
     </label>
   </div>
 
-  <div class="row">
+  <div id="frequencyValue1Row" class="row" style="%s">
     <div class="col d-flex align-items-center">%s</div>
     <div class="col d-flex justify-content-end">
       <input
+        id="frequencyValue1"
         class="form-control"
         type="number"
         name="frequencyValue1"
@@ -297,6 +299,7 @@ void Renderer::renderEditRandomValue1(WiFiClient client,
   </div>
   )html",
                toggleHasdoRandomlySetValue1EventsCheckedBuffer, i18n_random_off,
+               hasdoRandomlySetValue1Events ? "" : "display: none;",
                I18N_EDIT_RANDOM_FREQ, doRandomlySetValue1Freq);
 
   pn(client, outputBuffer);
@@ -338,15 +341,17 @@ void Renderer::renderEditChannelLinked(WiFiClient client,
       role="switch"
       id="channelLinked"
       value="1"
+      onchange="toggleRowVisibility(this, 'channelLinkedRow', 'linkedChannelId')"
       %s
     />
     <label class="form-check-label" for="channelLinked">%s</label>
   </div>
 
-  <div class="row">
+  <div id="channelLinkedRow" class="row" style="%s">
     <div class="col d-flex align-items-center">%s</div>
     <div class="col d-flex align-items-center justify-content-end">
       <input
+        id="linkedChannelId"
         class="form-control"
         type="number"
         name="linkedChannelId"
@@ -359,6 +364,7 @@ void Renderer::renderEditChannelLinked(WiFiClient client,
   </div>
   )html",
                toggleIsChannelLinkedCheckedBuffer, I18N_EDIT_LINKED,
+               isChannelLinked ? "" : "display: none;",
                I18N_EDIT_CONTROLLED_BY_CHANNEL, smallesPossibleLinkedAddress,
                largestPossibleLinkedAddress, displayedLinkedChannelId,
                smallesPossibleLinkedAddress, largestPossibleLinkedAddress);
