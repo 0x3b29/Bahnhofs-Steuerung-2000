@@ -447,15 +447,17 @@ void Renderer::renderEditChannelLerp(WiFiClient client,
       role="switch"
       id="channelLerped"
       value="1"
+      onchange="toggleRowVisibility(this, 'lerpSpeedRow', 'lerpSpeed')"
       %s
     />
     <label class="form-check-label" for="channelLerped">%s</label>
   </div>
 
-  <div class="row">
+  <div id="lerpSpeedRow" class="row" style="%s">
     <div class="col d-flex align-items-center">%s</div>
     <div class="col d-flex align-items-center justify-content-end">
       <input
+        id="lerpSpeed"
         class="form-control"
         type="number"
         step="any"
@@ -466,6 +468,7 @@ void Renderer::renderEditChannelLerp(WiFiClient client,
   </div>
   )html",
                       toggleIsChannelLerpedCheckedBuffer, I18N_EDIT_IS_LERPED,
+                      isChannelLerped ? "" : "display: none;",
                       I18N_EDIT_LERP_SPEED, lerpSpeed);
 
   pn(client, outputBuffer);
