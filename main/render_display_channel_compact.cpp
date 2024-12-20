@@ -3,6 +3,7 @@
 #include "render.h"
 #include "state_manager.h"
 #include <WiFiNINA.h>
+#include "symbols.h"
 
 void Renderer::renderChannelDetailCompact(WiFiClient client,
                                           uint16_t channelId) {
@@ -102,14 +103,14 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
   char *rightClass;
 
   if (toggleUseCustomRange) {
-    leftSymbol = "⮘";
-    rightSymbol = "⮚";
+    leftSymbol = SYMBOL_SET_VALUE_1;
+    rightSymbol = SYMBOL_SET_VALUE_2;
     leftClass = "text-primary";
     rightClass = "text-primary";
 
   } else {
-    leftSymbol = "⛭";
-    rightSymbol = "⛭";
+    leftSymbol = SYMBOL_TURN_LIGHT_ON;
+    rightSymbol = SYMBOL_TURN_LIGHT_OFF;
     leftClass = "";
     rightClass = "text-warning";
   }

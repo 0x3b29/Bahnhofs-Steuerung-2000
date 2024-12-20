@@ -5,6 +5,7 @@
 #include <WiFiNINA.h>
 
 #include "helpers.h"
+#include "symbols.h"
 
 void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
                                                   uint16_t channelId,
@@ -184,23 +185,24 @@ void Renderer::renderChannelDetailWithSimpleRange(WiFiClient client,
     <div class="col-3">
       <div class="d-flex justify-content-end">
         <button class="btn" name="editChannel" onclick="openEditChannelPage('%d')">
-          🖊
+          %s
         </button>
         <button class="btn" onclick="sendValue('setChannelToValue1', '%d')">
-          ⛭
+          %s
         </button>
         <button
           class="btn text-warning"
           onclick="sendValue('setChannelToValue2', '%d')"
         >
-          ⛭
+          %s
         </button>
       </div>
     </div>
   </div>)html",
       channelIdToDisplay, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
       I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
-      boardSubAddressToDisplay, channelIdToDisplay, channelId, channelId);
+      boardSubAddressToDisplay, channelIdToDisplay, SYMBOL_EDIT_CHANNEL,
+      channelId, SYMBOL_TURN_LIGHT_OFF, channelId, SYMBOL_TURN_LIGHT_ON);
 
   bool toggleShowSlider =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_SHOW_SLIDER);
