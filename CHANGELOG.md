@@ -1,3 +1,11 @@
+## [1.3.0] - 2024-02-20
+### Added
+- Support for lerping channels
+- Support for delay between linked channels
+
+### Changed
+- Restructured channel settings
+
 ## [1.2.0] - 2024-02-20
 ### Added
 - Support for servo motors
