@@ -32,7 +32,14 @@ private:
   void renderEditNormalChannelJavascript(WiFiClient client);
   void renderEditCustomChannelJavascript(WiFiClient client);
 
+  void renderEditAddSpacer(WiFiClient client);
+  void renderEditDisplayHeading(WiFiClient client, char * heading);
+
+  void renderEditChannelHeading(WiFiClient client, uint16_t channelIdToEdit);
   void renderEditChannelName(WiFiClient client, uint16_t channelIdToEdit);
+  void renderEditCustomChannelToggle(WiFiClient client,
+                                     uint16_t channelIdToEdit,
+                                     bool useCustomRange);
   void renderEditInitialState(WiFiClient client, uint16_t channelIdToEdit,
                               bool useCustomRange);
   void renderEditRandomValue2(WiFiClient client, uint16_t channelIdToEdit,
@@ -44,9 +51,6 @@ private:
   void renderEditChannelHiddenInCompactView(WiFiClient client,
                                             uint16_t channelIdToEdit);
   void renderEditShowSlider(WiFiClient client, uint16_t channelIdToEdit);
-  void renderEditCustomChannelToggle(WiFiClient client,
-                                     uint16_t channelIdToEdit,
-                                     bool useCustomRange);
   void renderEditChannelLerp(WiFiClient client, uint16_t channelIdToEdit);
 
   void renderEditNormalChannel(WiFiClient client);

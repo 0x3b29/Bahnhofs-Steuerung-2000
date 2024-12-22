@@ -495,7 +495,7 @@ void ChannelController::setNextRunningLight() {
 }
 
 void ChannelController::loopEvent() {
-  unsigned long currentMillis = millis();
+  uint16_t currentMillis = millis();
   uint16_t deltaTimeInMilliseconds = currentMillis - m_previousMillis;
   m_previousMillis = currentMillis;
 

@@ -8,7 +8,7 @@ void ChannelController::addChannelToCurrentlyLerpingList(uint16_t channelId) {
   for (uint16_t i = 0; i < m_currentlyLerpingChannelCount; i++) {
     if (m_currenltyLerpingChannels[i] == channelId) {
       if (SHOW_DEBUG_INFO) {
-        st("Channel ");
+        st("Info: Channel ");
         st(channelId);
         sn(" was already in list of lerping channels");
       }
@@ -18,19 +18,31 @@ void ChannelController::addChannelToCurrentlyLerpingList(uint16_t channelId) {
     }
   }
 
-  // Add the channelId to the list
-  if (m_currentlyLerpingChannelCount < MAX_LERPING_CHANNELS) {
+  if (hasChannelArrivedAtTarget(channelId)) {
+    // Bail out if channel is already at or close to its target position
     if (SHOW_DEBUG_INFO) {
-      st("Channel ");
+      st("Fail: Channel ");
       st(channelId);
-      sn(" added to list of lerping channels");
+      sn(" already at target position!");
     }
 
-    m_currenltyLerpingChannels[m_currentlyLerpingChannelCount++] = channelId;
-  } else {
-    // TODO: implement behaviour here!
-    sn("No more free slots for channels to lerp!");
+    return;
   }
+
+  if (m_currentlyLerpingChannelCount >= MAX_LERPING_CHANNELS) {
+    // TODO: implement behaviour here!
+    sn("Fail: No more free slots for channels to lerp!");
+    return;
+  }
+
+  // Add the channelId to the list
+  if (SHOW_DEBUG_INFO) {
+    st("Success: Channel ");
+    st(channelId);
+    sn(" added to list of lerping channels");
+  }
+
+  m_currenltyLerpingChannels[m_currentlyLerpingChannelCount++] = channelId;
 }
 
 void ChannelController::removeChannelFromCurrentlyLerpingList(
@@ -42,6 +54,7 @@ void ChannelController::removeChannelFromCurrentlyLerpingList(
       for (uint16_t j = i; j < m_currentlyLerpingChannelCount - 1; j++) {
         m_currenltyLerpingChannels[j] = m_currenltyLerpingChannels[j + 1];
       }
+
       m_currentlyLerpingChannelCount--;
 
       if (SHOW_DEBUG_INFO) {
@@ -53,6 +66,21 @@ void ChannelController::removeChannelFromCurrentlyLerpingList(
 
       return;
     }
+  }
+}
+
+bool ChannelController::hasChannelArrivedAtTarget(uint16_t channelId) {
+  float currentValue =
+      readFloatForChannelFromEepromBuffer(channelId, MEM_SLOT_LERP_CURRENT_POS);
+  float targetValue = (float)readUint16tForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_LERP_TARGET_VALUE);
+
+  float delta = abs(currentValue - targetValue);
+
+  if (delta < MAX_LERP_DELTA) {
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -109,15 +137,16 @@ float ChannelController::updateLerpingChannel(
   return abs(currentValue - targetValue);
 }
 
-void ChannelController::lerpLoopEvent(uint16_t deltaTimeInMilliseconds) {
-  for (uint16_t i = 0; i < m_currentlyLerpingChannelCount; i++) {
-    float remainingDelta = updateLerpingChannel(m_currenltyLerpingChannels[i],
-                                                deltaTimeInMilliseconds);
+void ChannelController::lerpLoopEvent(const uint16_t deltaTimeInMilliseconds) {
+  uint8_t index = 0;
+  while (index < m_currentlyLerpingChannelCount) {
+        updateLerpingChannel(m_currenltyLerpingChannels[index],
+                         deltaTimeInMilliseconds);
 
-    if (remainingDelta < 0.01) {
-      removeChannelFromCurrentlyLerpingList(m_currenltyLerpingChannels[i]);
-      // Recheck from current index after removing currentl position
-      i--;
+    if (hasChannelArrivedAtTarget(m_currenltyLerpingChannels[index])) {
+      removeChannelFromCurrentlyLerpingList(m_currenltyLerpingChannels[index]);
+    } else {
+      index++;
     }
   }
 }

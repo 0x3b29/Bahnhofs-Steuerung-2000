@@ -15,6 +15,7 @@
 #define RANDOM_INTERVAL 1000
 #define RUNNING_LIGHT_INTERVAL 25
 #define RANDOM_EVENT_INTERVAL 100
+#define HEARTBEAT_INTERVAL 500
 
 StateManager m_stateManager;
 ChannelController m_channelController(&m_stateManager);
@@ -26,7 +27,12 @@ long m_lastRandom = 0;
 long m_lastRandomEvent = 0;
 long m_lastRunningLightEvent = 0;
 
+long m_lastHeartbeatEvent = 0;
+bool m_lastHeartbeatState = false;
+
 void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+
   Serial.begin(115200);
   delay(2000);
   Serial.println("Starting");
@@ -73,14 +79,13 @@ void setup() {
   Serial.println("Attempting to connect to WiFi network...");
   delay(500);
   WiFi.begin(SECRET_SSID, SECRET_PASS);
-
   int tries = 0;
   // Attempt to connect to WiFi network
   while (WiFi.status() != WL_CONNECTED) {
     Serial.println("Waiting for WiFi network...");
     //
 
-    if (tries > 10) {
+    if (tries > 5) {
       Serial.println("Re-attempting to connect to WiFi network...");
       WiFi.begin(SECRET_SSID, SECRET_PASS);
       tries = 0;
@@ -129,6 +134,18 @@ void loop() {
     m_channelController.setNextRunningLight();
   }
 
-  m_serverController.loopEvent();
+  if (millis() > (m_lastHeartbeatEvent + HEARTBEAT_INTERVAL)) {
+    m_lastHeartbeatEvent = millis();
+
+    if (m_lastHeartbeatState == true) {
+      m_lastHeartbeatState = false;
+    } else {
+      m_lastHeartbeatState = true;
+    }
+
+    digitalWrite(LED_BUILTIN, m_lastHeartbeatState);
+  }
+
   m_channelController.loopEvent();
+  m_serverController.loopEvent();
 }

@@ -10,4 +10,6 @@ uint8_t getBoardSubAddressForChannel(uint16_t channel);
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max);
 
+void floatToBuffer(float value, char *buffer, size_t bufferSize, uint8_t precision);
+
 #endif // helpers_h

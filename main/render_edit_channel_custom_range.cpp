@@ -117,6 +117,8 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
   bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
       channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
 
+  renderEditChannelHeading(client, channelIdToEdit);
+  renderEditDisplayHeading(client, I18N_EDIT_HEADING_BASIC_SETTINGS);
   renderEditChannelName(client, channelIdToEdit);
   renderEditCustomChannelToggle(client, channelIdToEdit, toggleUseCustomRange);
   renderEditInitialState(client, channelIdToEdit, toggleUseCustomRange);
@@ -204,11 +206,16 @@ void Renderer::renderEditCustomChannel(WiFiClient client) {
 
   pn(client, outputBuffer);
 
+  renderEditAddSpacer(client);
+  renderEditDisplayHeading(client, I18N_EDIT_HEADING_OPTIONAL_SETTINGS);
   renderEditRandomValue2(client, channelIdToEdit, toggleUseCustomRange);
   renderEditRandomValue1(client, channelIdToEdit, toggleUseCustomRange);
   renderEditChannelLinked(client, channelIdToEdit);
   renderEditChannelLinkDelay(client, channelIdToEdit);
-  renderEditChannelHiddenInCompactView(client, channelIdToEdit);
-  renderEditShowSlider(client, channelIdToEdit);
   renderEditChannelLerp(client, channelIdToEdit);
+
+  renderEditAddSpacer(client);
+  renderEditDisplayHeading(client, I18N_EDIT_HEADING_DISPLAY_SETTINGS);
+  renderEditShowSlider(client, channelIdToEdit);
+  renderEditChannelHiddenInCompactView(client, channelIdToEdit);
 }

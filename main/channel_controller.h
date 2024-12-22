@@ -6,6 +6,8 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <Arduino.h>
 
+#define MAX_LERP_DELTA 0.01
+
 class ChannelController {
 private:
   struct ChannelDelay {
@@ -31,8 +33,8 @@ private:
 
   unsigned long m_previousMillis = 0;
 
-  void lerpLoopEvent(uint16_t deltaTimeInMilliseconds);
-  void waitLoopEvent(uint16_t deltaTimeInMilliseconds);
+  void lerpLoopEvent(const uint16_t deltaTimeInMilliseconds);
+  void waitLoopEvent(const uint16_t deltaTimeInMilliseconds);
 
   void addChannelToCurrentlyLerpingList(uint16_t channelId);
   void removeChannelFromCurrentlyLerpingList(uint16_t channelId);
@@ -58,6 +60,7 @@ public:
   void resetRecursionFlag();
 
   void setChannelPwmValue(int channel, uint16_t pwmValue);
+  bool hasChannelArrivedAtTarget(uint16_t channelId);
   void setPWM(int channel, int boardIndex, int subAddress, uint16_t pwmValue);
 
   void applyAndPropagateValue(int channel, uint16_t pwmValue, float percentage);

@@ -23,3 +23,28 @@ uint8_t getBoardSubAddressForChannel(uint16_t channel) { return channel % 16; }
 float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+
+void floatToBuffer(float value, char *buffer, size_t bufferSize, uint8_t precision) {
+  if (bufferSize == 0) {
+    return;
+  }
+
+  // Handle special cases: NaN and infinity
+  if (isnan(value)) {
+    snprintf(buffer, bufferSize, "NaN");
+    return;
+  }
+
+  if (isinf(value)) {
+    snprintf(buffer, bufferSize, "Inf");
+    return;
+  }
+
+  // Handle the integer and fractional parts
+  int intPart = (int)value;                    
+  float fracPart = fabs(value - intPart);      
+  unsigned int fracAsInt = (unsigned int)(fracPart * pow(10, precision));
+
+  // Format into the buffer
+  snprintf(buffer, bufferSize, "%d.%0*u", intPart, precision, fracAsInt);
+}

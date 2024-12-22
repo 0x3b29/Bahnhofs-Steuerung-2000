@@ -100,6 +100,37 @@ void Renderer::renderUpdateChannelJavascript(WiFiClient client) {
   )html");
 }
 
+void Renderer::renderEditChannelHeading(WiFiClient client,
+                                        uint16_t channelIdToEdit) {
+  bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
+
+  uint16_t channelIdToDisplay =
+      toggleOneBasedAddresses ? channelIdToEdit + 1 : channelIdToEdit;
+
+  bool toggleUseCustomRange = readBoolForChannelFromEepromBuffer(
+      channelIdToEdit, MEM_SLOT_USES_OUTPUT_VALUE1);
+
+  const char *channelMode =
+      toggleUseCustomRange ? I18N_EDIT_MODE_CUSTOM : I18N_EDIT_MODE_NORMAL;
+
+  char outputBuffer[1024] = {0};
+  uint16_t bufferSize = sizeof(outputBuffer);
+  uint16_t written = 0;
+
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+  <div class="d-flex align-items-baseline">
+    <h3>%s %s %d</h3> &nbsp; <div class="text-muted ">%s</div>
+  </div>
+
+<input type="hidden" name="channelId" value="%d" />
+<input type="hidden" name="channelIdToDisplay" value="%d" />
+)html",
+                      I18N_EDIT_EDIT, I18N_EDIT_CHANNEL, channelIdToDisplay,
+                      channelMode, channelIdToEdit, channelIdToDisplay);
+
+  pn(client, outputBuffer);
+}
+
 void Renderer::renderEditChannelName(WiFiClient client,
                                      uint16_t channelIdToEdit) {
   bool toggleOneBasedAddresses = m_stateManager->getToggleOneBasedAddresses();
@@ -120,13 +151,6 @@ void Renderer::renderEditChannelName(WiFiClient client,
   uint16_t written = 0;
 
   written += snprintf(outputBuffer + written, bufferSize - written, R"html(
-  <div class="d-flex align-items-baseline">
-    <h3>%s %s %d</h3> &nbsp; <div class="text-muted ">%s</div>
-  </div>
-
-<input type="hidden" name="channelId" value="%d" />
-<input type="hidden" name="channelIdToDisplay" value="%d" />
-
 <div class="row">
   <div class="col">%s</div>
   <div class="col d-flex flex-fill justify-content-end">
@@ -141,9 +165,7 @@ void Renderer::renderEditChannelName(WiFiClient client,
   </div>
 </div>
 )html",
-                      I18N_EDIT_EDIT, I18N_EDIT_CHANNEL, channelIdToDisplay,
-                      channelMode, channelIdToEdit, channelIdToDisplay,
-                      I18N_EDIT_DESCRIPTION, maxChannelNameLength,
+                      I18N_EDIT_CHANNEL_NAME, maxChannelNameLength,
                       maxChannelNameLength, m_channelNameBuffer);
 
   pn(client, outputBuffer);
@@ -159,7 +181,7 @@ void Renderer::renderEditInitialState(WiFiClient client,
       initialState ? m_checkedBuffer : m_emptyBuffer;
 
   const char *i18n_initial_state = useCustomRange
-                                       ? I18N_EDIT_CUSTOM_INITIAL_STATE_ON
+                                       ? I18N_EDIT_CUSTOM_INITIAL_STATE_VALUE_2
                                        : I18N_EDIT_INITIAL_STATE_ON;
 
   char outputBuffer[1024] = {0};
@@ -431,6 +453,11 @@ void Renderer::renderEditChannelLerp(WiFiClient client,
   float lerpSpeed =
       readFloatForChannelFromEepromBuffer(channelIdToEdit, MEM_SLOT_LERP_SPEED);
 
+  // We render lerpSpeed in a seperate buffer using our own helper function to
+  // fix random crash during usage of %f in the big buffer
+  char lerpSpeedBuffer[16];
+  floatToBuffer(lerpSpeed, lerpSpeedBuffer, sizeof(lerpSpeedBuffer), 4);
+
   char *toggleIsChannelLerpedCheckedBuffer =
       isChannelLerped ? m_checkedBuffer : m_emptyBuffer;
 
@@ -462,14 +489,18 @@ void Renderer::renderEditChannelLerp(WiFiClient client,
         type="number"
         step="any"
         name="lerpSpeed"
-        value="%f"
+        value="%s"
       />
     </div>
   </div>
   )html",
                       toggleIsChannelLerpedCheckedBuffer, I18N_EDIT_IS_LERPED,
                       isChannelLerped ? "" : "display: none;",
-                      I18N_EDIT_LERP_SPEED, lerpSpeed);
+                      I18N_EDIT_LERP_SPEED, lerpSpeedBuffer);
+
+  if (written > bufferSize) {
+    sn("WARNING, buffer overflow");
+  }
 
   pn(client, outputBuffer);
 }
@@ -603,6 +634,31 @@ void Renderer::renderEditSaveAndDiscardButtons(WiFiClient client) {
 </div>
 )html",
                       I18N_EDIT_DISCARD, I18N_EDIT_SAVE);
+
+  pn(client, outputBuffer);
+}
+
+void Renderer::renderEditAddSpacer(WiFiClient client) {
+  char outputBuffer[128] = {0};
+  uint16_t bufferSize = sizeof(outputBuffer);
+  uint16_t written = 0;
+
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+<br />
+)html");
+
+  pn(client, outputBuffer);
+}
+
+void Renderer::renderEditDisplayHeading(WiFiClient client, char *heading) {
+  char outputBuffer[128] = {0};
+  uint16_t bufferSize = sizeof(outputBuffer);
+  uint16_t written = 0;
+
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
+<b>%s</b>
+)html",
+                      heading);
 
   pn(client, outputBuffer);
 }
