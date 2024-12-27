@@ -177,36 +177,8 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
   uint16_t bufferSize = sizeof(outputBuffer);
   uint16_t written = 0;
 
-  written += snprintf(
-      outputBuffer + written, bufferSize - written, R"html(
-<div id="channel-%d" class="pl-1 pr-1">
-  <div class="row">
-    <div class="col-9">
-      <span class="h4">%s %d</span>
-      %s %d, %s %d
-    </div>
-
-    <div class="col-3">
-      <div class="d-flex justify-content-end">
-        <button class="btn" name="editChannel" onclick="openEditChannelPage('%d')">
-          %s
-        </button>
-        <button class="btn text-primary" onclick="sendValue('setChannelToValue1', '%d')">
-          %s
-        </button>
-        <button
-          class="btn text-primary"
-          onclick="sendValue('setChannelToValue2', '%d')"
-        >
-          %s
-        </button>
-      </div>
-    </div>
-  </div>)html",
-      channelIdToDisplay, I18N_CHANNEL_CHANNEL, channelIdToDisplay,
-      I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
-      boardSubAddressToDisplay, channelIdToDisplay, SYMBOL_EDIT_CHANNEL,
-      channelId, SYMBOL_SET_VALUE_1, channelId, SYMBOL_SET_VALUE_2);
+  written += renderDisplayChannelExpandedNameAndButtons(
+      outputBuffer + written, bufferSize - written, channelId, false);
 
   bool toggleShowSlider =
       readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_SHOW_SLIDER);
@@ -223,7 +195,7 @@ void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
       <span class="h6">%s</span>
     </div>
     <div class="col font-weight-bold mtba">
-      <b> %s </b>
+      <b> %s </b>  
     </div>
   </div>
   )html",

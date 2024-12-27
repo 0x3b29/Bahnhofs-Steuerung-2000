@@ -17,6 +17,10 @@ private:
   void renderHeadJavascript(WiFiClient client);
   void renderHeadCss(WiFiClient client);
 
+  uint16_t renderDisplayChannelExpandedNameAndButtons(char *outputBuffer,
+                                                         uint16_t bufferSize,
+                                                         uint16_t channelId, bool isSimpleRange);
+
   void renderChannelDetailCompact(WiFiClient client, uint16_t channelId);
 
   void renderChannelDetailWithSimpleRange(WiFiClient client, uint16_t channelId,
@@ -33,7 +37,7 @@ private:
   void renderEditCustomChannelJavascript(WiFiClient client);
 
   void renderEditAddSpacer(WiFiClient client);
-  void renderEditDisplayHeading(WiFiClient client, char * heading);
+  void renderEditDisplayHeading(WiFiClient client, char *heading);
 
   void renderEditChannelHeading(WiFiClient client, uint16_t channelIdToEdit);
   void renderEditChannelName(WiFiClient client, uint16_t channelIdToEdit);
