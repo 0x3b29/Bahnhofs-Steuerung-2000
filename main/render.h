@@ -23,10 +23,10 @@ private:
 
   void renderChannelDetailCompact(WiFiClient client, uint16_t channelId);
 
-  void renderChannelDetailWithSimpleRange(WiFiClient client, uint16_t channelId,
+  void renderChannelDetailExpandedWithSimpleRange(WiFiClient client, uint16_t channelId,
                                           bool renderHorizontalRule);
 
-  void renderChannelDetailWithCustomRange(WiFiClient client, uint16_t channelId,
+  void renderChannelDetailExpandedWithCustomRange(WiFiClient client, uint16_t channelId,
                                           bool renderHorizontalRule);
 
   uint16_t renderSlider(char *outputBuffer, uint16_t bufferSize,

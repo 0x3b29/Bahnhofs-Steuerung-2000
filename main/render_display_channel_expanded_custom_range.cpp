@@ -7,7 +7,7 @@
 #include "helpers.h"
 #include "symbols.h"
 
-void Renderer::renderChannelDetailWithCustomRange(WiFiClient client,
+void Renderer::renderChannelDetailExpandedWithCustomRange(WiFiClient client,
                                                   uint16_t channelId,
                                                   bool renderHorizontalRule) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);

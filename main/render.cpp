@@ -297,10 +297,10 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
             channelId, MEM_SLOT_USES_OUTPUT_VALUE1);
 
         if (toggleUseCustomRange) {
-          renderChannelDetailWithCustomRange(client, channelId,
+          renderChannelDetailExpandedWithCustomRange(client, channelId,
                                              renderHorizontalRule);
         } else {
-          renderChannelDetailWithSimpleRange(client, channelId,
+          renderChannelDetailExpandedWithSimpleRange(client, channelId,
                                              renderHorizontalRule);
         }
       }
