@@ -18,12 +18,21 @@ private:
   void renderHeadCss(WiFiClient client);
 
   uint16_t renderDisplayChannelExpandedIdsAndButtons(char *outputBuffer,
-                                                      uint16_t bufferSize,
-                                                      uint16_t channelId,
-                                                      bool isSimpleRange);
+                                                     uint16_t bufferSize,
+                                                     uint16_t channelId,
+                                                     bool isSimpleRange);
 
   uint16_t renderDisplayChannelExpandedName(char *outputBuffer,
                                             uint16_t bufferSize);
+
+  uint16_t renderDisplayChannelExpandedLinked(char *outputBuffer,
+                                              uint16_t bufferSize,
+                                              uint16_t channelId,
+                                              bool toggleOneBasedAddresses);
+  
+  uint16_t renderDisplayChannelExpandedHiddenInCompactView(char *outputBuffer,
+                                                           uint16_t bufferSize,
+                                                           uint16_t channelId);
 
   void renderChannelDetailCompact(WiFiClient client, uint16_t channelId);
 
@@ -75,6 +84,9 @@ private:
   static char m_emptyBuffer[];
   static char m_renderHiddenBuffer[];
   static char m_textMutedBuffer[];
+
+  static char m_yesBuffer[];
+  static char m_noBuffer[];
 
 public:
   Renderer(StateManager *stateManager);

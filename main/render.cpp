@@ -5,6 +5,9 @@ char Renderer::m_emptyBuffer[] = "";
 char Renderer::m_renderHiddenBuffer[] = "style='display: none;'";
 char Renderer::m_textMutedBuffer[] = "text-muted";
 
+char Renderer::m_yesBuffer[] = I18N_CHANNEL_YES;
+char Renderer::m_noBuffer[] = I18N_CHANNEL_NO;
+
 Renderer::Renderer(StateManager *stateManager) {
   this->m_stateManager = stateManager;
 }
@@ -280,7 +283,7 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
 
     pn(client, "</div>");
 
-    pn(client, "<div>");
+    pn(client, "<div> ");
     if (toggleCompactDisplay) {
       for (int channelId = 0; channelId < numChannels; channelId++) {
         renderChannelDetailCompact(client, channelId);
@@ -298,10 +301,10 @@ void Renderer::renderWebPage(WiFiClient client, bool foundRecursion) {
 
         if (toggleUseCustomRange) {
           renderChannelDetailExpandedWithCustomRange(client, channelId,
-                                             renderHorizontalRule);
+                                                     renderHorizontalRule);
         } else {
           renderChannelDetailExpandedWithSimpleRange(client, channelId,
-                                             renderHorizontalRule);
+                                                     renderHorizontalRule);
         }
       }
     }

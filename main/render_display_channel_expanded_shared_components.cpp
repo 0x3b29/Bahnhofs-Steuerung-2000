@@ -149,3 +149,76 @@ uint16_t Renderer::renderDisplayChannelExpandedName(char *outputBuffer,
   )html",
                   I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer);
 }
+
+uint16_t Renderer::renderDisplayChannelExpandedLinked(
+    char *outputBuffer, uint16_t bufferSize, uint16_t channelId,
+    bool toggleOneBasedAddresses) {
+
+  bool isLinked =
+      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
+
+  uint16_t linkedChannelId =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINKED_CHANNEL);
+
+  uint16_t linkedChannelIdToDisplay =
+      toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
+
+  char *isChannelLinkedBuffer = isLinked ? m_yesBuffer : m_noBuffer;
+
+  char linkedChannelHtmlInputBuffer[] = R"html(
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>%s</span>
+    </div>
+    <div class='col mtba'>
+      %u
+    </div>
+  </div>
+  )html";
+
+  char linkedChannelHtmlOutputBuffer[512];
+
+  snprintf(linkedChannelHtmlOutputBuffer, sizeof(linkedChannelHtmlOutputBuffer),
+           linkedChannelHtmlInputBuffer, I18N_CHANNEL_COMMANDED_BY_CHANNEL,
+           linkedChannelIdToDisplay);
+
+  char *linkedChannelHtmlToDisplayBuffer =
+      isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
+
+  return snprintf(outputBuffer, bufferSize, R"html(
+  <!-- Is channel linked -->
+  <div class="row">
+    <div class="col">
+      <span class="h6">%s</span>
+    </div>
+    <div class="col mtba">%s</div>
+  </div>
+
+  <!-- Linked channel if channel is linked -->
+  %s
+)html",
+                  I18N_CHANNEL_LINKED, isChannelLinkedBuffer,
+                  linkedChannelHtmlToDisplayBuffer);
+}
+
+uint16_t Renderer::renderDisplayChannelExpandedHiddenInCompactView(
+    char *outputBuffer, uint16_t bufferSize, uint16_t channelId) {
+  bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
+      channelId, MEM_SLOT_HIDE_IN_COMPACT_VIEW);
+
+  char *isChannelHiddenBuffer =
+      isChannelHiddenInCompactView ? m_yesBuffer : m_noBuffer;
+
+  return snprintf(outputBuffer, bufferSize, R"html(
+  <!-- Information if channel is hidden in compact view -->
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>%s</span>
+    </div>
+    <div class='col mtba'>
+      %s
+    </div>
+  </div>
+  )html",
+                      I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
+}
