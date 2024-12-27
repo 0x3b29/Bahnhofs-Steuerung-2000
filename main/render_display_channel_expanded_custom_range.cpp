@@ -7,9 +7,8 @@
 #include "helpers.h"
 #include "symbols.h"
 
-void Renderer::renderChannelDetailExpandedWithCustomRange(WiFiClient client,
-                                                  uint16_t channelId,
-                                                  bool renderHorizontalRule) {
+void Renderer::renderChannelDetailExpandedWithCustomRange(
+    WiFiClient client, uint16_t channelId, bool renderHorizontalRule) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   uint16_t value2 =
@@ -177,7 +176,7 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(WiFiClient client,
   uint16_t bufferSize = sizeof(outputBuffer);
   uint16_t written = 0;
 
-  written += renderDisplayChannelExpandedNameAndButtons(
+  written += renderDisplayChannelExpandedIdsAndButtons(
       outputBuffer + written, bufferSize - written, channelId, false);
 
   bool toggleShowSlider =
@@ -188,18 +187,8 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(WiFiClient client,
         renderSlider(outputBuffer + written, bufferSize - written, channelId);
   }
 
-  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
-  <!-- Description -->
-  <div class="row">
-    <div class="col">
-      <span class="h6">%s</span>
-    </div>
-    <div class="col font-weight-bold mtba">
-      <b> %s </b>  
-    </div>
-  </div>
-  )html",
-                      I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer);
+  written += renderDisplayChannelExpandedName(outputBuffer + written,
+                                              bufferSize - written);
 
   const char *initialStateBuffer;
 

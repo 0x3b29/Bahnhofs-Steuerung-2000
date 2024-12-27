@@ -17,17 +17,23 @@ private:
   void renderHeadJavascript(WiFiClient client);
   void renderHeadCss(WiFiClient client);
 
-  uint16_t renderDisplayChannelExpandedNameAndButtons(char *outputBuffer,
-                                                         uint16_t bufferSize,
-                                                         uint16_t channelId, bool isSimpleRange);
+  uint16_t renderDisplayChannelExpandedIdsAndButtons(char *outputBuffer,
+                                                      uint16_t bufferSize,
+                                                      uint16_t channelId,
+                                                      bool isSimpleRange);
+
+  uint16_t renderDisplayChannelExpandedName(char *outputBuffer,
+                                            uint16_t bufferSize);
 
   void renderChannelDetailCompact(WiFiClient client, uint16_t channelId);
 
-  void renderChannelDetailExpandedWithSimpleRange(WiFiClient client, uint16_t channelId,
-                                          bool renderHorizontalRule);
+  void renderChannelDetailExpandedWithSimpleRange(WiFiClient client,
+                                                  uint16_t channelId,
+                                                  bool renderHorizontalRule);
 
-  void renderChannelDetailExpandedWithCustomRange(WiFiClient client, uint16_t channelId,
-                                          bool renderHorizontalRule);
+  void renderChannelDetailExpandedWithCustomRange(WiFiClient client,
+                                                  uint16_t channelId,
+                                                  bool renderHorizontalRule);
 
   uint16_t renderSlider(char *outputBuffer, uint16_t bufferSize,
                         uint16_t channelId);

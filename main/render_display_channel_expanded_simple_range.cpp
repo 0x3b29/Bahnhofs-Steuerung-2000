@@ -7,9 +7,8 @@
 #include "helpers.h"
 #include "symbols.h"
 
-void Renderer::renderChannelDetailExpandedWithSimpleRange(WiFiClient client,
-                                                  uint16_t channelId,
-                                                  bool renderHorizontalRule) {
+void Renderer::renderChannelDetailExpandedWithSimpleRange(
+    WiFiClient client, uint16_t channelId, bool renderHorizontalRule) {
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   uint16_t brightness =
@@ -173,7 +172,7 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(WiFiClient client,
   uint16_t bufferSize = sizeof(outputBuffer);
   uint16_t written = 0;
 
-  written += renderDisplayChannelExpandedNameAndButtons(
+  written += renderDisplayChannelExpandedIdsAndButtons(
       outputBuffer + written, bufferSize - written, channelId, true);
 
   bool toggleShowSlider =
@@ -184,18 +183,11 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(WiFiClient client,
         renderSlider(outputBuffer + written, bufferSize - written, channelId);
   }
 
+  written += renderDisplayChannelExpandedName(
+      outputBuffer + written, bufferSize - written);
+
   written += snprintf(
       outputBuffer + written, bufferSize - written, R"html(
-  <!-- Description -->
-  <div class="row">
-    <div class="col">
-      <span class="h6">%s</span>
-    </div>
-    <div class="col font-weight-bold mtba">
-      <b> %s </b>
-    </div>
-  </div>
-
   <!-- Start State -->
   <div class="row">
     <div class="col">
@@ -252,9 +244,8 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(WiFiClient client,
 <!-- Newline -->
 %s
 )html",
-      I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer, I18N_CHANNEL_START_STATE,
-      toggleInitialStateCheckedBuffer, I18N_CHANNEL_BRIGHTNESS,
-      brightnessAsPercentage, I18N_CHANNEL_RANDOMLY_ON,
+      I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer,
+      I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage, I18N_CHANNEL_RANDOMLY_ON,
       doRandomlySetValue2EventsEnabledBuffer,
       doRandomlySetValue2EventsFrequencyHtmlToDisplayBuffer,
       I18N_CHANNEL_RANDOMLY_OFF, doRandomlySetValue1EventsEnabledBuffer,

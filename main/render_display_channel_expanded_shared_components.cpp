@@ -64,7 +64,7 @@ uint16_t Renderer::renderSlider(char *outputBuffer, uint16_t bufferSize,
                   sliderMin, sliderMax, startValue, channelId);
 }
 
-uint16_t Renderer::renderDisplayChannelExpandedNameAndButtons(
+uint16_t Renderer::renderDisplayChannelExpandedIdsAndButtons(
     char *outputBuffer, uint16_t bufferSize, uint16_t channelId,
     bool isSimpleRange) {
 
@@ -132,4 +132,20 @@ uint16_t Renderer::renderDisplayChannelExpandedNameAndButtons(
                   SYMBOL_EDIT_CHANNEL, setValue1IconColorBuffer, channelId,
                   setValue1IconBuffer, setValue2IconColorBuffer, channelId,
                   setValue2IconBuffer);
+}
+
+uint16_t Renderer::renderDisplayChannelExpandedName(char *outputBuffer,
+                                                    uint16_t bufferSize) {
+  return snprintf(outputBuffer, bufferSize, R"html(
+  <!-- Description -->
+  <div class="row">
+    <div class="col">
+      <span class="h6">%s</span>
+    </div>
+    <div class="col font-weight-bold mtba">
+      <b> %s </b>
+    </div>
+  </div>
+  )html",
+                  I18N_CHANNEL_DESCRIPTION, m_channelNameBuffer);
 }
