@@ -201,6 +201,55 @@ uint16_t Renderer::renderDisplayChannelExpandedLinked(
                   linkedChannelHtmlToDisplayBuffer);
 }
 
+uint16_t Renderer::renderDisplayChannelExpandedLerped(char *outputBuffer,
+                                                      uint16_t bufferSize,
+                                                      uint16_t channelId) {
+  bool isLerped =
+      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LERPED);
+  char *isChannelLerpedBuffer = isLerped ? m_yesBuffer : m_noBuffer;
+  char lerpedChannelHtmlOutputBuffer[512] = "";
+
+  if (isLerped) {
+    float lerpSpeed =
+        readFloatForChannelFromEepromBuffer(channelId, MEM_SLOT_LERP_SPEED);
+
+    // We render lerpSpeed in a seperate buffer using our own helper function to
+    // fix random crash during usage of %f in the big buffer
+    char lerpSpeedBuffer[16];
+    floatToBuffer(lerpSpeed, lerpSpeedBuffer, sizeof(lerpSpeedBuffer), 4);
+
+    char lerpedChannelHtmlInputBuffer[] = R"html(
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>%s</span>
+    </div>
+    <div class='col mtba'>
+      %s
+    </div>
+  </div>
+  )html";
+
+    snprintf(lerpedChannelHtmlOutputBuffer,
+             sizeof(lerpedChannelHtmlOutputBuffer),
+             lerpedChannelHtmlInputBuffer, "I18N LERP SPEED", lerpSpeedBuffer);
+  }
+
+  return snprintf(outputBuffer, bufferSize, R"html(
+  <!-- Is channel lerped -->
+  <div class="row">
+    <div class="col">
+      <span class="h6">%s</span>
+    </div>
+    <div class="col mtba">%s</div>
+  </div>
+
+  <!-- Lerp speed if channel is lerped -->
+  %s
+)html",
+                  I18N_CHANNEL_LINKED, isChannelLerpedBuffer,
+                  lerpedChannelHtmlOutputBuffer);
+}
+
 uint16_t Renderer::renderDisplayChannelExpandedHiddenInCompactView(
     char *outputBuffer, uint16_t bufferSize, uint16_t channelId) {
   bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
@@ -220,5 +269,5 @@ uint16_t Renderer::renderDisplayChannelExpandedHiddenInCompactView(
     </div>
   </div>
   )html",
-                      I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
+                  I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
 }

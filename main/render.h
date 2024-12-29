@@ -29,10 +29,14 @@ private:
                                               uint16_t bufferSize,
                                               uint16_t channelId,
                                               bool toggleOneBasedAddresses);
-  
+
   uint16_t renderDisplayChannelExpandedHiddenInCompactView(char *outputBuffer,
                                                            uint16_t bufferSize,
                                                            uint16_t channelId);
+
+  uint16_t renderDisplayChannelExpandedLerped(char *outputBuffer,
+                                              uint16_t bufferSize,
+                                              uint16_t channelId);
 
   void renderChannelDetailCompact(WiFiClient client, uint16_t channelId);
 
