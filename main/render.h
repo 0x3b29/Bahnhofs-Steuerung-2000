@@ -30,6 +30,10 @@ private:
                                               uint16_t channelId,
                                               bool toggleOneBasedAddresses);
 
+  uint16_t renderDisplayChannelExpandedLinkDelayed(char *outputBuffer,
+                                              uint16_t bufferSize,
+                                              uint16_t channelId);
+
   uint16_t renderDisplayChannelExpandedHiddenInCompactView(char *outputBuffer,
                                                            uint16_t bufferSize,
                                                            uint16_t channelId);

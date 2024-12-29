@@ -201,6 +201,55 @@ uint16_t Renderer::renderDisplayChannelExpandedLinked(
                   linkedChannelHtmlToDisplayBuffer);
 }
 
+uint16_t Renderer::renderDisplayChannelExpandedLinkDelayed(char *outputBuffer,
+                                                           uint16_t bufferSize,
+                                                           uint16_t channelId) {
+  uint16_t linkDelay =
+      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINK_DELAY);
+
+  bool hasLinkDelay = false;
+
+  if (linkDelay != 0) {
+    hasLinkDelay = true;
+  }
+
+  char *hasChannelLinkDelay = hasLinkDelay ? m_yesBuffer : m_noBuffer;
+  char linkDelayChannelHtmlOutputBuffer[512] = "";
+
+  if (hasLinkDelay) {
+
+    char linkDelayChannelHtmlInputBuffer[] = R"html(
+  <div class='row'>
+    <div class='col'>
+      <span class='h6'>%s</span>
+    </div>
+    <div class='col mtba'>
+      %u
+    </div>
+  </div>
+  )html";
+
+    snprintf(linkDelayChannelHtmlOutputBuffer,
+             sizeof(linkDelayChannelHtmlOutputBuffer),
+             linkDelayChannelHtmlInputBuffer, "I18N LINK DELAY", linkDelay);
+  }
+
+  return snprintf(outputBuffer, bufferSize, R"html(
+  <!-- Has channel link delay -->
+  <div class="row">
+    <div class="col">
+      <span class="h6">%s</span>
+    </div>
+    <div class="col mtba">%s</div>
+  </div>
+
+  <!-- Link delay if channel has link delay -->
+  %s
+)html",
+                  "I18N HAS LINK DELAY", hasChannelLinkDelay,
+                  linkDelayChannelHtmlOutputBuffer);
+}
+
 uint16_t Renderer::renderDisplayChannelExpandedLerped(char *outputBuffer,
                                                       uint16_t bufferSize,
                                                       uint16_t channelId) {
