@@ -231,7 +231,8 @@ uint16_t Renderer::renderDisplayChannelExpandedLinkDelayed(char *outputBuffer,
 
     snprintf(linkDelayChannelHtmlOutputBuffer,
              sizeof(linkDelayChannelHtmlOutputBuffer),
-             linkDelayChannelHtmlInputBuffer, "I18N LINK DELAY", linkDelay);
+             linkDelayChannelHtmlInputBuffer, I18N_CHANNEL_LINK_DELAY,
+             linkDelay);
   }
 
   return snprintf(outputBuffer, bufferSize, R"html(
@@ -246,7 +247,7 @@ uint16_t Renderer::renderDisplayChannelExpandedLinkDelayed(char *outputBuffer,
   <!-- Link delay if channel has link delay -->
   %s
 )html",
-                  "I18N HAS LINK DELAY", hasChannelLinkDelay,
+                  I18N_HAS_CHANNEL_LINK_DELAY, hasChannelLinkDelay,
                   linkDelayChannelHtmlOutputBuffer);
 }
 
@@ -278,9 +279,9 @@ uint16_t Renderer::renderDisplayChannelExpandedLerped(char *outputBuffer,
   </div>
   )html";
 
-    snprintf(lerpedChannelHtmlOutputBuffer,
-             sizeof(lerpedChannelHtmlOutputBuffer),
-             lerpedChannelHtmlInputBuffer, "I18N LERP SPEED", lerpSpeedBuffer);
+    snprintf(
+        lerpedChannelHtmlOutputBuffer, sizeof(lerpedChannelHtmlOutputBuffer),
+        lerpedChannelHtmlInputBuffer, I18N_CHANNEL_LERP_SPEED, lerpSpeedBuffer);
   }
 
   return snprintf(outputBuffer, bufferSize, R"html(
@@ -295,7 +296,7 @@ uint16_t Renderer::renderDisplayChannelExpandedLerped(char *outputBuffer,
   <!-- Lerp speed if channel is lerped -->
   %s
 )html",
-                  I18N_CHANNEL_LINKED, isChannelLerpedBuffer,
+                  I18N_IS_CHANNEL_LERPED, isChannelLerpedBuffer,
                   lerpedChannelHtmlOutputBuffer);
 }
 

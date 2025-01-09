@@ -190,7 +190,18 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(
   written += renderDisplayChannelExpandedLinked(outputBuffer + written,
                                                 bufferSize - written, channelId,
                                                 toggleOneBasedAddresses);
+
+  bool isLinked =
+      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
   
+  if (isLinked) {
+    written += renderDisplayChannelExpandedLinkDelayed(
+        outputBuffer + written, bufferSize - written, channelId);
+  }
+
+  written += renderDisplayChannelExpandedLerped(
+      outputBuffer + written, bufferSize - written, channelId);
+
   written += renderDisplayChannelExpandedHiddenInCompactView(
       outputBuffer + written, bufferSize - written, channelId);
 
