@@ -1,6 +1,10 @@
 ## [1.4.2] - 2025-01-09
 ### Added
-- Support for collapsable channel settings
+- Labels to expanded channel view for link delay and lerping
+### Changed
+- Improved wording in expanded channel view
+### Fixed
+- Missing internationalization of unnamed channels in compact view
 
 ## [1.4.1] - 2024-12-10
 ### Added
