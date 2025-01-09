@@ -2,8 +2,8 @@
 #include "helpers.h"
 #include "render.h"
 #include "state_manager.h"
-#include <WiFiNINA.h>
 #include "symbols.h"
+#include <WiFiNINA.h>
 
 void Renderer::renderChannelDetailCompact(WiFiClient client,
                                           uint16_t channelId) {
@@ -50,8 +50,9 @@ void Renderer::renderChannelDetailCompact(WiFiClient client,
   if (strcmp(m_channelNameBuffer, "")) {
     strcpy(channelNameToDisplay, m_channelNameBuffer);
   } else {
-    snprintf(channelNameToDisplay, sizeof(channelNameToDisplay),
-             "Board %d, Pin %d", boardIndexToDisplay, boardSubAddressToDisplay);
+    snprintf(channelNameToDisplay, sizeof(channelNameToDisplay), "%s %d, %s %d",
+             I18N_CHANNEL_BOARD, boardIndexToDisplay, I18N_CHANNEL_PIN,
+             boardSubAddressToDisplay);
   }
 
   char outputBuffer[2048];
