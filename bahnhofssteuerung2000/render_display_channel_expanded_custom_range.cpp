@@ -39,9 +39,6 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(
   char value2Buffer[] = I18N_EDIT_CUSTOM_PWM_VALUE_2;
   char value1Buffer[] = I18N_EDIT_CUSTOM_PWM_VALUE_1;
 
-  char yesBuffer[] = I18N_CHANNEL_YES;
-  char noBuffer[] = I18N_CHANNEL_NO;
-
   char *toggleIsInitialStateValue2CheckedBuffer =
       isInitialStateValue2 ? value2Buffer : value1Buffer;
 
@@ -53,7 +50,7 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(
       channelId, MEM_SLOT_RANDOMLY_SET_VALUE2_FREQ);
 
   char *randomlySetValue2EventsEnabledBuffer =
-      doRandomlySetValue2 ? yesBuffer : noBuffer;
+      doRandomlySetValue2 ? m_yesBuffer : m_noBuffer;
 
   char randomlySetValue2FrequencyHtmlInputBuffer[] = R"html(
   <div class='row'>
@@ -85,7 +82,7 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(
       channelId, MEM_SLOT_RANDOMLY_SET_VALUE1_FREQ);
 
   char *randomlySetValue1EventsEnabledBuffer =
-      doRandomlySetValue1 ? yesBuffer : noBuffer;
+      doRandomlySetValue1 ? m_yesBuffer : m_noBuffer;
 
   char randomlySetValue1FrequencyHtmlInputBuffer[] = R"html(
   <div class="row">
@@ -109,63 +106,6 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(
 
   // --- /Prepare random off events ---
 
-  // --- Prepare linked ---
-  bool isLinked =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
-
-  uint16_t linkedChannelId =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINKED_CHANNEL);
-
-  uint16_t linkedChannelIdToDisplay =
-      toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
-
-  char *isChannelLinkedBuffer = isLinked ? yesBuffer : noBuffer;
-
-  char linkedChannelHtmlInputBuffer[] = R"html(
-  <div class='row'>
-    <div class='col'>
-      <span class='h6'>%s</span>
-    </div>
-    <div class='col mtba'>
-      %d
-    </div>
-  </div>
-  )html";
-
-  char linkedChannelHtmlOutputBuffer[512];
-  snprintf(linkedChannelHtmlOutputBuffer, sizeof(linkedChannelHtmlOutputBuffer),
-           linkedChannelHtmlInputBuffer, I18N_CHANNEL_COMMANDED_BY_CHANNEL,
-           linkedChannelIdToDisplay);
-
-  char *linkedChannelHtmlToDisplayBuffer =
-      isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
-  // --- /Prepare linked ---
-
-  // --- Prepare note on visibility in compact view
-  bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_HIDE_IN_COMPACT_VIEW);
-
-  char isChannelHiddenInCompactViewHtmlInputBuffer[] = R"html(
-  <div class='row'>
-    <div class='col'>
-      <span class='h6'>%s</span>
-    </div>
-    <div class='col mtba'>
-      %s
-    </div>
-  </div>
-  )html";
-
-  char *isChannelHiddenBuffer =
-      isChannelHiddenInCompactView ? yesBuffer : noBuffer;
-
-  char isChannelHiddenInCompactViewHtmlToDisplayBuffer[512];
-  snprintf(isChannelHiddenInCompactViewHtmlToDisplayBuffer,
-           sizeof(isChannelHiddenInCompactViewHtmlToDisplayBuffer),
-           isChannelHiddenInCompactViewHtmlInputBuffer,
-           I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
-  // --- /Prepare note on visibility in compact view
-
   // --- Prepare horizontal seperator
   char horizontalRuleHtmlBuffer[] = "<hr class='mb-3 mt-3'/>";
   char *horizontalRuleHtmlToDisplayBuffer =
@@ -175,7 +115,6 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(
   char outputBuffer[4096] = {0};
   uint16_t bufferSize = sizeof(outputBuffer);
   uint16_t written = 0;
-
   written += renderDisplayChannelExpandedIdsAndButtons(
       outputBuffer + written, bufferSize - written, channelId, false);
 
@@ -248,28 +187,30 @@ void Renderer::renderChannelDetailExpandedWithCustomRange(
       I18N_EDIT_CUSTOM_RANDOM_VALUE_1, randomlySetValue1EventsEnabledBuffer,
       randomlySetValue1EventsFrequencyHtmlToDisplayBuffer);
 
+  written += renderDisplayChannelExpandedLinked(outputBuffer + written,
+                                                bufferSize - written, channelId,
+                                                toggleOneBasedAddresses);
+
+  bool isLinked =
+      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
+  
+  if (isLinked) {
+    written += renderDisplayChannelExpandedLinkDelayed(
+        outputBuffer + written, bufferSize - written, channelId);
+  }
+
+  written += renderDisplayChannelExpandedLerped(
+      outputBuffer + written, bufferSize - written, channelId);
+
+  written += renderDisplayChannelExpandedHiddenInCompactView(
+      outputBuffer + written, bufferSize - written, channelId);
+
   written += snprintf(outputBuffer + written, bufferSize - written, R"html(
-  <!-- Is channel linked -->
-  <div class="row">
-    <div class="col">
-      <span class="h6">%s</span>
-    </div>
-    <div class="col mtba">%s</div>
-  </div>
-
-  <!-- Linked channel if channel is linked -->
-  %s
-
-  <!-- Information if channel is hidden in compact view -->
-  %s
 </div>
 
 <!-- Newline -->
 %s
 )html",
-                      I18N_CHANNEL_LINKED, isChannelLinkedBuffer,
-                      linkedChannelHtmlToDisplayBuffer,
-                      isChannelHiddenInCompactViewHtmlToDisplayBuffer,
                       horizontalRuleHtmlToDisplayBuffer);
 
   pn(client, outputBuffer);

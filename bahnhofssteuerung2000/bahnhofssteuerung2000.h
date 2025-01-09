@@ -9,9 +9,9 @@
 // Select your prefered language for the web interface.
 // Include only one single line with the language you would like to use.
 // Exclude all the language lines.
-#include "i18n/english.h"
+//#include "i18n/english.h"
 // #include "i18n/german.h"
-// #include "i18n/french.h"
+#include "i18n/french.h"
 // #include "i18n/dutch.h"
 // #include "i18n/luxembourgish.h"
 
@@ -20,7 +20,7 @@
 #define SHOW_DEBUG_INFO true
 
 // Select the number of pwm boards you need. Please note that more than 16 pwm
-// boards is currently not actively tested.
+// boards is currently not actively tested. 1 - 16 works fine.
 #define PWM_BOARDS 16
 
 // Analog servos usually use 50hz as frequency. This frequency can be altered

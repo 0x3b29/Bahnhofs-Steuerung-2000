@@ -9,6 +9,7 @@
 
 void Renderer::renderChannelDetailExpandedWithSimpleRange(
     WiFiClient client, uint16_t channelId, bool renderHorizontalRule) {
+      
   readChannelNameFromEepromBufferToChannelNameBuffer(channelId);
 
   uint16_t brightness =
@@ -35,9 +36,6 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
   char enabledBuffer[] = I18N_CHANNEL_ON;
   char disabledBuffer[] = I18N_CHANNEL_OFF;
 
-  char yesBuffer[] = I18N_CHANNEL_YES;
-  char noBuffer[] = I18N_CHANNEL_NO;
-
   char *toggleInitialStateCheckedBuffer =
       initialState ? enabledBuffer : disabledBuffer;
 
@@ -49,7 +47,7 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
       channelId, MEM_SLOT_RANDOMLY_SET_VALUE2_FREQ);
 
   char *doRandomlySetValue2EventsEnabledBuffer =
-      doRandomlySetValue2 ? yesBuffer : noBuffer;
+      doRandomlySetValue2 ? m_yesBuffer : m_noBuffer;
 
   char doRandomlySetValue2FrequencyHtmlInputBuffer[] = R"html(
   <div class='row'>
@@ -81,7 +79,7 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
       channelId, MEM_SLOT_RANDOMLY_SET_VALUE1_FREQ);
 
   char *doRandomlySetValue1EventsEnabledBuffer =
-      doRandomlySetValue1 ? yesBuffer : noBuffer;
+      doRandomlySetValue1 ? m_yesBuffer : m_noBuffer;
 
   char doRandomlySetValue1FrequencyHtmlInputBuffer[] = R"html(
   <div class="row">
@@ -105,69 +103,6 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
 
   // --- /Prepare random off events ---
 
-  // --- Prepare linked ---
-  bool isLinked =
-      readBoolForChannelFromEepromBuffer(channelId, MEM_SLOT_IS_LINKED);
-
-  uint16_t linkedChannelId =
-      readUint16tForChannelFromEepromBuffer(channelId, MEM_SLOT_LINKED_CHANNEL);
-
-  uint16_t linkedChannelIdToDisplay =
-      toggleOneBasedAddresses ? linkedChannelId + 1 : linkedChannelId;
-
-  char *isChannelLinkedBuffer = isLinked ? yesBuffer : noBuffer;
-
-  char linkedChannelHtmlInputBuffer[] = R"html(
-  <div class='row'>
-    <div class='col'>
-      <span class='h6'>%s</span>
-    </div>
-    <div class='col mtba'>
-      %d
-    </div>
-  </div>
-  )html";
-
-  char linkedChannelHtmlOutputBuffer[512];
-  snprintf(linkedChannelHtmlOutputBuffer, sizeof(linkedChannelHtmlOutputBuffer),
-           linkedChannelHtmlInputBuffer, I18N_CHANNEL_COMMANDED_BY_CHANNEL,
-           linkedChannelIdToDisplay);
-
-  char *linkedChannelHtmlToDisplayBuffer =
-      isLinked ? linkedChannelHtmlOutputBuffer : m_emptyBuffer;
-  // --- /Prepare linked ---
-
-  // --- Prepare note on visibility in compact view
-  bool isChannelHiddenInCompactView = readBoolForChannelFromEepromBuffer(
-      channelId, MEM_SLOT_HIDE_IN_COMPACT_VIEW);
-
-  char isChannelHiddenInCompactViewHtmlInputBuffer[] = R"html(
-  <div class='row'>
-    <div class='col'>
-      <span class='h6'>%s</span>
-    </div>
-    <div class='col mtba'>
-      %s
-    </div>
-  </div>
-  )html";
-
-  char *isChannelHiddenBuffer =
-      isChannelHiddenInCompactView ? yesBuffer : noBuffer;
-
-  char isChannelHiddenInCompactViewHtmlToDisplayBuffer[512];
-  snprintf(isChannelHiddenInCompactViewHtmlToDisplayBuffer,
-           sizeof(isChannelHiddenInCompactViewHtmlToDisplayBuffer),
-           isChannelHiddenInCompactViewHtmlInputBuffer,
-           I18N_IS_HIDDEN_IN_COMPACT_VIEW, isChannelHiddenBuffer);
-  // --- /Prepare note on visibility in compact view
-
-  // --- Prepare horizontal seperator
-  char horizontalRuleHtmlBuffer[] = "<hr class='mb-3 mt-3'/>";
-  char *horizontalRuleHtmlToDisplayBuffer =
-      renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
-  // --- /Prepare horizontal seperator
-
   char outputBuffer[4096] = {0};
   uint16_t bufferSize = sizeof(outputBuffer);
   uint16_t written = 0;
@@ -183,11 +118,11 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
         renderSlider(outputBuffer + written, bufferSize - written, channelId);
   }
 
-  written += renderDisplayChannelExpandedName(
-      outputBuffer + written, bufferSize - written);
+  written += renderDisplayChannelExpandedName(outputBuffer + written,
+                                              bufferSize - written);
 
-  written += snprintf(
-      outputBuffer + written, bufferSize - written, R"html(
+  written +=
+      snprintf(outputBuffer + written, bufferSize - written, R"html(
   <!-- Start State -->
   <div class="row">
     <div class="col">
@@ -195,7 +130,10 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
     </div>
     <div class="col mtba">%s</div>
   </div>
+  )html",
+               I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer);
 
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
   <!-- Brightness -->
   <div class="row">
     <div class="col">
@@ -203,7 +141,11 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
     </div>
     <div class="col mtba">%d %%</div>
   </div>
+)html",
+                      I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage);
 
+  written +=
+      snprintf(outputBuffer + written, bufferSize - written, R"html(
   <!-- Randomly turning on -->
   <div class="row">
     <div class="col">
@@ -214,7 +156,11 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
 
   <!-- Randomly turning on frequency if randomly turning on -->
   %s
+)html",
+               I18N_CHANNEL_RANDOMLY_ON, doRandomlySetValue2EventsEnabledBuffer,
+               doRandomlySetValue2EventsFrequencyHtmlToDisplayBuffer);
 
+  written += snprintf(outputBuffer + written, bufferSize - written, R"html(
   <!-- Randomly turning off -->
   <div class="row">
     <div class="col">
@@ -225,35 +171,34 @@ void Renderer::renderChannelDetailExpandedWithSimpleRange(
 
   <!-- Randomly turning off frequency if randomly turning off -->
   %s
+)html",
+                      I18N_CHANNEL_RANDOMLY_OFF,
+                      doRandomlySetValue1EventsEnabledBuffer,
+                      doRandomlySetValue1EventsFrequencyHtmlToDisplayBuffer);
 
-  <!-- Is channel linked -->
-  <div class="row">
-    <div class="col">
-      <span class="h6">%s</span>
-    </div>
-    <div class="col mtba">%s</div>
-  </div>
+  written += renderDisplayChannelExpandedLinked(outputBuffer + written,
+                                                bufferSize - written, channelId,
+                                                toggleOneBasedAddresses);
 
-  <!-- Linked channel if channel is linked -->
-  %s
+  // --- Prepare note on visibility in compact view
+  written += renderDisplayChannelExpandedHiddenInCompactView(
+      outputBuffer + written, bufferSize - written, channelId);
 
-  <!-- Information if channel is hidden in compact view -->
-  %s
+
+  // --- Prepare horizontal seperator
+  char horizontalRuleHtmlBuffer[] = "<hr class='mb-3 mt-3'/>";
+  char *horizontalRuleHtmlToDisplayBuffer =
+      renderHorizontalRule ? horizontalRuleHtmlBuffer : m_emptyBuffer;
+  // --- /Prepare horizontal seperator
+
+  written += snprintf(outputBuffer + written, bufferSize - written,
+                      R"html(
 </div>
 
 <!-- Newline -->
 %s
 )html",
-      I18N_CHANNEL_START_STATE, toggleInitialStateCheckedBuffer,
-      I18N_CHANNEL_BRIGHTNESS, brightnessAsPercentage, I18N_CHANNEL_RANDOMLY_ON,
-      doRandomlySetValue2EventsEnabledBuffer,
-      doRandomlySetValue2EventsFrequencyHtmlToDisplayBuffer,
-      I18N_CHANNEL_RANDOMLY_OFF, doRandomlySetValue1EventsEnabledBuffer,
-      doRandomlySetValue1EventsFrequencyHtmlToDisplayBuffer,
-      I18N_CHANNEL_LINKED, isChannelLinkedBuffer,
-      linkedChannelHtmlToDisplayBuffer,
-      isChannelHiddenInCompactViewHtmlToDisplayBuffer,
-      horizontalRuleHtmlToDisplayBuffer);
+                      horizontalRuleHtmlToDisplayBuffer);
 
   pn(client, outputBuffer);
 }
