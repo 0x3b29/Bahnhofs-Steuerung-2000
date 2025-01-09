@@ -1,7 +1,7 @@
 #ifndef helpers_h
 #define helpers_h
 
-#include "main.h"
+#include "bahnhofssteuerung2000.h"
 #include <Arduino.h>
 
 uint8_t getBoardIndexForChannel(uint16_t channel);

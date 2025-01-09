@@ -1,7 +1,7 @@
 #ifndef led_controller
 #define led_controller
 
-#include "main.h"
+#include "bahnhofssteuerung2000.h"
 #include "state_manager.h"
 #include <Adafruit_PWMServoDriver.h>
 #include <Arduino.h>

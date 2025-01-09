@@ -1,5 +1,5 @@
-#ifndef main_h
-#define main_h
+#ifndef bahnhofssteuerung2000_h
+#define bahnhofssteuerung2000_h
 #include <Arduino.h>
 
 // In this file are some parameters that can be used to customise the project.

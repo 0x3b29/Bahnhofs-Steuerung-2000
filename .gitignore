@@ -1,7 +1,4 @@
 .DS_Store
-main/arduino_secrets.h
-.ArduinoOutput
-.vs
 .vscode
-main/.theia/launch.json
-main/.arduino_secrets.h
+bahnhofssteuerung2000/build/
+bahnhofssteuerung2000/arduino_secrets.h
