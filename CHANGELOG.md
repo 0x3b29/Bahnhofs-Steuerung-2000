@@ -1,4 +1,16 @@
-## [1.3.0] - 2024-02-20
+## [1.5.0] - 2024-12-05
+### Added
+- Support for collapsable channel settings
+
+## [1.5.0] - 2024-12-05
+### Added
+- Support for collapsable channel settings
+
+## [1.4.0] - 2024-12-05
+### Added
+- Support for channel link delays
+
+## [1.3.0] - 2024-12-05
 ### Added
 - Support for lerping channels
 - Support for delay between linked channels
@@ -6,7 +18,7 @@
 ### Changed
 - Restructured channel settings
 
-## [1.2.0] - 2024-02-20
+## [1.2.0] - 2024-07-15
 ### Added
 - Support for servo motors
 - Optional slider control for channels
