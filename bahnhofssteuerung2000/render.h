@@ -1,7 +1,7 @@
 #ifndef render_h
 #define render_h
 
-#include "main.h"
+#include "bahnhofssteuerung2000.h"
 #include "state_manager.h"
 #include <Arduino.h>
 #include <WiFiNINA.h>

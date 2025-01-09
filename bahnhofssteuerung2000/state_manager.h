@@ -2,7 +2,7 @@
 #define STATE_MANAGER_H
 
 #include "eeprom.h"
-#include "main.h"
+#include "bahnhofssteuerung2000.h"
 #include <Arduino.h>
 
 class StateManager {

@@ -1,7 +1,7 @@
 #include "channel_controller.h"
 #include "eeprom.h"
 #include "helpers.h"
-#include "main.h"
+#include "bahnhofssteuerung2000.h"
 #include "render.h"
 #include "server_controller.h"
 #include "state_manager.h"

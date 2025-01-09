@@ -1,7 +1,7 @@
 #ifndef eeprom_h
 #define eeprom_h
 
-#include "main.h"
+#include "bahnhofssteuerung2000.h"
 #include <Arduino.h>
 
 #define EEPROM_ADDRESS 0x50
