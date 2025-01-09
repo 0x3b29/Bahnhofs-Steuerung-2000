@@ -1,12 +1,12 @@
-## [1.5.0] - 2024-12-05
+## [1.4.2] - 2025-01-09
 ### Added
 - Support for collapsable channel settings
 
-## [1.5.0] - 2024-12-05
+## [1.4.1] - 2024-12-10
 ### Added
 - Support for collapsable channel settings
 
-## [1.4.0] - 2024-12-05
+## [1.4.0] - 2024-12-09
 ### Added
 - Support for channel link delays
 
