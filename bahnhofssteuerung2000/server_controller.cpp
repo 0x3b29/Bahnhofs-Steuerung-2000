@@ -1,9 +1,8 @@
-#include <WiFiServer.h>
-
+#include "server_controller.h"
 #include "channel_controller.h"
 #include "eeprom.h"
 #include "render.h"
-#include "server_controller.h"
+#include <WiFiServer.h>
 
 #include "static_files/font_woff2.h"
 #include "static_files/styles.h"
