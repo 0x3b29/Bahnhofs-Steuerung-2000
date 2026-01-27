@@ -6,7 +6,7 @@ profiles:
     libraries:
       - Adafruit PWM Servo Driver Library (3.0.2)
       - Adafruit BusIO (1.17.0)
-      - WiFiNINA (1.9.1)
+      - WiFiNINA (1.8.14)
       - CRC (1.0.3)
     programmer: ""
     port_config:

@@ -15,6 +15,13 @@
 // #include "i18n/dutch.h"
 // #include "i18n/luxembourgish.h"
 
+// As requested by Leo V.
+// This flag defines whether your microcontroller joins a network or creates a
+// new custom network. Set the flag to:
+// - false, to connect to an existing network
+// - true, to create a new network
+#define IS_IN_ACCESS_POINT_MODE false
+
 // Set this flag to true to see debug information on the serial interface
 // Set to false for maximum performance
 #define SHOW_DEBUG_INFO true

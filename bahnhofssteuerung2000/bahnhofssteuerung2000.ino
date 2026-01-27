@@ -1,7 +1,7 @@
+#include "bahnhofssteuerung2000.h"
 #include "channel_controller.h"
 #include "eeprom.h"
 #include "helpers.h"
-#include "bahnhofssteuerung2000.h"
 #include "render.h"
 #include "server_controller.h"
 #include "state_manager.h"
@@ -29,6 +29,62 @@ long m_lastRunningLightEvent = 0;
 
 long m_lastHeartbeatEvent = 0;
 bool m_lastHeartbeatState = false;
+
+void startWifiInHostMode() {
+  WiFi.beginAP(SECRET_SSID, SECRET_PASS);
+  Serial.println("Attempting to create a WiFi network...");
+  delay(500);
+  WiFi.beginAP(SECRET_SSID, SECRET_PASS);
+  int tries = 0;
+  // Attempt to connect to WiFi network
+  while (WiFi.status() != WL_AP_LISTENING) {
+    Serial.println("Waiting for WiFi network...");
+    //
+
+    if (tries > 5) {
+      Serial.println("Re-attempting to create a WiFi network...");
+      WiFi.beginAP(SECRET_SSID, SECRET_PASS);
+      tries = 0;
+    }
+
+    delay(1000);
+    tries++;
+  }
+
+  Serial.println("Created a WiFi");
+
+  // Print the IP address
+  Serial.print("Server IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void startWifiInClientMode() {
+  WiFi.begin(SECRET_SSID, SECRET_PASS);
+  Serial.println("Attempting to connect to WiFi network...");
+  delay(500);
+  WiFi.begin(SECRET_SSID, SECRET_PASS);
+  int tries = 0;
+  // Attempt to connect to WiFi network
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Waiting for WiFi network...");
+    //
+
+    if (tries > 5) {
+      Serial.println("Re-attempting to connect to WiFi network...");
+      WiFi.begin(SECRET_SSID, SECRET_PASS);
+      tries = 0;
+    }
+
+    delay(1000);
+    tries++;
+  }
+
+  Serial.println("Connected to WiFi");
+
+  // Print the IP address
+  Serial.print("Server IP Address: ");
+  Serial.println(WiFi.localIP());
+}
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -75,31 +131,11 @@ void setup() {
 
   m_channelController.initializePwmBoards();
 
-  WiFi.begin(SECRET_SSID, SECRET_PASS);
-  Serial.println("Attempting to connect to WiFi network...");
-  delay(500);
-  WiFi.begin(SECRET_SSID, SECRET_PASS);
-  int tries = 0;
-  // Attempt to connect to WiFi network
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Waiting for WiFi network...");
-    //
-
-    if (tries > 5) {
-      Serial.println("Re-attempting to connect to WiFi network...");
-      WiFi.begin(SECRET_SSID, SECRET_PASS);
-      tries = 0;
-    }
-
-    delay(1000);
-    tries++;
+  if (IS_IN_ACCESS_POINT_MODE) {
+    startWifiInHostMode();
+  } else {
+    startWifiInClientMode();
   }
-
-  Serial.println("Connected to WiFi");
-
-  // Print the IP address
-  Serial.print("Server IP Address: ");
-  Serial.println(WiFi.localIP());
 
   // Start the m_wifiServer
   m_serverController.begin();
