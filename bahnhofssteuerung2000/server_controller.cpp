@@ -1,8 +1,12 @@
-#include "server_controller.h"
+#include <WiFiServer.h>
+
 #include "channel_controller.h"
 #include "eeprom.h"
 #include "render.h"
-#include <WiFiServer.h>
+#include "server_controller.h"
+
+#include "static_files/font_woff2.h"
+#include "static_files/styles.h"
 
 WiFiServer m_wifiServer(80);
 
@@ -306,12 +310,57 @@ void ServerController::prepareRenderChannels(WiFiClient client) {
   m_renderer->renderWebPage(client, m_channelController->getFoundRecursion());
 }
 
+void ServerController::serveFont(WiFiClient client) {
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/woff2");
+  client.println("Cache-Control: max-age=604800");
+  client.print("Content-Length: ");
+  client.println(font_woff2_len);
+  client.println("Connection: close");
+  client.println();
+
+  // Send from memory in chunks
+  const size_t chunkSize = 1024;
+  uint8_t buffer[chunkSize];
+
+  for (size_t i = 0; i < font_woff2_len; i += chunkSize) {
+    size_t len = min(chunkSize, font_woff2_len - i);
+    memcpy_P(buffer, font_woff2 + i, len);
+    client.write(buffer, len);
+  }
+}
+
+void ServerController::serveStyles(WiFiClient client) {
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/css");
+  client.println("Content-Encoding: gzip");
+  client.println("Cache-Control: max-age=86400");
+  client.print("Content-Length: ");
+  client.println(style_css_gz_len);
+  client.println("Connection: close");
+  client.println();
+
+  // Send from memory in chunks
+  const size_t chunkSize = 1024;
+  uint8_t buffer[chunkSize];
+
+  for (size_t i = 0; i < style_css_gz_len; i += chunkSize) {
+    size_t len = min(chunkSize, style_css_gz_len - i);
+    memcpy_P(buffer, style_css_gz + i, len);
+    client.write(buffer, len);
+  }
+}
+
 void ServerController::processGetRequest(WiFiClient client) {
 
   if (isArgInRequest(m_requestBuffer, " / ")) {
     // A get request for the main page
     prepareRenderChannels(client);
     return;
+  } else if (isArgInRequest(m_requestBuffer, "/font")) {
+    serveFont(client);
+  } else if (isArgInRequest(m_requestBuffer, "/styles.css")) {
+    serveStyles(client);
   } else if (isArgInRequest(m_requestBuffer, "/update")) {
     // A get request for the update page
     if (!isArgInRequest(m_requestBuffer, "channel")) {

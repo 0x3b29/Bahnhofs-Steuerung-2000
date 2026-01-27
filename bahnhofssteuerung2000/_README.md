@@ -1,4 +1,4 @@
-# Important technical Information about Bahnhofssteuerung 2000
+# Important Technical Information
 
 ## Disclaimer
 DO NOT CONNECT MAINS VOLTAGE directly to any part of this Arduino project. Arduino boards and related components are designed for low-voltage DC circuits only and are not rated to handle high-voltage AC from mains power.

@@ -47,6 +47,9 @@ private:
   void processGetRequest(WiFiClient client);
   void processRequest(WiFiClient client);
 
+  void serveFont(WiFiClient client);
+  void serveStyles(WiFiClient client);
+
   void updateBoolIfFound(uint16_t channelId, const char *buffer,
                          const char *key, int memorySlot);
   void updateUint8tIfFound(uint16_t channelId, const char *buffer,

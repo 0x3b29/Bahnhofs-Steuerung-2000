@@ -1,0 +1,18 @@
+profiles:
+  Arduino_MKR_WiFi_1010:
+    fqbn: arduino:samd:mkrwifi1010
+    platforms:
+      - platform: arduino:samd (1.8.14)
+    libraries:
+      - Adafruit PWM Servo Driver Library (3.0.2)
+      - Adafruit BusIO (1.17.0)
+      - WiFiNINA (1.9.1)
+      - CRC (1.0.3)
+    programmer: ""
+    port_config:
+      baudrate: "115200"
+      lineEnding: "\r\n"
+      bits: "8"
+      parity: none
+      stop_bits: "1"
+    port: COM29
